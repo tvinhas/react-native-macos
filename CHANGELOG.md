@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.84.0-rc.4
+
+### Fixed
+
+#### Android specific
+
+- Fix incorrect `fetch()` response URL after redirect (https://github.com/facebook/react-native/issues/55248) ([fbe6a686e6](https://github.com/facebook/react-native/commit/fbe6a686e65e70dd61700413084ddc54c0b86765) by [@MarkCSmith](https://github.com/MarkCSmith))
+
 ## v0.84.0-rc.3
 
 ### Added
