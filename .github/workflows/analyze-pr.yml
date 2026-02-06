@@ -6,6 +6,7 @@ on:
 
 permissions:
   pull-requests: write
+  issues: write
 
 jobs:
   analyze-pr:
@@ -27,11 +28,31 @@ jobs:
             const {message, status} = validatePRBody(context.payload.pull_request.body);
             core.setOutput('message', message);
             core.setOutput('status', status);
+      - name: Check branch target
+        id: check-branch-target
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const checkBranchTarget = require('./.github/workflow-scripts/checkBranchTarget.js');
+            const baseRef = context.payload.pull_request.base.ref;
+            const {message, status, shouldAddPickLabel} = checkBranchTarget(baseRef);
+
+            if (shouldAddPickLabel) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['Pick Request'],
+              });
+            }
+
+            core.setOutput('message', message);
+            core.setOutput('status', status);
       - name: Post PR comment
         uses: ./.github/actions/post-pr-comment
         with:
           marker: '<!-- analyze-pr -->'
-          sections: '[${{ toJSON(steps.check-pr-body.outputs.message) }}]'
+          sections: '[${{ toJSON(steps.check-pr-body.outputs.message) }}, ${{ toJSON(steps.check-branch-target.outputs.message) }}]'
       - name: Fail if validation errors
-        if: steps.check-pr-body.outputs.status == 'FAIL'
+        if: steps.check-pr-body.outputs.status == 'FAIL' || steps.check-branch-target.outputs.status == 'FAIL'
         run: exit 1
