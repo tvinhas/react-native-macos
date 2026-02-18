@@ -12,7 +12,6 @@ package com.facebook.react.views.text
 import android.os.Build
 import android.text.Layout
 import android.text.Spannable
-import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextUtils
 import android.text.util.Linkify
@@ -32,7 +31,6 @@ import com.facebook.react.uimanager.LayoutShadowNode
 import com.facebook.react.uimanager.LengthPercentage
 import com.facebook.react.uimanager.LengthPercentageType
 import com.facebook.react.uimanager.ReactStylesDiffMap
-import com.facebook.react.uimanager.ReferenceStateWrapper
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewDefaults
@@ -48,7 +46,7 @@ import java.util.HashMap
 /** View manager for `<Text>` nodes. */
 @ReactModule(name = ReactTextViewManager.REACT_CLASS)
 @OptIn(UnstableReactNativeAPI::class)
-public open class ReactTextViewManager
+public class ReactTextViewManager
 @JvmOverloads
 public constructor(
     protected var reactTextViewManagerCallback: ReactTextViewManagerCallback? = null
@@ -133,11 +131,6 @@ public constructor(
       stateWrapper: StateWrapper,
   ): Any? {
     SystraceSection("ReactTextViewManager.updateState").use { s ->
-      val refState = (stateWrapper as? ReferenceStateWrapper)?.stateDataReference
-      if (refState is PreparedLayout) {
-        return getReactTextUpdateFromPreparedLayout(view, refState)
-      }
-
       val stateMapBuffer = stateWrapper.stateDataMapBuffer
       return if (stateMapBuffer != null) {
         getReactTextUpdate(view, props, stateMapBuffer)
@@ -180,34 +173,6 @@ public constructor(
         TextLayoutManager.getTextGravity(attributedString, spanned),
         textBreakStrategy,
         TextAttributeProps.getJustificationMode(props, currentJustificationMode),
-    )
-  }
-
-  /**
-   * Constructs a [ReactTextUpdate] from a [PreparedLayout] received via [ReferenceStateWrapper].
-   */
-  private fun getReactTextUpdateFromPreparedLayout(
-      view: ReactTextView,
-      preparedLayout: PreparedLayout,
-  ): ReactTextUpdate {
-    val layout = preparedLayout.layout
-    val text = layout.text
-    val spanned = if (text is Spannable) text else SpannableString(text)
-    view.setSpanned(spanned)
-
-    val textAlign =
-        when (layout.alignment) {
-          Layout.Alignment.ALIGN_CENTER -> Gravity.CENTER_HORIZONTAL
-          Layout.Alignment.ALIGN_OPPOSITE -> Gravity.END
-          else -> Gravity.START
-        }
-
-    return ReactTextUpdate(
-        spanned,
-        -1,
-        textAlign,
-        Layout.BREAK_STRATEGY_HIGH_QUALITY,
-        0,
     )
   }
 

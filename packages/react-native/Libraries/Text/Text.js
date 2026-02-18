@@ -20,18 +20,14 @@ import flattenStyle from '../StyleSheet/flattenStyle';
 import processColor from '../StyleSheet/processColor';
 import Platform from '../Utilities/Platform';
 import TextAncestorContext from './TextAncestorContext';
-import {
-  NativeSelectableText,
-  NativeText,
-  NativeVirtualText,
-} from './TextNativeComponent';
+import {NativeText, NativeVirtualText} from './TextNativeComponent';
 import * as React from 'react';
 import {useContext, useMemo, useState} from 'react';
 
 export type {TextProps} from './TextProps';
 
 type TextForwardRef = React.ElementRef<
-  typeof NativeText | typeof NativeVirtualText | typeof NativeSelectableText,
+  typeof NativeText | typeof NativeVirtualText,
 >;
 
 /**
@@ -267,7 +263,7 @@ const TextImpl: component(
     processedProps.children = children;
     if (isPressable) {
       return (
-        <PressableVirtualText
+        <NativePressableVirtualText
           ref={forwardedRef}
           textProps={processedProps}
           textPressabilityProps={textPressabilityProps ?? {}}
@@ -287,20 +283,14 @@ const TextImpl: component(
 
   if (isPressable) {
     nativeText = (
-      <PressableText
+      <NativePressableText
         ref={forwardedRef}
-        selectable={_selectable}
         textProps={processedProps}
         textPressabilityProps={textPressabilityProps ?? {}}
       />
     );
   } else {
-    nativeText =
-      _selectable === true ? (
-        <NativeSelectableText {...processedProps} ref={forwardedRef} />
-      ) : (
-        <NativeText {...processedProps} ref={forwardedRef} />
-      );
+    nativeText = <NativeText {...processedProps} ref={forwardedRef} />;
   }
 
   if (children == null) {
@@ -467,17 +457,28 @@ function useTextPressability({
   );
 }
 
+type NativePressableTextProps = Readonly<{
+  textProps: NativeTextProps,
+  textPressabilityProps: TextPressabilityProps,
+}>;
+
 /**
  * Wrap the NativeVirtualText component and initialize pressability.
  *
  * This logic is split out from the main Text component to enable the more
  * expensive pressability logic to be only initialized when needed.
  */
-component PressableVirtualText(
+const NativePressableVirtualText: component(
+  ref: React.RefSetter<TextForwardRef>,
+  ...props: NativePressableTextProps
+) = ({
+  ref: forwardedRef,
+  textProps,
+  textPressabilityProps,
+}: {
   ref?: React.RefSetter<TextForwardRef>,
-  textProps: NativeTextProps,
-  textPressabilityProps: TextPressabilityProps,
-) {
+  ...NativePressableTextProps,
+}) => {
   const [isHighlighted, eventHandlersForText] = useTextPressability(
     textPressabilityProps,
   );
@@ -488,40 +489,42 @@ component PressableVirtualText(
       {...eventHandlersForText}
       isHighlighted={isHighlighted}
       isPressable={true}
-      ref={ref}
+      ref={forwardedRef}
     />
   );
-}
+};
 
 /**
- * Wrap a NativeText component and initialize pressability.
+ * Wrap the NativeText component and initialize pressability.
  *
  * This logic is split out from the main Text component to enable the more
  * expensive pressability logic to be only initialized when needed.
  */
-component PressableText(
+const NativePressableText: component(
+  ref: React.RefSetter<TextForwardRef>,
+  ...props: NativePressableTextProps
+) = ({
+  ref: forwardedRef,
+  textProps,
+  textPressabilityProps,
+}: {
   ref?: React.RefSetter<TextForwardRef>,
-  selectable?: ?boolean,
-  textProps: NativeTextProps,
-  textPressabilityProps: TextPressabilityProps,
-) {
+  ...NativePressableTextProps,
+}) => {
   const [isHighlighted, eventHandlersForText] = useTextPressability(
     textPressabilityProps,
   );
 
-  const NativeComponent =
-    selectable === true ? NativeSelectableText : NativeText;
-
   return (
-    <NativeComponent
+    <NativeText
       {...textProps}
       {...eventHandlersForText}
       isHighlighted={isHighlighted}
       isPressable={true}
-      ref={ref}
+      ref={forwardedRef}
     />
   );
-}
+};
 
 const userSelectToSelectableMap = {
   auto: true,
