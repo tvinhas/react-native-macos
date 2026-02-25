@@ -178,35 +178,7 @@ struct CascadedRectangleEdges {
     };
   }
 
-  bool operator==(const CascadedRectangleEdges<T> &rhs) const
-  {
-    return std::tie(
-               this->left,
-               this->top,
-               this->right,
-               this->bottom,
-               this->start,
-               this->end,
-               this->horizontal,
-               this->vertical,
-               this->all,
-               this->block,
-               this->blockStart,
-               this->blockEnd) ==
-        std::tie(
-               rhs.left,
-               rhs.top,
-               rhs.right,
-               rhs.bottom,
-               rhs.start,
-               rhs.end,
-               rhs.horizontal,
-               rhs.vertical,
-               rhs.all,
-               rhs.block,
-               rhs.blockStart,
-               rhs.blockEnd);
-  }
+  bool operator==(const CascadedRectangleEdges<T> &rhs) const = default;
 };
 
 template <typename T>
@@ -251,37 +223,7 @@ struct CascadedRectangleCorners {
     };
   }
 
-  bool operator==(const CascadedRectangleCorners<T> &rhs) const
-  {
-    return std::tie(
-               this->topLeft,
-               this->topRight,
-               this->bottomLeft,
-               this->bottomRight,
-               this->topStart,
-               this->topEnd,
-               this->bottomStart,
-               this->bottomEnd,
-               this->all,
-               this->endEnd,
-               this->endStart,
-               this->startEnd,
-               this->startStart) ==
-        std::tie(
-               rhs.topLeft,
-               rhs.topRight,
-               rhs.bottomLeft,
-               rhs.bottomRight,
-               rhs.topStart,
-               rhs.topEnd,
-               rhs.bottomStart,
-               rhs.bottomEnd,
-               rhs.all,
-               rhs.endEnd,
-               rhs.endStart,
-               rhs.startEnd,
-               rhs.startStart);
-  }
+  bool operator==(const CascadedRectangleCorners<T> &rhs) const = default;
 };
 
 using BorderWidths = RectangleEdges<Float>;
@@ -303,12 +245,7 @@ struct BorderMetrics {
   BorderCurves borderCurves{};
   BorderStyles borderStyles{};
 
-  bool operator==(const BorderMetrics &rhs) const
-  {
-    return std::tie(
-               this->borderColors, this->borderWidths, this->borderRadii, this->borderCurves, this->borderStyles) ==
-        std::tie(rhs.borderColors, rhs.borderWidths, rhs.borderRadii, rhs.borderCurves, rhs.borderStyles);
-  }
+  bool operator==(const BorderMetrics &rhs) const = default;
 };
 
 } // namespace facebook::react
