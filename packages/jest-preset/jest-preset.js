@@ -10,10 +10,15 @@
 
 'use strict';
 
+const path = require('path');
+
 module.exports = {
   haste: {
     defaultPlatform: 'ios',
     platforms: ['android', 'ios', 'native'],
+  },
+  moduleNameMapper: {
+    '^react-native($|/.*)': `${path.dirname(require.resolve('react-native'))}/$1`,
   },
   resolver: require.resolve('./jest/resolver.js'),
   transform: {
