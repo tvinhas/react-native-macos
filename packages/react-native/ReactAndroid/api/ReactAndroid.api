@@ -1667,6 +1667,7 @@ public final class com/facebook/react/common/assets/ReactFontManager {
 	public fun <init> ()V
 	public final fun addCustomFont (Landroid/content/Context;Ljava/lang/String;I)V
 	public final fun addCustomFont (Ljava/lang/String;Landroid/graphics/Typeface;)V
+	public final fun getCustomFontFamilies ()Ljava/util/Set;
 	public static final fun getInstance ()Lcom/facebook/react/common/assets/ReactFontManager;
 	public final fun getTypeface (Ljava/lang/String;IILandroid/content/res/AssetManager;)Landroid/graphics/Typeface;
 	public final fun getTypeface (Ljava/lang/String;ILandroid/content/res/AssetManager;)Landroid/graphics/Typeface;
