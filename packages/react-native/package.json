@@ -179,10 +179,10 @@
     "react": "^19.2.3"
   },
   "peerDependenciesMeta": {
-    "@types/react": {
+    "@react-native/jest-preset": {
       "optional": true
     },
-    "@react-native/jest-preset": {
+    "@types/react": {
       "optional": true
     }
   },
