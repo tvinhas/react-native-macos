@@ -195,6 +195,10 @@ RCT_EXPORT_MODULE()
     errorInfo = [self _customizeError:errorInfo];
 
     if (self->_controller == nullptr) {
+#if TARGET_OS_OSX // [macOS] On macOS, RedBox 2.0 is the only RedBox we ship — `redBoxV2IOS()` is iOS-specific and defaults false on macOS, which would silently leave our entire macOS RedBox 2.0 port dead code.
+      self->_controller = [[RCTRedBox2Controller alloc] initWithCustomButtonTitles:self->_customButtonTitles
+                                                              customButtonHandlers:self->_customButtonHandlers];
+#else // [macOS
       if (facebook::react::ReactNativeFeatureFlags::redBoxV2IOS()) {
         self->_controller = [[RCTRedBox2Controller alloc] initWithCustomButtonTitles:self->_customButtonTitles
                                                                 customButtonHandlers:self->_customButtonHandlers];
@@ -202,6 +206,7 @@ RCT_EXPORT_MODULE()
         self->_controller = [[RCTRedBoxController alloc] initWithCustomButtonTitles:self->_customButtonTitles
                                                                customButtonHandlers:self->_customButtonHandlers];
       }
+#endif // macOS]
       self->_controller.actionDelegate = self;
     }
     [self _redBox2Controller].bundleURL = self->_overrideBundleURL ?: self->_bundleManager.bundleURL;

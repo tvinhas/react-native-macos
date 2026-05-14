@@ -1580,6 +1580,10 @@ enum class RowKind : uint8_t {
       [fileLabel.topAnchor constraintEqualToAnchor:methodLabel.bottomAnchor constant:2],
       [fileLabel.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:12],
       [fileLabel.trailingAnchor constraintEqualToAnchor:cell.trailingAnchor constant:-12],
+      // Close the vertical chain so Auto Layout doesn't log "unable to simultaneously
+      // satisfy constraints" on every stack-frame row. lessThanOrEqual avoids
+      // conflicting with the fixed 50pt row height when text wraps short.
+      [fileLabel.bottomAnchor constraintLessThanOrEqualToAnchor:cell.bottomAnchor constant:-2],
     ]];
   }
 
@@ -1646,6 +1650,12 @@ enum class RowKind : uint8_t {
   codeLabel.cell.usesSingleLineMode = NO;
   codeLabel.cell.lineBreakMode = NSLineBreakByClipping;
   codeLabel.selectable = YES;
+  // NSScrollView sizes its documentView via autoresizingMask + intrinsicContentSize,
+  // not Auto Layout — leaving translatesAutoresizingMaskIntoConstraints=NO here
+  // means horizontal scrolling never works (the label collapses to zero width).
+  codeLabel.translatesAutoresizingMaskIntoConstraints = YES;
+  codeLabel.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+  [codeLabel sizeToFit];
 
   NSScrollView *codeScrollView = [[NSScrollView alloc] init];
   codeScrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -1679,6 +1689,8 @@ enum class RowKind : uint8_t {
     [codeScrollView.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:10],
     [codeScrollView.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-10],
     [codeScrollView.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-10],
+    // NSScrollView has no intrinsic height; without an explicit height the container collapses to zero.
+    [codeScrollView.heightAnchor constraintEqualToConstant:140],
 
     [fileLabel.topAnchor constraintEqualToAnchor:container.bottomAnchor constant:10],
     [fileLabel.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:10],
@@ -1703,6 +1715,7 @@ enum class RowKind : uint8_t {
     cell.textField = label;
 
     [NSLayoutConstraint activateConstraints:@[
+      [label.topAnchor constraintGreaterThanOrEqualToAnchor:cell.topAnchor constant:8],
       [label.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:12],
       [label.trailingAnchor constraintEqualToAnchor:cell.trailingAnchor constant:-12],
       [label.bottomAnchor constraintEqualToAnchor:cell.bottomAnchor constant:-10],

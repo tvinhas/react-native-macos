@@ -562,7 +562,9 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder *)aDecoder)
                        accessibilityIdentifier:@"redbox-dismiss"
                                       selector:@selector(dismiss)
                                          block:nil];
-  [dismissButton setKeyEquivalent:@"\e"];
+  // Obj-C string literals don't recognize \e as the escape character (it collapses to "e").
+  // Use the explicit hex escape so Cmd-press of "e" doesn't accidentally trigger Dismiss.
+  [dismissButton setKeyEquivalent:@"\x1b"];
   NSButton *reloadButton = [self redBoxButton:reloadText
                       accessibilityIdentifier:@"redbox-reload"
                                      selector:@selector(reload)
