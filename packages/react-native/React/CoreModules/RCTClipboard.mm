@@ -29,8 +29,10 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(setString : (NSString *)content)
 {
 #if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_TV
   UIPasteboard *clipboard = [UIPasteboard generalPasteboard];
   clipboard.string = (content ?: @"");
+#endif
 #else // [macOS
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   [pasteboard clearContents];
@@ -41,8 +43,12 @@ RCT_EXPORT_METHOD(setString : (NSString *)content)
 RCT_EXPORT_METHOD(getString : (RCTPromiseResolveBlock)resolve reject : (__unused RCTPromiseRejectBlock)reject)
 {
 #if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_TV
   UIPasteboard *clipboard = [UIPasteboard generalPasteboard];
   resolve((clipboard.string ?: @""));
+#else
+  resolve(@"");
+#endif
 #else // [macOS
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   resolve(([pasteboard stringForType:NSPasteboardTypeString] ? : @""));

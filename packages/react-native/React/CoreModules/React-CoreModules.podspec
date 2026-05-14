@@ -55,6 +55,7 @@ Pod::Spec.new do |s|
   s.dependency "React-Core/CoreModulesHeaders", version
   s.dependency "React-RCTImage", version
   s.dependency "React-jsi", version
+  add_dependency(s, "React-featureflags")
   s.dependency 'React-RCTBlob'
   add_dependency(s, "React-debug")
   add_dependency(s, "React-runtimeexecutor", :additional_framework_paths => ["platform/ios"])
@@ -65,6 +66,7 @@ Pod::Spec.new do |s|
   add_dependency(s, "React-RCTFBReactNativeSpec")
   add_dependency(s, "ReactCommon", :subspec => "turbomodule/core", :additional_framework_paths => ["react/nativemodule/core"])
   add_dependency(s, "React-NativeModulesApple")
+  add_dependency(s, "React-utils", :additional_framework_paths => ["react/utils/platform/ios"])
 
   add_rn_third_party_dependencies(s)
   add_rncore_dependency(s)

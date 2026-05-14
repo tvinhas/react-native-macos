@@ -28,6 +28,7 @@
 #if TARGET_OS_OSX // [macOS
   NSArray<NSPasteboardType> *_readablePasteboardTypes;
 #endif // macOS]
+  BOOL _disableKeyboardShortcuts;
 }
 
 #if !TARGET_OS_OSX // [macOS]
@@ -72,14 +73,13 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
     self.textColor = [RCTPlatformColor labelColor]; // [macOS]
     // This line actually removes 5pt (default value) left and right padding in UITextView.
 #if !TARGET_OS_OSX // [macOS]
-    self.textContainer.lineFragmentPadding = 0;
 #else // [macOS
     // macOS has a bug where setting this to 0 will cause the scroll view to scroll to top when
     // inserting a newline at the bottom of a NSTextView when it has more rows than can be displayed
     // on screen.
     self.textContainer.lineFragmentPadding = 1;
 #endif //macOS]
-#if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_OSX && !TARGET_OS_TV // [macOS]
     self.scrollsToTop = NO;
 #endif // [macOS]
     self.scrollEnabled = YES;
@@ -284,6 +284,7 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
 
 - (void)setDisableKeyboardShortcuts:(BOOL)disableKeyboardShortcuts
 {
+  _disableKeyboardShortcuts = disableKeyboardShortcuts;
 #if TARGET_OS_IOS
   // Initialize the initial values only once
   if (_initialValueLeadingBarButtonGroups == nil) {
@@ -300,8 +301,12 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
     self.inputAssistantItem.leadingBarButtonGroups = _initialValueLeadingBarButtonGroups;
     self.inputAssistantItem.trailingBarButtonGroups = _initialValueTrailingBarButtonGroups;
   }
-  _disableKeyboardShortcuts = disableKeyboardShortcuts;
 #endif
+}
+
+- (BOOL)disableKeyboardShortcuts
+{
+  return _disableKeyboardShortcuts;
 }
 
 #pragma mark - Overrides
@@ -591,7 +596,7 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
 
 - (void)buildMenuWithBuilder:(id<UIMenuBuilder>)builder
 {
-#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 && !TARGET_OS_TV
   if (@available(iOS 17.0, *)) {
     if (_contextMenuHidden) {
       [builder removeMenuForIdentifier:UIMenuAutoFill];

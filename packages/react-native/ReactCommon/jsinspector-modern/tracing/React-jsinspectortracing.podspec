@@ -47,6 +47,11 @@ Pod::Spec.new do |s|
   s.dependency "React-jsi"
   s.dependency "React-oscompat"
   s.dependency "React-timing"
+  add_dependency(s, "React-utils", :additional_framework_paths => ["react/utils/platform/ios"])
+
+  if use_hermes()
+    s.dependency "hermes-engine"
+  end
 
   add_rn_third_party_dependencies(s)
   add_rncore_dependency(s)

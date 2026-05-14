@@ -108,6 +108,10 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
   // Result string is initialized lazily to prevent useless but costly allocations.
   NSMutableString *str = nil;
   for (RCTUIView *subview in view.subviews) { // [macOS]
+    // Skip subviews that have accessibilityElementsHidden set to YES
+    if (subview.accessibilityElementsHidden) {
+      continue;
+    }
 #if !TARGET_OS_OSX // [macOS]
     NSString *label = subview.accessibilityLabel;
 #else // [macOS
@@ -1343,7 +1347,8 @@ static void RCTUpdateShadowPathForView(RCTView *view)
 static void RCTUpdateHoverStyleForView(RCTView *view)
 {
 #if !TARGET_OS_OSX // [macOS]
-#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */
+#if !TARGET_OS_TV && defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && \
+    __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */
   if (@available(iOS 17.0, *)) {
     UIHoverStyle *hoverStyle = nil;
     if ([view cursor] == RCTCursorPointer) {

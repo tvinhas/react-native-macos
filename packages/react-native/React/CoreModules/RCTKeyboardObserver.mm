@@ -24,7 +24,7 @@ RCT_EXPORT_MODULE()
 
 - (void)startObserving
 {
-#if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_OSX && !TARGET_OS_TV // [macOS]
 
   NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
 
@@ -85,6 +85,7 @@ IMPLEMENT_KEYBOARD_HANDLER(keyboardDidChangeFrame)
 
 @end
 
+#if !TARGET_OS_TV
 NS_INLINE NSDictionary *RCTRectDictionaryValue(CGRect rect)
 {
   return @{
@@ -143,6 +144,14 @@ static NSDictionary *RCTParseKeyboardNotification(NSNotification *notification)
   return @{};
 #endif // macOS]
 }
+
+#else
+static NSDictionary *RCTParseKeyboardNotification(NSNotification *notification)
+{
+  return @{};
+}
+
+#endif
 
 Class RCTKeyboardObserverCls(void)
 {

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<a0a1898f3a4c14179bd03d5dbe97adfa>>
+ * @generated SignedSource<<fe805d0e749aa9417e175cc68a681fff>>
  */
 
 /**
@@ -39,15 +39,15 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool cxxNativeAnimatedRemoveJsSync() override {
-    return false;
+  bool defaultTextToOverflowHidden() override {
+    return true;
   }
 
   bool disableEarlyViewCommandExecution() override {
     return false;
   }
 
-  bool disableFabricCommitInCXXAnimated() override {
+  bool disableImageViewPreallocationAndroid() override {
     return false;
   }
 
@@ -55,11 +55,15 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool disableOldAndroidAttachmentMetricsWorkarounds() override {
-    return true;
+  bool disableSubviewClippingAndroid() override {
+    return false;
   }
 
   bool disableTextLayoutManagerCacheAndroid() override {
+    return false;
+  }
+
+  bool disableViewPreallocationAndroid() override {
     return false;
   }
 
@@ -68,6 +72,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableAccumulatedUpdatesInRawPropsAndroid() override {
+    return false;
+  }
+
+  bool enableAndroidAntialiasedBorderRadiusClipping() override {
     return false;
   }
 
@@ -107,6 +115,14 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool enableExclusivePropsUpdateAndroid() override {
+    return false;
+  }
+
+  bool enableFabricCommitBranching() override {
+    return false;
+  }
+
   bool enableFabricLogs() override {
     return false;
   }
@@ -131,6 +147,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool enableImagePrefetchingJNIBatchingAndroid() override {
+    return false;
+  }
+
   bool enableImagePrefetchingOnUiThreadAndroid() override {
     return false;
   }
@@ -144,6 +164,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableInteropViewManagerClassLookUpOptimizationIOS() override {
+    return false;
+  }
+
+  bool enableIntersectionObserverByDefault() override {
     return false;
   }
 
@@ -167,12 +191,16 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool enableMutationObserverByDefault() override {
+    return false;
+  }
+
   bool enableNativeCSSParsing() override {
     return false;
   }
 
   bool enableNetworkEventReporting() override {
-    return false;
+    return true;
   }
 
   bool enablePreparedTextLayout() override {
@@ -180,10 +208,6 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enablePropsUpdateReconciliationAndroid() override {
-    return false;
-  }
-
-  bool enableResourceTimingAPI() override {
     return false;
   }
 
@@ -215,10 +239,6 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return true;
   }
 
-  bool enableVirtualViewClippingWithoutScrollViewClipping() override {
-    return true;
-  }
-
   bool enableVirtualViewContainerStateExperimental() override {
     return false;
   }
@@ -227,27 +247,35 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool enableVirtualViewRenderState() override {
-    return true;
-  }
-
-  bool enableVirtualViewWindowFocusDetection() override {
+  bool fixFindShadowNodeByTagRaceCondition() override {
     return false;
-  }
-
-  bool enableWebPerformanceAPIsByDefault() override {
-    return true;
   }
 
   bool fixMappingOfEventPrioritiesBetweenFabricAndReact() override {
     return false;
   }
 
+  bool fixTextClippingAndroid15useBoundsForWidth() override {
+    return false;
+  }
+
+  bool fuseboxAssertSingleHostState() override {
+    return true;
+  }
+
   bool fuseboxEnabledRelease() override {
     return false;
   }
 
+  bool fuseboxFrameRecordingEnabled() override {
+    return false;
+  }
+
   bool fuseboxNetworkInspectionEnabled() override {
+    return true;
+  }
+
+  bool fuseboxScreenshotCaptureEnabled() override {
     return false;
   }
 
@@ -275,6 +303,14 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool redBoxV2Android() override {
+    return false;
+  }
+
+  bool redBoxV2IOS() override {
+    return false;
+  }
+
   bool shouldPressibilityUseW3CPointerEventsForHover() override {
     return false;
   }
@@ -287,8 +323,8 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool sweepActiveTouchOnChildNativeGesturesAndroid() override {
-    return true;
+  bool syncAndroidClipToPaddingWithOverflow() override {
+    return false;
   }
 
   bool traceTurboModulePromiseRejectionsOnAndroid() override {
@@ -296,6 +332,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool updateRuntimeShadowNodeReferencesOnCommit() override {
+    return false;
+  }
+
+  bool updateRuntimeShadowNodeReferencesOnCommitThread() override {
     return false;
   }
 
@@ -307,27 +347,11 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return true;
   }
 
-  bool useNativeEqualsInNativeReadableArrayAndroid() override {
-    return true;
-  }
-
-  bool useNativeTransformHelperAndroid() override {
-    return true;
-  }
-
   bool useNativeViewConfigsInBridgelessMode() override {
     return false;
   }
 
-  bool useOptimizedEventBatchingOnAndroid() override {
-    return false;
-  }
-
-  bool useRawPropsJsiValue() override {
-    return true;
-  }
-
-  bool useShadowNodeStateOnClone() override {
+  bool useNestedScrollViewAndroid() override {
     return false;
   }
 
@@ -347,12 +371,16 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool useUnorderedMapInDifferentiator() override {
+    return false;
+  }
+
   double viewCullingOutsetRatio() override {
     return 0.0;
   }
 
-  double virtualViewHysteresisRatio() override {
-    return 0.0;
+  bool viewTransitionEnabled() override {
+    return false;
   }
 
   double virtualViewPrerenderRatio() override {

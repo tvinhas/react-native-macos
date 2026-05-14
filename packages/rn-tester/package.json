@@ -1,6 +1,6 @@
 {
   "name": "@react-native/tester",
-  "version": "0.83.0-main",
+  "version": "0.85.3",
   "private": true,
   "description": "React Native tester app.",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "directory": "packages/rn-tester"
   },
   "engines": {
-    "node": ">= 20.19.4"
+    "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0"
   },
   "scripts": {
     "start": "react-native-macos start",
@@ -33,7 +33,7 @@
     "nullthrows": "^1.1.1"
   },
   "peerDependencies": {
-    "react": "19.2.0",
+    "react": "19.2.3",
     "react-native-macos": "workspace:*"
   },
   "codegenConfig": {

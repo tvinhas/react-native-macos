@@ -81,16 +81,19 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
 
 #pragma mark - RCTParagraphComponentView // [macOS]
 
-#if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_OSX && !TARGET_OS_TV // [macOS]
 @interface RCTParagraphComponentView () <UIEditMenuInteractionDelegate>
 
 @property (nonatomic, nullable) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
-#else // [macOS
+#elif TARGET_OS_OSX // [macOS
 @interface RCTParagraphComponentView () <NSTextViewDelegate>
 @end
-#endif // macOS]
+#else
+@interface RCTParagraphComponentView ()
+@end
+#endif // [macOS]
 
 @implementation RCTParagraphComponentView {
   ParagraphAttributes _paragraphAttributes;

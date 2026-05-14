@@ -21,7 +21,6 @@
 #else
 #import <React/CoreModulesPlugins.h>
 #endif
-#import <React/RCTBundleURLProvider.h>
 #import <React/RCTComponentViewFactory.h>
 #import <React/RCTComponentViewProtocol.h>
 #import <React/RCTFabricSurface.h>
@@ -141,6 +140,7 @@
   return [self viewWithModuleName:moduleName
                 initialProperties:initialProperties
                     launchOptions:nil
+              bundleConfiguration:[RCTBundleConfiguration defaultConfiguration]
              devMenuConfiguration:[RCTDevMenuConfiguration defaultConfiguration]];
 }
 
@@ -149,17 +149,21 @@
   return [self viewWithModuleName:moduleName
                 initialProperties:nil
                     launchOptions:nil
+              bundleConfiguration:[RCTBundleConfiguration defaultConfiguration]
              devMenuConfiguration:[RCTDevMenuConfiguration defaultConfiguration]];
 }
 
 - (void)initializeReactHostWithLaunchOptions:(NSDictionary *)launchOptions
+                         bundleConfiguration:(RCTBundleConfiguration *)bundleConfiguration
                         devMenuConfiguration:(RCTDevMenuConfiguration *)devMenuConfiguration
 {
   // Enable TurboModule interop by default in Bridgeless mode
   RCTEnableTurboModuleInterop(YES);
   RCTEnableTurboModuleInteropBridgeProxy(YES);
 
-  [self createReactHostIfNeeded:launchOptions devMenuConfiguration:devMenuConfiguration];
+  [self createReactHostIfNeeded:launchOptions
+            bundleConfiguration:bundleConfiguration
+           devMenuConfiguration:devMenuConfiguration];
   return;
 }
 
@@ -170,15 +174,19 @@
   return [self viewWithModuleName:moduleName
                 initialProperties:initialProperties
                     launchOptions:launchOptions
+              bundleConfiguration:[RCTBundleConfiguration defaultConfiguration]
              devMenuConfiguration:[RCTDevMenuConfiguration defaultConfiguration]];
 }
 
 - (RCTPlatformView *)viewWithModuleName:(NSString *)moduleName // [macOS]
              initialProperties:(NSDictionary *)initProps
                  launchOptions:(NSDictionary *)launchOptions
+           bundleConfiguration:(RCTBundleConfiguration *)bundleConfiguration
           devMenuConfiguration:(RCTDevMenuConfiguration *)devMenuConfiguration
 {
-  [self initializeReactHostWithLaunchOptions:launchOptions devMenuConfiguration:devMenuConfiguration];
+  [self initializeReactHostWithLaunchOptions:launchOptions
+                         bundleConfiguration:bundleConfiguration
+                        devMenuConfiguration:devMenuConfiguration];
 
   RCTFabricSurface *surface = [self.reactHost createSurfaceWithModuleName:moduleName
                                                         initialProperties:initProps ? initProps : @{}];
@@ -187,7 +195,11 @@
       [[RCTSurfaceHostingProxyRootView alloc] initWithSurface:surface];
 
 #if !TARGET_OS_OSX // [macOS]
+#if TARGET_OS_TV
+    surfaceHostingProxyRootView.backgroundColor = [UIColor clearColor];
+#else
     surfaceHostingProxyRootView.backgroundColor = [UIColor systemBackgroundColor];
+#endif
 #endif // [macOS]
 
 #if RCT_DEV_MENU // [macOS
@@ -223,7 +235,11 @@
 #endif // macOS]
 
 #if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_TV
   rootView.backgroundColor = [UIColor systemBackgroundColor];
+#else
+  rootView.backgroundColor = [UIColor blackColor];
+#endif
 #endif // [macOS]
   return rootView;
 }
@@ -270,20 +286,27 @@
 #pragma mark - New Arch Utilities
 
 - (void)createReactHostIfNeeded:(NSDictionary *)launchOptions
+            bundleConfiguration:(RCTBundleConfiguration *)bundleConfiguration
            devMenuConfiguration:(RCTDevMenuConfiguration *)devMenuConfiguration
 {
   if (self.reactHost) {
     return;
   }
-  self.reactHost = [self createReactHost:launchOptions devMenuConfiguration:devMenuConfiguration];
+
+  self.reactHost = [self createReactHost:launchOptions
+                     bundleConfiguration:bundleConfiguration
+                    devMenuConfiguration:devMenuConfiguration];
 }
 
 - (RCTHost *)createReactHost:(NSDictionary *)launchOptions
 {
-  return [self createReactHost:launchOptions devMenuConfiguration:[RCTDevMenuConfiguration defaultConfiguration]];
+  return [self createReactHost:launchOptions
+           bundleConfiguration:[RCTBundleConfiguration defaultConfiguration]
+          devMenuConfiguration:[RCTDevMenuConfiguration defaultConfiguration]];
 }
 
 - (RCTHost *)createReactHost:(NSDictionary *)launchOptions
+         bundleConfiguration:(RCTBundleConfiguration *)bundleConfiguration
         devMenuConfiguration:(RCTDevMenuConfiguration *)devMenuConfiguration
 {
   __weak __typeof(self) weakSelf = self;
@@ -295,6 +318,7 @@
                                   return [weakSelf createJSRuntimeFactory];
                                 }
                                    launchOptions:launchOptions
+                             bundleConfiguration:bundleConfiguration
                             devMenuConfiguration:devMenuConfiguration];
   [reactHost setBundleURLProvider:^NSURL *() {
     return [weakSelf bundleURL];

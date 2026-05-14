@@ -8,14 +8,14 @@ fmt_git_url = fmt_config[:git]
 
 Pod::Spec.new do |spec|
   spec.name = "fmt"
-  spec.version = "11.0.2"
+  spec.version = "12.1.0"
   spec.license = { :type => "MIT" }
   spec.homepage = "https://github.com/fmtlib/fmt"
   spec.summary = "{fmt} is an open-source formatting library for C++. It can be used as a safe and fast alternative to (s)printf and iostreams."
   spec.authors = "The fmt contributors"
   spec.source = {
     :git => fmt_git_url,
-    :tag => "11.0.2"
+    :tag => "12.1.0"
   }
   # Patch fmt's existing "Apple clang < 14 broken" gate at
   # `include/fmt/base.h:122` to catch ALL Apple clang versions. fmt 11.0.2's

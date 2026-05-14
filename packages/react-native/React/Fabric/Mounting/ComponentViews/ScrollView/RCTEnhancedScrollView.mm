@@ -236,9 +236,15 @@
 
 #pragma mark - UIScrollViewDelegate
 
-- (void)scrollViewWillEndDragging:(RCTUIScrollView *)scrollView
+- (void)scrollViewDidScroll:(__unused RCTUIScrollView *)scrollView // [macOS]
+{
+  // Empty implementation. This method exists to prevent crashes when the delegate splitter
+  // forwards scrollViewDidScroll: messages to RCTEnhancedScrollView.
+}
+
+- (void)scrollViewWillEndDragging:(RCTUIScrollView *)scrollView // [macOS]
                      withVelocity:(CGPoint)velocity
-              targetContentOffset:(inout CGPoint *)targetContentOffset // [macOS]
+              targetContentOffset:(inout CGPoint *)targetContentOffset
 {
   if (self.snapToOffsets && self.snapToOffsets.count > 0) {
     // An alternative to enablePaging and snapToInterval which allows setting custom

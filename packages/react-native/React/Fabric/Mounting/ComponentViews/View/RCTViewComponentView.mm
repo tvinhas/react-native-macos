@@ -82,7 +82,7 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   if (self = [super initWithFrame:frame]) {
     _props = ViewShadowNode::defaultSharedProps();
     _reactSubviews = [NSMutableArray new];
-#if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_OSX && !TARGET_OS_TV // [macOS]
     self.multipleTouchEnabled = YES;
 #endif // [macOS]
     _useCustomContainerView = NO;
@@ -450,6 +450,7 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
 
   // `accessibilityShowsLargeContentViewer`
   if (oldViewProps.accessibilityShowsLargeContentViewer != newViewProps.accessibilityShowsLargeContentViewer) {
+#if !TARGET_OS_TV
     if (@available(iOS 13.0, *)) {
       if (newViewProps.accessibilityShowsLargeContentViewer) {
         self.showsLargeContentViewer = YES;
@@ -459,13 +460,16 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
         self.showsLargeContentViewer = NO;
       }
     }
+#endif
   }
 
   // `accessibilityLargeContentTitle`
   if (oldViewProps.accessibilityLargeContentTitle != newViewProps.accessibilityLargeContentTitle) {
+#if !TARGET_OS_TV
     if (@available(iOS 13.0, *)) {
       self.largeContentTitle = RCTNSStringFromStringNilIfEmpty(newViewProps.accessibilityLargeContentTitle);
     }
+#endif
   }
 #endif // [macOS]
 
@@ -695,6 +699,12 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   // re-applying individual sub-values which weren't changed.
   [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:_layoutMetrics];
 
+  // Capture the frame size that was used by updateProps to resolve the
+  // transform, before overwriting _layoutMetrics. This is important because
+  // _layoutMetrics may be stale (e.g., from a recycled view) and differ from
+  // the oldLayoutMetrics parameter (which comes from the shadow tree).
+  auto previousFrameSize = _layoutMetrics.frame.size;
+
   _layoutMetrics = layoutMetrics;
   _needsInvalidateLayer = YES;
 
@@ -712,8 +722,12 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
     _backgroundColorLayer.frame = CGRectMake(0, 0, self.layer.bounds.size.width, self.layer.bounds.size.height);
   }
 
+  // Recompute the transform whenever the layout size differs from what was
+  // used in updateProps. Using previousFrameSize (the stored _layoutMetrics)
+  // instead of the oldLayoutMetrics parameter ensures correctness even when
+  // the view was recycled with stale dimensions.
   if ((_props->transformOrigin.isSet() || !_props->transform.operations.empty()) &&
-      layoutMetrics.frame.size != oldLayoutMetrics.frame.size) {
+      layoutMetrics.frame.size != previousFrameSize) {
     auto newTransform = _props->resolveTransform(layoutMetrics);
 #if !TARGET_OS_OSX // [macOS]
     self.layer.transform = RCTCATransform3DFromTransformMatrix(newTransform);
@@ -767,6 +781,26 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
     self.layer.opacity = (float)props.opacity;
   }
 
+  // Clean up box shadow layers to prevent cross-component contamination
+  if (_boxShadowLayers != nullptr) {
+    for (CALayer *boxShadowLayer = nullptr in _boxShadowLayers) {
+      [boxShadowLayer removeFromSuperlayer];
+    }
+    [_boxShadowLayers removeAllObjects];
+    _boxShadowLayers = nil;
+  }
+
+  // Clean up other visual layers
+  [_backgroundColorLayer removeFromSuperlayer];
+  _backgroundColorLayer = nil;
+  [_borderLayer removeFromSuperlayer];
+  _borderLayer = nil;
+  [_outlineLayer removeFromSuperlayer];
+  _outlineLayer = nil;
+  [_filterLayer removeFromSuperlayer];
+  _filterLayer = nil;
+  [self clearExistingBackgroundImageLayers];
+
   _propKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN = nil;
   _eventEmitter.reset();
   _isJSResponder = NO;
@@ -777,6 +811,7 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
     self.acceptsFirstMouse = NO;
     self.mouseDownCanMoveWindow = YES;
 #endif // macOS]
+  _layoutMetrics = {};
 }
 
 - (void)setPropKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN:(NSSet<NSString *> *_Nullable)props
@@ -1177,34 +1212,8 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     layer.shadowPath = nil;
   }
 
-#if !TARGET_OS_OSX // [visionOS]
-  // Stage 1.5. Cursor / Hover Effects
-  if (@available(iOS 17.0, *)) {
-    UIHoverStyle *hoverStyle = nil;
-    if (_props->cursor == Cursor::Pointer) {
-      const RCTCornerInsets cornerInsets =
-          RCTGetCornerInsets(RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii), UIEdgeInsetsZero);
-#if TARGET_OS_IOS
-      // Due to an Apple bug, it seems on iOS, UIShapes made with `[UIShape shapeWithBezierPath:]`
-      // evaluate their shape on the superviews' coordinate space. This leads to the hover shape
-      // rendering incorrectly on iOS, iOS apps in compatibility mode on visionOS, but not on visionOS.
-      // To work around this, for iOS, we can calculate the border path based on `view.frame` (the
-      // superview's coordinate space) instead of view.bounds.
-      CGPathRef borderPath = RCTPathCreateWithRoundedRect(self.frame, cornerInsets, NULL, NO);
-#else // TARGET_OS_VISION
-      CGPathRef borderPath = RCTPathCreateWithRoundedRect(self.bounds, cornerInsets, NULL, NO);
-#endif
-      UIBezierPath *bezierPath = [UIBezierPath bezierPathWithCGPath:borderPath];
-      CGPathRelease(borderPath);
-      UIShape *shape = [UIShape shapeWithBezierPath:bezierPath];
-
-      hoverStyle = [UIHoverStyle styleWithEffect:[UIHoverAutomaticEffect effect] shape:shape];
-    }
-    [self setHoverStyle:hoverStyle];
-  }
-#endif // [visionOS]
-
-#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */
+#if !TARGET_OS_OSX && !TARGET_OS_TV && defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && \
+    __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */ // [macOS]
   // Stage 1.5. Cursor / Hover Effects
   if (@available(iOS 17.0, *)) {
     UIHoverStyle *hoverStyle = nil;
@@ -1652,6 +1661,10 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
   // Result string is initialized lazily to prevent useless but costly allocations.
   NSMutableString *result = nil;
   for (RCTUIView *subview in view.subviews) { // [macOS]
+    // Skip subviews that have accessibilityElementsHidden set to YES
+    if (subview.accessibilityElementsHidden) {
+      continue;
+    }
     NSString *label = subview.accessibilityLabel;
     if (!label) {
       label = RCTRecursiveAccessibilityLabel(subview);
@@ -1791,8 +1804,15 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
 
   NSMutableArray<UIAccessibilityCustomAction *> *customActions = [NSMutableArray array];
   for (const auto &accessibilityAction : accessibilityActions) {
+    NSString *actionName = RCTNSStringFromString(accessibilityAction.name);
+    NSString *actionLabel = actionName;
+
+    if (accessibilityAction.label.has_value()) {
+      actionLabel = RCTNSStringFromString(accessibilityAction.label.value());
+    }
+
     [customActions
-        addObject:[[UIAccessibilityCustomAction alloc] initWithName:RCTNSStringFromString(accessibilityAction.name)
+        addObject:[[UIAccessibilityCustomAction alloc] initWithName:actionLabel
                                                              target:self
                                                            selector:@selector(didActivateAccessibilityCustomAction:)]];
   }
@@ -1847,7 +1867,17 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
 - (BOOL)didActivateAccessibilityCustomAction:(UIAccessibilityCustomAction *)action
 {
   if (_eventEmitter && _props->onAccessibilityAction) {
-    _eventEmitter->onAccessibilityAction(RCTStringFromNSString(action.name));
+    // iOS defines the name as the localized label, so iterate through accessibilityActions to find the matching
+    // non-localized action name when passing to JS. This allows for standard action names across platforms.
+    NSString *actionName = action.name;
+    for (const auto &accessibilityAction : _props->accessibilityActions) {
+      if (accessibilityAction.label.has_value() &&
+          [RCTNSStringFromString(accessibilityAction.label.value()) isEqualToString:action.name]) {
+        actionName = RCTNSStringFromString(accessibilityAction.name);
+        break;
+      }
+    }
+    _eventEmitter->onAccessibilityAction(RCTStringFromNSString(actionName));
     return YES;
   } else {
     return NO;

@@ -28,7 +28,7 @@ import PressabilityPerformanceEventEmitter from './PressabilityPerformanceEventE
 import {type PressabilityTouchSignal as TouchSignal} from './PressabilityTypes.js';
 import invariant from 'invariant';
 
-export type PressabilityConfig = $ReadOnly<{
+export type PressabilityConfig = Readonly<{
   /**
    * Whether a press gesture can be interrupted by a parent gesture such as a
    * scroll event. Defaults to true.
@@ -89,12 +89,12 @@ export type PressabilityConfig = $ReadOnly<{
   /**
    * Called after the element loses focus.
    */
-  onBlur?: ?(event: BlurEvent) => void,
+  onBlur?: ?(event: BlurEvent) => unknown,
 
   /**
    * Called after the element is focused.
    */
-  onFocus?: ?(event: FocusEvent) => void,
+  onFocus?: ?(event: FocusEvent) => unknown,
 
   // [macOS
   /*
@@ -115,37 +115,37 @@ export type PressabilityConfig = $ReadOnly<{
   /**
    * Called when the hover is activated to provide visual feedback.
    */
-  onHoverIn?: ?(event: MouseEvent) => mixed,
+  onHoverIn?: ?(event: MouseEvent) => unknown,
 
   /**
    * Called when the hover is deactivated to undo visual feedback.
    */
-  onHoverOut?: ?(event: MouseEvent) => mixed,
+  onHoverOut?: ?(event: MouseEvent) => unknown,
 
   /**
    * Called when a long press gesture has been triggered.
    */
-  onLongPress?: ?(event: GestureResponderEvent) => mixed,
+  onLongPress?: ?(event: GestureResponderEvent) => unknown,
 
   /**
    * Called when a press gesture has been triggered.
    */
-  onPress?: ?(event: GestureResponderEvent) => mixed,
+  onPress?: ?(event: GestureResponderEvent) => unknown,
 
   /**
    * Called when the press is activated to provide visual feedback.
    */
-  onPressIn?: ?(event: GestureResponderEvent) => mixed,
+  onPressIn?: ?(event: GestureResponderEvent) => unknown,
 
   /**
    * Called when the press location moves. (This should rarely be used.)
    */
-  onPressMove?: ?(event: GestureResponderEvent) => mixed,
+  onPressMove?: ?(event: GestureResponderEvent) => unknown,
 
   /**
    * Called when the press is deactivated to undo visual feedback.
    */
-  onPressOut?: ?(event: GestureResponderEvent) => mixed,
+  onPressOut?: ?(event: GestureResponderEvent) => unknown,
 
   /**
    * Whether to prevent any other native components from becoming responder
@@ -154,7 +154,7 @@ export type PressabilityConfig = $ReadOnly<{
   blockNativeResponder?: ?boolean,
 }>;
 
-export type EventHandlers = $ReadOnly<{
+export type EventHandlers = Readonly<{
   onBlur: (event: BlurEvent) => void,
   onClick: (event: GestureResponderEvent) => void,
   onFocus: (event: FocusEvent) => void,
@@ -397,13 +397,13 @@ export default class Pressability {
   _pressDelayTimeout: ?TimeoutID = null;
   _pressOutDelayTimeout: ?TimeoutID = null;
   _responderID: ?number | HostInstance = null;
-  _responderRegion: ?$ReadOnly<{
+  _responderRegion: ?Readonly<{
     bottom: number,
     left: number,
     right: number,
     top: number,
   }> = null;
-  _touchActivatePosition: ?$ReadOnly<{
+  _touchActivatePosition: ?Readonly<{
     pageX: number,
     pageY: number,
   }>;
@@ -929,7 +929,7 @@ export default class Pressability {
 
   _isTouchWithinResponderRegion(
     touch: GestureResponderEvent['nativeEvent'],
-    responderRegion: $ReadOnly<{
+    responderRegion: Readonly<{
       bottom: number,
       left: number,
       right: number,
