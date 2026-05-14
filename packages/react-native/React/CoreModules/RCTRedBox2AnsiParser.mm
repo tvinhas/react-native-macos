@@ -15,14 +15,14 @@
 using facebook::react::unstable_redbox::AnsiColor;
 using facebook::react::unstable_redbox::parseAnsi;
 
-static UIColor *RCTUIColorFromAnsiColor(const AnsiColor &c)
+static RCTUIColor *RCTUIColorFromAnsiColor(const AnsiColor &c) // [macOS]
 {
-  return [UIColor colorWithRed:c.r / 255.0 green:c.g / 255.0 blue:c.b / 255.0 alpha:1.0];
+  return [RCTUIColor colorWithRed:c.r / 255.0 green:c.g / 255.0 blue:c.b / 255.0 alpha:1.0]; // [macOS]
 }
 
 @implementation RCTRedBox2AnsiParser
 
-+ (NSAttributedString *)attributedStringFromAnsiText:(NSString *)text baseFont:(UIFont *)font baseColor:(UIColor *)color
++ (NSAttributedString *)attributedStringFromAnsiText:(NSString *)text baseFont:(UIFont *)font baseColor:(RCTUIColor *)color // [macOS]
 {
   if (text == nil) {
     return [[NSAttributedString alloc] init];

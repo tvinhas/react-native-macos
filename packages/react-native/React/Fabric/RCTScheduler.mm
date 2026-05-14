@@ -154,9 +154,15 @@ class RCTAnimationChoreographer : public AnimationChoreographer {
   void resume() override
   {
     if (_animationDisplayLink == nil) {
+#if !TARGET_OS_OSX // [macOS]
       _animationDisplayLink = [CADisplayLink displayLinkWithTarget:_displayLinkTarget
                                                           selector:@selector(displayLinkTick:)];
       [_animationDisplayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+#else // [macOS — CADisplayLink standalone-init is unavailable; attach via NSScreen on macOS 14+
+      _animationDisplayLink = [[NSScreen mainScreen] displayLinkWithTarget:_displayLinkTarget
+                                                                  selector:@selector(displayLinkTick:)];
+      [_animationDisplayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+#endif // macOS]
     }
     [_animationDisplayLink setPaused:NO];
   }

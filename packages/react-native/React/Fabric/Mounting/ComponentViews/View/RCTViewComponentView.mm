@@ -1662,9 +1662,11 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
   NSMutableString *result = nil;
   for (RCTUIView *subview in view.subviews) { // [macOS]
     // Skip subviews that have accessibilityElementsHidden set to YES
+#if !TARGET_OS_OSX // [macOS] NSView has no accessibilityElementsHidden
     if (subview.accessibilityElementsHidden) {
       continue;
     }
+#endif // [macOS]
     NSString *label = subview.accessibilityLabel;
     if (!label) {
       label = RCTRecursiveAccessibilityLabel(subview);

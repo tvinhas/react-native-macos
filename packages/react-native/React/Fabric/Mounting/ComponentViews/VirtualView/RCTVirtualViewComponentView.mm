@@ -292,7 +292,7 @@ static BOOL sIsAccessibilityUsed = NO;
 
 - (id<RCTVirtualViewContainerProtocol>)_getParentVirtualViewContainer
 {
-  UIView *view = self.superview;
+  RCTUIView *view = self.superview; // [macOS]
   while (view != nil) {
     if ([view respondsToSelector:@selector(virtualViewContainerState)]) {
       return (id<RCTVirtualViewContainerProtocol>)view;

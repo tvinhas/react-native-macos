@@ -574,9 +574,15 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithTarget : (id)target action : (SEL)act
     shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
   BOOL canBePrevented = [self canBePreventedByGestureRecognizer:otherGestureRecognizer];
+#if !TARGET_OS_OSX // [macOS] NSGestureRecognizer has no cancelsTouchesInView
   if (canBePrevented && otherGestureRecognizer.cancelsTouchesInView) {
     [self _cancelTouches];
   }
+#else // [macOS
+  if (canBePrevented) {
+    [self _cancelTouches];
+  }
+#endif // macOS]
   return NO;
 }
 

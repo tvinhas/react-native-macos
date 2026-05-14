@@ -43,6 +43,7 @@ BOOL RCTIsHomeAssetURL(NSURL *__nullable imageURL);
 // Returns the current device's orientation
 #if !TARGET_OS_TV
 UIDeviceOrientation RCTDeviceOrientation(void);
+#endif // !TARGET_OS_TV
 #endif // [macOS]
 
 // Whether the New Architecture is enabled or not
@@ -702,6 +703,7 @@ UIStatusBarManager *__nullable RCTUIStatusBarManager(void)
 }
 #endif
 
+#if !TARGET_OS_OSX // [macOS] RCTPresentedViewController uses iOS-only UIWindow.rootViewController + presentedViewController chain
 UIViewController *__nullable RCTPresentedViewController(void)
 {
   if ([RCTUtilsUIOverride hasPresentedViewController]) {
