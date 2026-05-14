@@ -373,6 +373,7 @@ static NSDictionary *deviceOrientationEventBody(UIDeviceOrientation orientation)
 }
 #endif // [macOS] [visionOS]
 
+#if TARGET_OS_IOS // [macOS] [visionOS]
 - (void)namedOrientationDidChange
 {
   NSDictionary *orientationEvent = deviceOrientationEventBody([UIDevice currentDevice].orientation);
@@ -386,7 +387,7 @@ static NSDictionary *deviceOrientationEventBody(UIDeviceOrientation orientation)
                                                                         body:orientationEvent];
 #pragma clang diagnostic pop
 }
-#endif
+#endif // [macOS] [visionOS]
 
 - (dispatch_queue_t)methodQueue
 {
@@ -1687,11 +1688,11 @@ static RCTPlatformView *_jsResponder; // [macOS]
 {
 }
 
-- (void)registerRootView:(UIView *)rootView
+- (void)registerRootView:(RCTUIView *)rootView // [macOS]
 {
 }
 
-- (UIView *)viewForReactTag:(NSNumber *)reactTag
+- (RCTPlatformView *)viewForReactTag:(NSNumber *)reactTag // [macOS]
 {
   return nil;
 }
@@ -1710,19 +1711,19 @@ static RCTPlatformView *_jsResponder; // [macOS]
   return nil;
 }
 
-- (void)setAvailableSize:(CGSize)availableSize forRootView:(UIView *)rootView
+- (void)setAvailableSize:(CGSize)availableSize forRootView:(RCTUIView *)rootView // [macOS]
 {
 }
 
-- (void)setLocalData:(NSObject *)localData forView:(UIView *)view
+- (void)setLocalData:(NSObject *)localData forView:(RCTPlatformView *)view // [macOS]
 {
 }
 
-- (void)setSize:(CGSize)size forView:(UIView *)view
+- (void)setSize:(CGSize)size forView:(RCTPlatformView *)view // [macOS]
 {
 }
 
-- (void)setIntrinsicContentSize:(CGSize)intrinsicContentSize forView:(UIView *)view
+- (void)setIntrinsicContentSize:(CGSize)intrinsicContentSize forView:(RCTPlatformView *)view // [macOS]
 {
 }
 
@@ -1742,16 +1743,16 @@ static RCTPlatformView *_jsResponder; // [macOS]
 {
 }
 
-- (void)rootViewForReactTag:(NSNumber *)reactTag withCompletion:(void (^__strong)(UIView *__strong))completion
+- (void)rootViewForReactTag:(NSNumber *)reactTag withCompletion:(void (^__strong)(RCTPlatformView *__strong))completion // [macOS]
 {
 }
 
-- (UIView *)viewForNativeID:(NSString *)nativeID withRootTag:(NSNumber *)rootTag
+- (RCTPlatformView *)viewForNativeID:(NSString *)nativeID withRootTag:(NSNumber *)rootTag // [macOS]
 {
   return nil;
 }
 
-- (void)setNativeID:(NSString *)nativeID forView:(UIView *)view
+- (void)setNativeID:(NSString *)nativeID forView:(RCTPlatformView *)view // [macOS]
 {
 }
 
@@ -1759,7 +1760,7 @@ static RCTPlatformView *_jsResponder; // [macOS]
 {
 }
 
-+ (UIView *)JSResponder
++ (RCTPlatformView *)JSResponder // [macOS]
 {
   return nil;
 }

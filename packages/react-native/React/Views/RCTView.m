@@ -108,14 +108,15 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
   // Result string is initialized lazily to prevent useless but costly allocations.
   NSMutableString *str = nil;
   for (RCTUIView *subview in view.subviews) { // [macOS]
+#if !TARGET_OS_OSX // [macOS]
     // Skip subviews that have accessibilityElementsHidden set to YES
     if (subview.accessibilityElementsHidden) {
       continue;
     }
-#if !TARGET_OS_OSX // [macOS]
     NSString *label = subview.accessibilityLabel;
 #else // [macOS
     NSString *label;
+#ifndef RCT_REMOVE_LEGACY_ARCH
     if ([subview isKindOfClass:[RCTTextView class]]) {
       // on macOS VoiceOver a text element will always have its accessibilityValue read, but will only read it's accessibilityLabel if it's value is set.
       // the macOS RCTTextView accessibilityValue will return its accessibilityLabel if set otherwise return its text.
@@ -123,6 +124,9 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
     } else {
       label = subview.accessibilityLabel;
     }
+#else
+    label = subview.accessibilityLabel;
+#endif // RCT_REMOVE_LEGACY_ARCH
 #endif // macOS]
     if (!label) {
       label = RCTRecursiveAccessibilityLabel(subview);

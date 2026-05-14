@@ -306,8 +306,6 @@ static void *TextFieldSelectionObservingContext = &TextFieldSelectionObservingCo
 }
 #endif // macOS]
 
-#endif
-
 @end
 
 #pragma mark - RCTBackedTextViewDelegateAdapter (for UITextView)
@@ -600,7 +598,5 @@ static void *TextFieldSelectionObservingContext = &TextFieldSelectionObservingCo
   }
 }
 #endif // macOS]
-
-#endif
 
 @end
