@@ -12,8 +12,6 @@
 #import <React/RCTSurfaceSizeMeasureMode.h>
 #import <React/RCTSurfaceStage.h>
 
-@class RCTBridge;
-@class RCTSurface;
 #if RCT_DEV_MENU // [macOS
 @class RCTDevMenu;
 #endif // macOS]

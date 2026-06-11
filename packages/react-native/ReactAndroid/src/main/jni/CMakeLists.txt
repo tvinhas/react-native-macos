@@ -90,6 +90,7 @@ add_react_common_subdir(react/renderer/componentregistry)
 add_react_common_subdir(react/renderer/mounting)
 add_react_common_subdir(react/renderer/scheduler)
 add_react_common_subdir(react/renderer/telemetry)
+add_react_common_subdir(react/renderer/viewtransition)
 add_react_common_subdir(react/renderer/uimanager)
 add_react_common_subdir(react/renderer/bridging)
 add_react_common_subdir(react/renderer/core)
@@ -98,8 +99,8 @@ add_react_common_subdir(react/renderer/css)
 add_react_common_subdir(react/renderer/uimanager/consistency)
 add_react_common_subdir(react/renderer/dom)
 add_react_common_subdir(react/renderer/element)
-add_react_common_subdir(react/renderer/graphics)
 add_react_common_subdir(react/renderer/debug)
+add_react_common_subdir(react/renderer/graphics)
 add_react_common_subdir(react/renderer/imagemanager)
 add_react_common_subdir(react/renderer/components/view)
 add_react_common_subdir(react/renderer/components/switch)
@@ -130,6 +131,7 @@ add_react_common_subdir(react/nativemodule/microtasks)
 add_react_common_subdir(react/nativemodule/idlecallbacks)
 add_react_common_subdir(react/nativemodule/intersectionobserver)
 add_react_common_subdir(react/nativemodule/mutationobserver)
+add_react_common_subdir(react/nativemodule/viewtransition)
 add_react_common_subdir(react/nativemodule/webperformance)
 add_react_common_subdir(react/networking)
 add_react_common_subdir(jserrorhandler)
@@ -158,6 +160,7 @@ add_react_android_subdir(src/main/jni/react/hermes/instrumentation/)
 add_react_android_subdir(src/main/jni/react/runtime/cxxreactpackage)
 add_react_android_subdir(src/main/jni/react/runtime/jni)
 add_react_android_subdir(src/main/jni/react/runtime/hermes/jni)
+add_react_android_subdir(src/main/jni/react/tracing)
 add_react_android_subdir(src/main/jni/react/devsupport)
 
 # SoMerging Utils
@@ -200,6 +203,7 @@ add_library(reactnative
           $<TARGET_OBJECTS:react_nativemodule_intersectionobserver>
           $<TARGET_OBJECTS:react_nativemodule_microtasks>
           $<TARGET_OBJECTS:react_nativemodule_mutationobserver>
+          $<TARGET_OBJECTS:react_nativemodule_viewtransition>
           $<TARGET_OBJECTS:react_nativemodule_webperformance>
           $<TARGET_OBJECTS:react_networking>
           $<TARGET_OBJECTS:react_newarchdefaults>
@@ -229,6 +233,8 @@ add_library(reactnative
           $<TARGET_OBJECTS:react_renderer_textlayoutmanager>
           $<TARGET_OBJECTS:react_renderer_uimanager>
           $<TARGET_OBJECTS:react_renderer_uimanager_consistency>
+          $<TARGET_OBJECTS:react_renderer_viewtransition>
+          $<TARGET_OBJECTS:react_tracingjni>
           $<TARGET_OBJECTS:react_utils>
           $<TARGET_OBJECTS:reactnativeblob>
           $<TARGET_OBJECTS:reactnativejni>
@@ -297,6 +303,7 @@ target_include_directories(reactnative
         $<TARGET_PROPERTY:react_nativemodule_intersectionobserver,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_nativemodule_microtasks,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_nativemodule_mutationobserver,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:react_nativemodule_viewtransition,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_nativemodule_webperformance,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_networking,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_newarchdefaults,INTERFACE_INCLUDE_DIRECTORIES>
@@ -328,6 +335,8 @@ target_include_directories(reactnative
         $<TARGET_PROPERTY:react_renderer_textlayoutmanager,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_renderer_uimanager,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_renderer_uimanager_consistency,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:react_renderer_viewtransition,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:react_tracingjni,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:react_utils,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:reactnativeblob,INTERFACE_INCLUDE_DIRECTORIES>
         $<TARGET_PROPERTY:reactnativejni,INTERFACE_INCLUDE_DIRECTORIES>

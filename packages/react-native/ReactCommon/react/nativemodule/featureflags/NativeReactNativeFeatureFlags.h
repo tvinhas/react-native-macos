@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<ed4a87c5d258ebf5aa61e7d74d1b09be>>
+ * @generated SignedSource<<1df283aec4b56f36271a187341e7103d>>
  */
 
 /**
@@ -60,10 +60,6 @@ class NativeReactNativeFeatureFlags
 
   bool enableAccumulatedUpdatesInRawPropsAndroid(jsi::Runtime& runtime);
 
-  bool enableAndroidAntialiasedBorderRadiusClipping(jsi::Runtime& runtime);
-
-  bool enableAndroidLinearText(jsi::Runtime& runtime);
-
   bool enableAndroidTextMeasurementOptimizations(jsi::Runtime& runtime);
 
   bool enableBridgelessArchitecture(jsi::Runtime& runtime);
@@ -73,6 +69,8 @@ class NativeReactNativeFeatureFlags
   bool enableCustomFocusSearchOnClippedElementsAndroid(jsi::Runtime& runtime);
 
   bool enableDestroyShadowTreeRevisionAsync(jsi::Runtime& runtime);
+
+  bool enableDifferentiatorMutationVectorPreallocation(jsi::Runtime& runtime);
 
   bool enableDoubleMeasurementFixAndroid(jsi::Runtime& runtime);
 
@@ -96,10 +94,6 @@ class NativeReactNativeFeatureFlags
 
   bool enableImagePrefetchingAndroid(jsi::Runtime& runtime);
 
-  bool enableImagePrefetchingJNIBatchingAndroid(jsi::Runtime& runtime);
-
-  bool enableImagePrefetchingOnUiThreadAndroid(jsi::Runtime& runtime);
-
   bool enableImmediateUpdateModeForContentOffsetChanges(jsi::Runtime& runtime);
 
   bool enableImperativeFocus(jsi::Runtime& runtime);
@@ -122,11 +116,15 @@ class NativeReactNativeFeatureFlags
 
   bool enableNativeCSSParsing(jsi::Runtime& runtime);
 
+  bool enableNativeViewPropTransformations(jsi::Runtime& runtime);
+
   bool enableNetworkEventReporting(jsi::Runtime& runtime);
 
   bool enablePreparedTextLayout(jsi::Runtime& runtime);
 
   bool enablePropsUpdateReconciliationAndroid(jsi::Runtime& runtime);
+
+  bool enableSchedulerDelegateInvalidation(jsi::Runtime& runtime);
 
   bool enableSwiftUIBasedFilters(jsi::Runtime& runtime);
 
@@ -146,11 +144,13 @@ class NativeReactNativeFeatureFlags
 
   bool enableVirtualViewDebugFeatures(jsi::Runtime& runtime);
 
+  bool fixDifferentiatorParentTagForUnflattenCase(jsi::Runtime& runtime);
+
   bool fixFindShadowNodeByTagRaceCondition(jsi::Runtime& runtime);
 
   bool fixMappingOfEventPrioritiesBetweenFabricAndReact(jsi::Runtime& runtime);
 
-  bool fixTextClippingAndroid15useBoundsForWidth(jsi::Runtime& runtime);
+  bool fixYogaFlexBasisFitContentInMainAxis(jsi::Runtime& runtime);
 
   bool fuseboxAssertSingleHostState(jsi::Runtime& runtime);
 
@@ -184,7 +184,7 @@ class NativeReactNativeFeatureFlags
 
   bool skipActivityIdentityAssertionOnHostPause(jsi::Runtime& runtime);
 
-  bool syncAndroidClipToPaddingWithOverflow(jsi::Runtime& runtime);
+  bool syncAndroidClipBoundsWithOverflow(jsi::Runtime& runtime);
 
   bool traceTurboModulePromiseRejectionsOnAndroid(jsi::Runtime& runtime);
 
@@ -196,9 +196,13 @@ class NativeReactNativeFeatureFlags
 
   bool useFabricInterop(jsi::Runtime& runtime);
 
+  bool useLISAlgorithmInDifferentiator(jsi::Runtime& runtime);
+
   bool useNativeViewConfigsInBridgelessMode(jsi::Runtime& runtime);
 
   bool useNestedScrollViewAndroid(jsi::Runtime& runtime);
+
+  bool useOptimizedViewRegistryOnAndroid(jsi::Runtime& runtime);
 
   bool useSharedAnimatedBackend(jsi::Runtime& runtime);
 

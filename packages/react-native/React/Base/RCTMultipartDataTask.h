@@ -17,7 +17,7 @@ typedef void (^RCTMultipartDataTaskCallback)(
     NSError *error,
     BOOL done);
 
-typedef NSURLRequest * _Nullable (^RCTMultipartDataTaskRequestInterceptor)(NSURLRequest *request);
+typedef NSURLRequest *_Nullable (^RCTMultipartDataTaskRequestInterceptor)(NSURLRequest *request);
 /**
  * The block provided via this function can inspect/modify multipart data task
  * requests before they are sent. Return a modified request to override, or nil

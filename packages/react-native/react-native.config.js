@@ -132,11 +132,11 @@ commands.push(codegenCommand);
 
 const config = {
   commands,
-  platforms: {} /*:: as {[string]: $ReadOnly<{
-      projectConfig: mixed,
-      dependencyConfig: mixed,
-      linkConfig?: mixed,
-      npmPackageName?: mixed,
+  platforms: {} /*:: as {[string]: Readonly<{
+      projectConfig: unknown,
+      dependencyConfig: unknown,
+      linkConfig?: unknown,
+      npmPackageName?: unknown,
     }>} */,
 };
 

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fe805d0e749aa9417e175cc68a681fff>>
+ * @generated SignedSource<<3d1718afe5b2ed63a918ffe09a4a36b1>>
  */
 
 /**
@@ -75,14 +75,6 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool enableAndroidAntialiasedBorderRadiusClipping() override {
-    return false;
-  }
-
-  bool enableAndroidLinearText() override {
-    return false;
-  }
-
   bool enableAndroidTextMeasurementOptimizations() override {
     return false;
   }
@@ -100,6 +92,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableDestroyShadowTreeRevisionAsync() override {
+    return false;
+  }
+
+  bool enableDifferentiatorMutationVectorPreallocation() override {
     return false;
   }
 
@@ -147,14 +143,6 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool enableImagePrefetchingJNIBatchingAndroid() override {
-    return false;
-  }
-
-  bool enableImagePrefetchingOnUiThreadAndroid() override {
-    return false;
-  }
-
   bool enableImmediateUpdateModeForContentOffsetChanges() override {
     return false;
   }
@@ -199,6 +187,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool enableNativeViewPropTransformations() override {
+    return false;
+  }
+
   bool enableNetworkEventReporting() override {
     return true;
   }
@@ -208,6 +200,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enablePropsUpdateReconciliationAndroid() override {
+    return false;
+  }
+
+  bool enableSchedulerDelegateInvalidation() override {
     return false;
   }
 
@@ -247,6 +243,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool fixDifferentiatorParentTagForUnflattenCase() override {
+    return false;
+  }
+
   bool fixFindShadowNodeByTagRaceCondition() override {
     return false;
   }
@@ -255,7 +255,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool fixTextClippingAndroid15useBoundsForWidth() override {
+  bool fixYogaFlexBasisFitContentInMainAxis() override {
     return false;
   }
 
@@ -284,7 +284,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool overrideBySynchronousMountPropsAtMountingAndroid() override {
-    return false;
+    return true;
   }
 
   bool perfIssuesEnabled() override {
@@ -323,7 +323,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
-  bool syncAndroidClipToPaddingWithOverflow() override {
+  bool syncAndroidClipBoundsWithOverflow() override {
     return false;
   }
 
@@ -347,11 +347,19 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return true;
   }
 
+  bool useLISAlgorithmInDifferentiator() override {
+    return false;
+  }
+
   bool useNativeViewConfigsInBridgelessMode() override {
     return false;
   }
 
   bool useNestedScrollViewAndroid() override {
+    return false;
+  }
+
+  bool useOptimizedViewRegistryOnAndroid() override {
     return false;
   }
 

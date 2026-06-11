@@ -8,6 +8,10 @@
  * @format
  */
 
+// [macOS] This legacy Jest test was removed upstream in 0.86 (ported to
+// Fantom in TextInput-itest.js). It is kept in react-native-macos to cover
+// macOS-specific TextInput instance methods (setSelection, setGhostText).
+
 const ReactNative = require('../../../ReactNative/RendererProxy');
 const {
   enter,

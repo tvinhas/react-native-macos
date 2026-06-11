@@ -8,7 +8,6 @@
 #pragma once
 
 #include <ReactCommon/CallInvoker.h>
-#include <folly/dynamic.h>
 #include <react/renderer/core/ReactPrimitives.h>
 #include <react/renderer/uimanager/UIManager.h>
 #include <react/renderer/uimanager/UIManagerAnimationBackend.h>
@@ -56,6 +55,7 @@ class AnimationBackend : public UIManagerAnimationBackend {
   void synchronouslyUpdateProps(const std::unordered_map<Tag, AnimatedProps> &updates);
   void requestAsyncFlushForSurfaces(const std::set<SurfaceId> &surfaces);
   void clearRegistry(SurfaceId surfaceId) override;
+  void clearRegistryOnSurfaceStop(SurfaceId surfaceId) override;
   void registerJSInvoker(std::shared_ptr<CallInvoker> jsInvoker) override;
 
   void onAnimationFrame(AnimationTimestamp timestamp) override;

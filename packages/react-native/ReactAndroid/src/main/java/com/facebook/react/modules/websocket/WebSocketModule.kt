@@ -29,6 +29,7 @@ import java.net.URISyntaxException
 import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import okhttp3.CookieJar
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -83,6 +84,8 @@ public class WebSocketModule(context: ReactApplicationContext) :
     val okHttpBuilder =
         OkHttpClientProvider.getOkHttpClient()
             .newBuilder()
+            // Don't let BridgeInterceptor overwrite a caller-supplied Cookie header.
+            .cookieJar(CookieJar.NO_COOKIES)
             .connectTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(10, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.MINUTES) // Disable timeouts for read
@@ -395,9 +398,9 @@ public class WebSocketModule(context: ReactApplicationContext) :
 
         val defaultOrigin =
             if (requestURI.port != -1) {
-              String.format("%s://%s:%s", scheme, requestURI.host, requestURI.port)
+              "$scheme://${requestURI.host}:${requestURI.port}"
             } else {
-              String.format("%s://%s", scheme, requestURI.host)
+              "$scheme://${requestURI.host}"
             }
 
         return defaultOrigin

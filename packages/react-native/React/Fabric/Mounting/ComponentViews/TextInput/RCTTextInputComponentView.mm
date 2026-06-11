@@ -1164,7 +1164,7 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
   return {
       .text = RCTStringFromNSString(_backedTextInputView.attributedText.string),
       .selectionRange = [self _selectionRange],
-      .eventCount = static_cast<int>(_mostRecentEventCount),
+      .contentSize = RCTSizeFromCGSize(_backedTextInputView.contentSize),
 #if !TARGET_OS_OSX // [macOS]
       .contentOffset = RCTPointFromCGPoint(_backedTextInputView.contentOffset),
       .contentInset = RCTEdgeInsetsFromUIEdgeInsets(_backedTextInputView.contentInset),
@@ -1172,7 +1172,7 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
       .contentOffset = {.x = 0, .y = 0},
       .contentInset = EdgeInsets{},
 #endif // macOS]
-      .contentSize = RCTSizeFromCGSize(_backedTextInputView.contentSize),
+      .eventCount = static_cast<int>(_mostRecentEventCount),
       .layoutMeasurement = RCTSizeFromCGSize(_backedTextInputView.bounds.size),
       .zoomScale = 1,
   };

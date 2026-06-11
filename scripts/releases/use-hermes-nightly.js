@@ -17,7 +17,10 @@ async function main() {
   const {packageJson} = await getReactNativePackage();
   const hermesCompilerVersion = packageJson.dependencies?.['hermes-compiler'];
 
-  if (hermesCompilerVersion !== '0.0.0') {
+  if (hermesCompilerVersion != null && hermesCompilerVersion !== '0.0.0') {
+    console.log(
+      `Skipping hermes nightly update: hermes-compiler is pinned to ${hermesCompilerVersion}`,
+    );
     return;
   }
 

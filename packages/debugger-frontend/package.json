@@ -1,7 +1,6 @@
 {
   "name": "@react-native/debugger-frontend",
   "version": "0.83.0-main",
-  "private": true,
   "description": "Debugger frontend for React Native based on Chrome DevTools",
   "keywords": [
     "react-native",
@@ -22,5 +21,6 @@
   ],
   "engines": {
     "node": ">= 20.19.4"
-  }
+  },
+  "private": true
 }

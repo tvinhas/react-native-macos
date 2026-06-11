@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4dd16dbf31dc31860960aa2abcb7862d>>
+ * @generated SignedSource<<80e1d4551c51800c138f16228cfae9f6>>
  */
 
 /**
@@ -104,16 +104,6 @@ bool NativeReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid(
   return ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid();
 }
 
-bool NativeReactNativeFeatureFlags::enableAndroidAntialiasedBorderRadiusClipping(
-    jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::enableAndroidAntialiasedBorderRadiusClipping();
-}
-
-bool NativeReactNativeFeatureFlags::enableAndroidLinearText(
-    jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::enableAndroidLinearText();
-}
-
 bool NativeReactNativeFeatureFlags::enableAndroidTextMeasurementOptimizations(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableAndroidTextMeasurementOptimizations();
@@ -137,6 +127,11 @@ bool NativeReactNativeFeatureFlags::enableCustomFocusSearchOnClippedElementsAndr
 bool NativeReactNativeFeatureFlags::enableDestroyShadowTreeRevisionAsync(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableDestroyShadowTreeRevisionAsync();
+}
+
+bool NativeReactNativeFeatureFlags::enableDifferentiatorMutationVectorPreallocation(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::enableDifferentiatorMutationVectorPreallocation();
 }
 
 bool NativeReactNativeFeatureFlags::enableDoubleMeasurementFixAndroid(
@@ -194,16 +189,6 @@ bool NativeReactNativeFeatureFlags::enableImagePrefetchingAndroid(
   return ReactNativeFeatureFlags::enableImagePrefetchingAndroid();
 }
 
-bool NativeReactNativeFeatureFlags::enableImagePrefetchingJNIBatchingAndroid(
-    jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::enableImagePrefetchingJNIBatchingAndroid();
-}
-
-bool NativeReactNativeFeatureFlags::enableImagePrefetchingOnUiThreadAndroid(
-    jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::enableImagePrefetchingOnUiThreadAndroid();
-}
-
 bool NativeReactNativeFeatureFlags::enableImmediateUpdateModeForContentOffsetChanges(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableImmediateUpdateModeForContentOffsetChanges();
@@ -259,6 +244,11 @@ bool NativeReactNativeFeatureFlags::enableNativeCSSParsing(
   return ReactNativeFeatureFlags::enableNativeCSSParsing();
 }
 
+bool NativeReactNativeFeatureFlags::enableNativeViewPropTransformations(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::enableNativeViewPropTransformations();
+}
+
 bool NativeReactNativeFeatureFlags::enableNetworkEventReporting(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableNetworkEventReporting();
@@ -272,6 +262,11 @@ bool NativeReactNativeFeatureFlags::enablePreparedTextLayout(
 bool NativeReactNativeFeatureFlags::enablePropsUpdateReconciliationAndroid(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enablePropsUpdateReconciliationAndroid();
+}
+
+bool NativeReactNativeFeatureFlags::enableSchedulerDelegateInvalidation(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::enableSchedulerDelegateInvalidation();
 }
 
 bool NativeReactNativeFeatureFlags::enableSwiftUIBasedFilters(
@@ -319,6 +314,11 @@ bool NativeReactNativeFeatureFlags::enableVirtualViewDebugFeatures(
   return ReactNativeFeatureFlags::enableVirtualViewDebugFeatures();
 }
 
+bool NativeReactNativeFeatureFlags::fixDifferentiatorParentTagForUnflattenCase(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::fixDifferentiatorParentTagForUnflattenCase();
+}
+
 bool NativeReactNativeFeatureFlags::fixFindShadowNodeByTagRaceCondition(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::fixFindShadowNodeByTagRaceCondition();
@@ -329,9 +329,9 @@ bool NativeReactNativeFeatureFlags::fixMappingOfEventPrioritiesBetweenFabricAndR
   return ReactNativeFeatureFlags::fixMappingOfEventPrioritiesBetweenFabricAndReact();
 }
 
-bool NativeReactNativeFeatureFlags::fixTextClippingAndroid15useBoundsForWidth(
+bool NativeReactNativeFeatureFlags::fixYogaFlexBasisFitContentInMainAxis(
     jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::fixTextClippingAndroid15useBoundsForWidth();
+  return ReactNativeFeatureFlags::fixYogaFlexBasisFitContentInMainAxis();
 }
 
 bool NativeReactNativeFeatureFlags::fuseboxAssertSingleHostState(
@@ -414,9 +414,9 @@ bool NativeReactNativeFeatureFlags::skipActivityIdentityAssertionOnHostPause(
   return ReactNativeFeatureFlags::skipActivityIdentityAssertionOnHostPause();
 }
 
-bool NativeReactNativeFeatureFlags::syncAndroidClipToPaddingWithOverflow(
+bool NativeReactNativeFeatureFlags::syncAndroidClipBoundsWithOverflow(
     jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::syncAndroidClipToPaddingWithOverflow();
+  return ReactNativeFeatureFlags::syncAndroidClipBoundsWithOverflow();
 }
 
 bool NativeReactNativeFeatureFlags::traceTurboModulePromiseRejectionsOnAndroid(
@@ -444,6 +444,11 @@ bool NativeReactNativeFeatureFlags::useFabricInterop(
   return ReactNativeFeatureFlags::useFabricInterop();
 }
 
+bool NativeReactNativeFeatureFlags::useLISAlgorithmInDifferentiator(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::useLISAlgorithmInDifferentiator();
+}
+
 bool NativeReactNativeFeatureFlags::useNativeViewConfigsInBridgelessMode(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::useNativeViewConfigsInBridgelessMode();
@@ -452,6 +457,11 @@ bool NativeReactNativeFeatureFlags::useNativeViewConfigsInBridgelessMode(
 bool NativeReactNativeFeatureFlags::useNestedScrollViewAndroid(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::useNestedScrollViewAndroid();
+}
+
+bool NativeReactNativeFeatureFlags::useOptimizedViewRegistryOnAndroid(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::useOptimizedViewRegistryOnAndroid();
 }
 
 bool NativeReactNativeFeatureFlags::useSharedAnimatedBackend(

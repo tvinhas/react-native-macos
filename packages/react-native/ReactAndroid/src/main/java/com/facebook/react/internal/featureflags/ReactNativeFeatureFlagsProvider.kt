@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4ed94743d9eafd0be32bb04471a18fc6>>
+ * @generated SignedSource<<42e555a40da280b24f84e3ee5b45051d>>
  */
 
 /**
@@ -47,10 +47,6 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun enableAccumulatedUpdatesInRawPropsAndroid(): Boolean
 
-  @DoNotStrip public fun enableAndroidAntialiasedBorderRadiusClipping(): Boolean
-
-  @DoNotStrip public fun enableAndroidLinearText(): Boolean
-
   @DoNotStrip public fun enableAndroidTextMeasurementOptimizations(): Boolean
 
   @DoNotStrip public fun enableBridgelessArchitecture(): Boolean
@@ -60,6 +56,8 @@ public interface ReactNativeFeatureFlagsProvider {
   @DoNotStrip public fun enableCustomFocusSearchOnClippedElementsAndroid(): Boolean
 
   @DoNotStrip public fun enableDestroyShadowTreeRevisionAsync(): Boolean
+
+  @DoNotStrip public fun enableDifferentiatorMutationVectorPreallocation(): Boolean
 
   @DoNotStrip public fun enableDoubleMeasurementFixAndroid(): Boolean
 
@@ -83,10 +81,6 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun enableImagePrefetchingAndroid(): Boolean
 
-  @DoNotStrip public fun enableImagePrefetchingJNIBatchingAndroid(): Boolean
-
-  @DoNotStrip public fun enableImagePrefetchingOnUiThreadAndroid(): Boolean
-
   @DoNotStrip public fun enableImmediateUpdateModeForContentOffsetChanges(): Boolean
 
   @DoNotStrip public fun enableImperativeFocus(): Boolean
@@ -109,11 +103,15 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun enableNativeCSSParsing(): Boolean
 
+  @DoNotStrip public fun enableNativeViewPropTransformations(): Boolean
+
   @DoNotStrip public fun enableNetworkEventReporting(): Boolean
 
   @DoNotStrip public fun enablePreparedTextLayout(): Boolean
 
   @DoNotStrip public fun enablePropsUpdateReconciliationAndroid(): Boolean
+
+  @DoNotStrip public fun enableSchedulerDelegateInvalidation(): Boolean
 
   @DoNotStrip public fun enableSwiftUIBasedFilters(): Boolean
 
@@ -133,11 +131,13 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun enableVirtualViewDebugFeatures(): Boolean
 
+  @DoNotStrip public fun fixDifferentiatorParentTagForUnflattenCase(): Boolean
+
   @DoNotStrip public fun fixFindShadowNodeByTagRaceCondition(): Boolean
 
   @DoNotStrip public fun fixMappingOfEventPrioritiesBetweenFabricAndReact(): Boolean
 
-  @DoNotStrip public fun fixTextClippingAndroid15useBoundsForWidth(): Boolean
+  @DoNotStrip public fun fixYogaFlexBasisFitContentInMainAxis(): Boolean
 
   @DoNotStrip public fun fuseboxAssertSingleHostState(): Boolean
 
@@ -171,7 +171,7 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun skipActivityIdentityAssertionOnHostPause(): Boolean
 
-  @DoNotStrip public fun syncAndroidClipToPaddingWithOverflow(): Boolean
+  @DoNotStrip public fun syncAndroidClipBoundsWithOverflow(): Boolean
 
   @DoNotStrip public fun traceTurboModulePromiseRejectionsOnAndroid(): Boolean
 
@@ -183,9 +183,13 @@ public interface ReactNativeFeatureFlagsProvider {
 
   @DoNotStrip public fun useFabricInterop(): Boolean
 
+  @DoNotStrip public fun useLISAlgorithmInDifferentiator(): Boolean
+
   @DoNotStrip public fun useNativeViewConfigsInBridgelessMode(): Boolean
 
   @DoNotStrip public fun useNestedScrollViewAndroid(): Boolean
+
+  @DoNotStrip public fun useOptimizedViewRegistryOnAndroid(): Boolean
 
   @DoNotStrip public fun useSharedAnimatedBackend(): Boolean
 

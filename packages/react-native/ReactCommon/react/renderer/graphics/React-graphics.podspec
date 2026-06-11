@@ -53,7 +53,9 @@ Pod::Spec.new do |s|
   s.dependency "React-jsiexecutor"
   s.dependency "React-featureflags"
   s.dependency "React-utils"
+  s.dependency "React-rendererdebug"
   s.dependency "React-Core" # [macOS] Needed for RCTUIKit
+
   depend_on_js_engine(s)
   add_rn_third_party_dependencies(s)
   add_rncore_dependency(s)

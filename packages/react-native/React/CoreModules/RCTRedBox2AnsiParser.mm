@@ -29,7 +29,7 @@ static RCTUIColor *RCTUIColorFromAnsiColor(const AnsiColor &c) // [macOS]
   }
 
   auto spans = parseAnsi(text.UTF8String);
-  NSMutableAttributedString *result =[NSMutableAttributedString new];
+  NSMutableAttributedString *result = [NSMutableAttributedString new];
   NSDictionary *baseAttributes = @{NSFontAttributeName : font, NSForegroundColorAttributeName : color};
 
   for (const auto &span : spans) {
