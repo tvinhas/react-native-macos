@@ -17,13 +17,8 @@ import type {
 } from 'react-native/Libraries/Components/View/ViewPropTypes';
 
 import RNTesterText from '../../components/RNTesterText';
-<<<<<<< HEAD
-import React from 'react';
-import {Image, LayoutAnimation, Platform, StyleSheet, View} from 'react-native'; // [macOS]
-=======
 import * as React from 'react';
-import {Image, LayoutAnimation, StyleSheet, View} from 'react-native';
->>>>>>> v0.86.0
+import {Image, LayoutAnimation, Platform, StyleSheet, View} from 'react-native'; // [macOS]
 
 type Props = Readonly<{}>;
 type State = {

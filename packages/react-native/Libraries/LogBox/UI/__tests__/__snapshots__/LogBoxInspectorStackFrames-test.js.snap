@@ -78,6 +78,7 @@ exports[`LogBoxInspectorStackFrames should render stack frames with 1 frame coll
       }
     >
       <View
+        acceptsFirstMouse={true}
         accessibilityState={
           Object {
             "busy": undefined,
@@ -97,7 +98,19 @@ exports[`LogBoxInspectorStackFrames should render stack frames with 1 frame coll
         }
         accessible={true}
         collapsable={false}
+        enableFocusRing={true}
         focusable={true}
+        keyDownEvents={
+          Array [
+            Object {
+              "key": " ",
+            },
+            Object {
+              "key": "Enter",
+            },
+          ]
+        }
+        mouseDownCanMoveWindow={false}
         onBlur={[Function]}
         onClick={[Function]}
         onFocus={[Function]}
@@ -191,6 +204,17 @@ exports[`LogBoxInspectorStackFrames should render stack frames with 1 frame coll
         collapsable={false}
         enableFocusRing={true}
         focusable={true}
+        keyDownEvents={
+          Array [
+            Object {
+              "key": " ",
+            },
+            Object {
+              "key": "Enter",
+            },
+          ]
+        }
+        mouseDownCanMoveWindow={false}
         onBlur={[Function]}
         onClick={[Function]}
         onFocus={[Function]}

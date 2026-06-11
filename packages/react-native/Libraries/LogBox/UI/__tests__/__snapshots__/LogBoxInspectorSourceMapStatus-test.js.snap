@@ -31,7 +31,7 @@ exports[`LogBoxInspectorSourceMapStatus should render for failed 1`] = `
     collapsable={false}
     source={
       Object {
-        "testUri": "../Libraries/LogBox/UI/LogBoxImages/alert-triangle.png",
+        "testUri": "../../../repos/react-native-macos/packages/react-native/Libraries/LogBox/UI/LogBoxImages/alert-triangle.png",
       }
     }
     style={
@@ -93,7 +93,7 @@ exports[`LogBoxInspectorSourceMapStatus should render for pending 1`] = `
     collapsable={false}
     source={
       Object {
-        "testUri": "../Libraries/LogBox/UI/LogBoxImages/loader.png",
+        "testUri": "../../../repos/react-native-macos/packages/react-native/Libraries/LogBox/UI/LogBoxImages/loader.png",
       }
     }
     style={

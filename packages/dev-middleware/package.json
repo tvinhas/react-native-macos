@@ -24,6 +24,7 @@
   "dependencies": {
     "@isaacs/ttlcache": "^1.4.1",
     "@react-native/debugger-frontend": "workspace:*",
+    "@react-native/debugger-shell": "0.86.0",
     "chrome-launcher": "^0.15.2",
     "chromium-edge-launcher": "^0.2.0",
     "connect": "^3.6.5",
@@ -32,8 +33,7 @@
     "nullthrows": "^1.1.1",
     "open": "^7.0.3",
     "serve-static": "^1.16.2",
-    "ws": "^7.5.10",
-    "@react-native/debugger-shell": "0.86.0"
+    "ws": "^7.5.10"
   },
   "devDependencies": {
     "@react-native/debugger-shell": "workspace:*",

@@ -1111,7 +1111,6 @@ const textInputExamples: Array<RNTesterModuleExample> = [
   },
 ];
 
-<<<<<<< HEAD
 // [macOS
 if (Platform.OS === 'macos') {
   textInputExamples.push(
@@ -1210,12 +1209,8 @@ if (Platform.OS === 'macos') {
 }
 // macOS]
 
-module.exports = ({
-  displayName: (undefined: ?string),
-=======
 module.exports = {
   displayName: undefined as ?string,
->>>>>>> v0.86.0
   title: 'TextInput',
   documentationURL: 'https://reactnative.dev/docs/TextInput',
   category: 'Basic',

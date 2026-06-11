@@ -134,7 +134,7 @@ Pod::Spec.new do |s|
       sss.dependency             "React-renderercss"
       sss.dependency             "Yoga"
       sss.source_files         = "react/renderer/components/view/**/*.{m,mm,cpp,h}" # [macOS]
-      sss.exclude_files        = "react/renderer/components/view/tests", "react/renderer/components/view/platform/android", "react/renderer/components/view/platform/windows" # [macOS]
+      sss.exclude_files        = "react/renderer/components/view/tests", "react/renderer/components/view/platform/android", "react/renderer/components/view/platform/windows", "react/renderer/components/view/platform/tvos" # [macOS] tvos added in 0.86 — its HostPlatform*.h alias headers shadow the macOS ones in Pods/Headers
       sss.header_dir           = "react/renderer/components/view"
     end
 

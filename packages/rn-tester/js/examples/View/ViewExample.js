@@ -768,7 +768,6 @@ function FocusBlurExample(): React.Node {
   );
 }
 
-<<<<<<< HEAD
 // [macOS
 function MouseClickEventsExample(): React.Node {
   const [eventLog, setEventLog] = useState<Array<string>>([]);
@@ -871,10 +870,7 @@ const mouseClickStyles = StyleSheet.create({
 });
 // macOS]
 
-export default ({
-=======
 export default {
->>>>>>> v0.86.0
   title: 'View',
   documentationURL: 'https://reactnative.dev/docs/view',
   category: 'Basic',
