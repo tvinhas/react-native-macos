@@ -25,6 +25,10 @@ const nullthrows = require('nullthrows');
 const path = require('path');
 const {parseArgs} = require('util');
 
+// Upload POSTs are not preserved when GitHub redirects from the former owner.
+const GITHUB_OWNER = 'react';
+const GITHUB_REPO = 'react-native';
+
 /*::
 import type {DotSlashProvider, DotSlashHttpProvider, DotSlashArtifactInfo} from './utils/dotslash-utils';
 import type {IOctokit} from './utils/octokit-utils';
@@ -138,8 +142,8 @@ async function getReleaseAssetMap(
   octokit /*: IOctokit */,
 ) /*: Promise<ReleaseAssetMap> */ {
   const existingAssets = await octokit.repos.listReleaseAssets({
-    owner: 'facebook',
-    repo: 'react-native',
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
     release_id: releaseId,
   });
   return new Map(existingAssets.data.map(asset => [asset.name, asset]));
@@ -180,7 +184,7 @@ async function uploadReleaseAssetsForDotSlashFile(
  * Given a description of a DotSlash artifact for a particular platform,
  * infers the upstream URL ( = where the binary is currently available) and
  * release asset URL ( = where the binary will be hosted after the release),
- * then downloads the asset from the the upstream URL and uploads it to GitHub
+ * then downloads the asset from the upstream URL and uploads it to GitHub
  * at the desired URL.
  */
 async function fetchUpstreamAssetAndUploadToRelease(
@@ -305,8 +309,8 @@ async function maybeDeleteExistingReleaseAsset(
   }
   console.log(`[${name}] Deleting existing release asset...`);
   await octokit.repos.deleteReleaseAsset({
-    owner: 'facebook',
-    repo: 'react-native',
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
     asset_id: existingAsset.id,
   });
 }
@@ -360,8 +364,8 @@ async function uploadAndVerifyReleaseAsset(
   const {
     data: {browser_download_url},
   } = await octokit.repos.uploadReleaseAsset({
-    owner: 'facebook',
-    repo: 'react-native',
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
     release_id: releaseId,
     name,
     data,

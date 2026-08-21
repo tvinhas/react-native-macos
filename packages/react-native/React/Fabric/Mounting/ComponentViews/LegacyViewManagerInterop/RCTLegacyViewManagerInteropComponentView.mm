@@ -7,6 +7,8 @@
 
 #import "RCTLegacyViewManagerInteropComponentView.h"
 
+#ifndef RCT_REMOVE_LEGACY_COMPONENT_INTEROP
+
 #import <React/RCTAssert.h>
 #import <React/RCTBridge+Private.h>
 #import <React/RCTConstants.h>
@@ -317,3 +319,5 @@ static NSString *const kRCTLegacyInteropChildIndexKey = @"index";
 #endif // macOS]
 
 @end
+
+#endif // RCT_REMOVE_LEGACY_COMPONENT_INTEROP

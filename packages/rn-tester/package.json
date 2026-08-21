@@ -1,42 +1,42 @@
 {
   "name": "@react-native/tester",
-  "version": "0.86.0",
+  "version": "0.87.0",
   "private": true,
   "description": "React Native tester app.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/facebook/react-native.git",
+    "url": "git+https://github.com/react/react-native.git",
     "directory": "packages/rn-tester"
   },
   "engines": {
-    "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0"
+    "node": "^22.13.0 || ^24.3.0 || >= 26.0.0"
   },
   "scripts": {
-    "start": "react-native-macos start",
-    "android": "react-native-macos run-android",
-    "install-android-jsc": "../../gradlew :packages:rn-tester:android:app:installDebug",
-    "install-android-hermes": "../../gradlew :packages:rn-tester:android:app:installDebug",
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "install-android": "../../gradlew :packages:rn-tester:android:app:installDebug",
     "clean-android": "rm -rf android/app/build",
     "prepare-ios": "node ./cli.js bootstrap ios",
     "clean-ios": "rm -rf build/generated/ios Pods Podfile.lock RNTesterPods.xcworkspace/ ../react-native-codegen/lib/",
+    "ios:clear-prebuild-caches": "rm -rf $HOME/Library/Caches/ReactNative",
     "e2e-build-android": "../../gradlew :packages:rn-tester:android:app:installRelease -PreactNativeArchitectures=arm64-v8a",
     "e2e-build-ios": "./scripts/maestro-build-ios.sh",
     "e2e-test-android": "maestro test .maestro/ -e APP_ID=com.facebook.react.uiapp",
-    "e2e-test-ios": "./scripts/maestro-test-ios.sh",
-    "ios:clear-prebuild-caches": "rm -rf $HOME/Library/Caches/ReactNative"
+    "e2e-test-ios": "./scripts/maestro-test-ios.sh"
   },
   "dependencies": {
-    "@react-native/new-app-screen": "workspace:*",
-    "@react-native/popup-menu-android": "workspace:*",
+    "@react-native/new-app-screen": "0.87.0",
+    "@react-native/popup-menu-android": "0.87.0",
     "flow-enums-runtime": "^0.0.6",
     "invariant": "^2.2.4",
-    "nullthrows": "^1.1.1"
+    "nullthrows": "^1.1.1",
+    "react-native-test-library-apple": "0.87.0-main",
+    "react-native-test-library-common": "0.87.0-main"
   },
   "peerDependencies": {
     "react": "19.2.3",
-    "react-native": "0.86.0",
-    "react-native-macos": "workspace:*"
+    "react-native": "0.87.0"
   },
   "codegenConfig": {
     "name": "AppSpecs",
@@ -46,11 +46,6 @@
       "javaPackageName": "com.facebook.fbreact.specs"
     },
     "ios": {
-      "modules": {
-        "SampleTurboModule": {
-          "unstableRequiresMainQueueSetup": true
-        }
-      },
       "components": {
         "RNTMyNativeView": {
           "className": "RNTMyNativeViewComponentView"
@@ -59,12 +54,12 @@
     }
   },
   "devDependencies": {
-    "@react-native-community/cli": "20.0.0",
-    "@react-native-community/cli-platform-android": "20.0.0",
-    "@react-native-community/cli-platform-ios": "20.0.0",
+    "@react-native-community/cli": "20.2.0",
+    "@react-native-community/cli-platform-android": "20.2.0",
+    "@react-native-community/cli-platform-ios": "20.2.0",
+    "@react-native/core-cli-utils": "*",
     "commander": "^12.0.0",
     "listr2": "^6.4.1",
-    "react-native-macos": "workspace:*",
     "rxjs": "npm:@react-native-community/rxjs@6.5.4-custom"
   }
 }

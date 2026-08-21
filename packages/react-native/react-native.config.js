@@ -18,7 +18,7 @@ import type {Command} from '@react-native-community/cli-types';
 // depending on and injecting:
 // - @react-native-community/cli-platform-android
 // - @react-native-community/cli-platform-ios
-// - @react-native/community-cli-plugin (via the @react-native/core-cli-utils package)
+// - @react-native/community-cli-plugin
 // - codegen command should be inhoused into @react-native-community/cli
 //
 // This is a temporary workaround.
@@ -129,6 +129,87 @@ const codegenCommand /*: Command */ = {
 };
 
 commands.push(codegenCommand);
+
+const spmCommand /*: Command */ = {
+  name: 'spm [action]',
+  description:
+    'Set up or maintain Swift Package Manager support for the iOS/macOS app. ' +
+    'Actions: add, update, deinit, scaffold. With no action: add (or update ' +
+    'if SPM is already set up).',
+  options: [
+    {
+      name: '--version <string>',
+      description:
+        'React Native version (e.g. 0.80.0). Defaults to the version in node_modules/react-native/package.json.',
+    },
+    {
+      name: '--yes',
+      description: 'Skip the dirty-pbxproj confirmation prompt.',
+    },
+    {
+      name: '--xcodeproj <path>',
+      description:
+        '[add] Path to the .xcodeproj to inject SPM packages into ' +
+        '(disambiguates when several exist).',
+    },
+    {
+      name: '--productName <string>',
+      description:
+        '[add] App target to inject into (disambiguates when several exist).',
+    },
+    {
+      name: '--deintegrate',
+      description:
+        '[add] Run `pod deintegrate` and strip React Native from the Podfile ' +
+        'before injecting (CocoaPods → SwiftPM migration).',
+    },
+    {
+      name: '--artifacts <path>',
+      description:
+        '[advanced] Local artifact root containing complete debug/ and release/ slots.',
+    },
+    {
+      name: '--download <string>',
+      description:
+        '[advanced] Artifact download policy: auto (default), skip, or force.',
+    },
+    {
+      name: '--skipCodegen',
+      description: '[advanced] Skip the react-native codegen step.',
+    },
+  ],
+  func: async (argv, _config, args) => {
+    const passthrough /*: Array<string> */ = [];
+    if (argv[0] != null) {
+      passthrough.push(argv[0]);
+    }
+    const stringOpts /*: Array<[string, string]> */ = [
+      ['version', '--version'],
+      ['productName', '--product-name'],
+      ['xcodeproj', '--xcodeproj'],
+      ['artifacts', '--artifacts'],
+      ['download', '--download'],
+    ];
+    for (const [key, flag] of stringOpts) {
+      if (args[key] != null) {
+        passthrough.push(flag, String(args[key]));
+      }
+    }
+    const boolOpts /*: Array<[string, string]> */ = [
+      ['skipCodegen', '--skip-codegen'],
+      ['deintegrate', '--deintegrate'],
+      ['yes', '--yes'],
+    ];
+    for (const [key, flag] of boolOpts) {
+      if (args[key]) {
+        passthrough.push(flag);
+      }
+    }
+    await require('./scripts/setup-apple-spm').main(passthrough);
+  },
+};
+
+commands.push(spmCommand);
 
 const config = {
   commands,

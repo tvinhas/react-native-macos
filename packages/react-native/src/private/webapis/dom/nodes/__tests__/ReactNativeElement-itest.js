@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @fantom_flags enableFabricCommitBranching:*
+ * @fantom_flags enableNativeEventTargetEventDispatching:true
+ * @fantom_flags enableImperativeEvents:*
  * @flow strict-local
  * @format
  */
@@ -18,11 +20,14 @@ import TextInputState from '../../../../../../Libraries/Components/TextInput/Tex
 import * as Fantom from '@react-native/fantom';
 import * as React from 'react';
 import {createRef} from 'react';
-import {ScrollView, Text, TextInput, View} from 'react-native';
+import {Modal, ScrollView, Text, TextInput, View} from 'react-native';
 import {
   NativeText,
   NativeVirtualText,
 } from 'react-native/Libraries/Text/TextNativeComponent';
+import * as ReactNativeFeatureFlags from 'react-native/src/private/featureflags/ReactNativeFeatureFlags';
+import Event from 'react-native/src/private/webapis/dom/events/Event';
+import ReactNativeDocument from 'react-native/src/private/webapis/dom/nodes/ReactNativeDocument';
 import ReactNativeElement from 'react-native/src/private/webapis/dom/nodes/ReactNativeElement';
 import ReadOnlyElement from 'react-native/src/private/webapis/dom/nodes/ReadOnlyElement';
 import ReadOnlyNode from 'react-native/src/private/webapis/dom/nodes/ReadOnlyNode';
@@ -32,6 +37,20 @@ import NodeList from 'react-native/src/private/webapis/dom/oldstylecollections/N
 function ensureReactNativeElement(value: unknown): ReactNativeElement {
   return ensureInstance(value, ReactNativeElement);
 }
+
+// The public imperative EventTarget API is not part of the static type of this
+// final class (it is only present at runtime, gated by feature flags), so we
+// cast to an interface with optional members to inspect/use it without Flow
+// errors. Optional members make this a valid upcast and let us assert both
+// presence (`'function'`) and absence (`'undefined'`).
+type MaybeEventTarget = interface {
+  addEventListener?: (type: string, callback: (event: Event) => void) => void,
+  removeEventListener?: (
+    type: string,
+    callback: (event: Event) => void,
+  ) => void,
+  dispatchEvent?: (event: Event) => boolean,
+};
 
 /* eslint-disable no-bitwise */
 
@@ -379,6 +398,47 @@ describe('ReactNativeElement', () => {
         expect(childNodeC.nextSibling).toBe(null);
         expect(childNodeC.parentNode).toBe(null);
         expect(childNodeC.parentElement).toBe(null);
+      });
+
+      it('returns the containing element as the parent of a modal host view, not the document', () => {
+        const parentRef = createRef<HostInstance>();
+        const modalRef = createRef<HostInstance>();
+
+        const root = Fantom.createRoot();
+        Fantom.runTask(() => {
+          root.render(
+            <View ref={parentRef}>
+              <Modal ref={modalRef} />
+            </View>,
+          );
+        });
+
+        const parentNode = ensureReactNativeElement(parentRef.current);
+        const modalNode = ensureReactNativeElement(modalRef.current);
+        const document = ensureInstance(
+          parentNode.ownerDocument,
+          ReactNativeDocument,
+        );
+
+        // Capture the relations before tearing down, so cleanup runs even if
+        // the assertions below fail.
+        const modalParentNode = modalNode.parentNode;
+        const modalParentElement = modalNode.parentElement;
+
+        // Unmount and drain the queue so the modal's AppContainer passive
+        // effects (in __DEV__) don't trip the global "MessageQueue is not
+        // empty" validation hook.
+        root.destroy();
+        Fantom.runWorkLoop();
+
+        // The <Modal> host view is a root-kind shadow node, but its parent
+        // must still be its actual containing element, NOT the document.
+        // Two-phase event propagation (e.g. focus/blur bubbling to ancestors
+        // rendered above the modal) walks this parent chain, so returning the
+        // document here silently severs bubbling at the modal boundary.
+        expect(modalParentNode).toBe(parentNode);
+        expect(modalParentElement).toBe(parentNode);
+        expect(modalParentNode).not.toBe(document);
       });
     });
 
@@ -1629,6 +1689,122 @@ describe('ReactNativeElement', () => {
             .toJSX(),
         ).toEqual(<rn-view testID={'second test id'} />);
       });
+    });
+  });
+
+  describe('imperative EventTarget API', () => {
+    // These tests run with `enableNativeEventTargetEventDispatching:true` and
+    // `enableImperativeEvents:*` (see the `@fantom_flags` pragmas). The public
+    // EventTarget API is gated behind `enableImperativeEvents`: when it is off
+    // the methods are removed from this final class, when it is on they are
+    // available.
+    const {isOSS} = Fantom.getConstants();
+
+    if (!ReactNativeFeatureFlags.enableImperativeEvents()) {
+      describe('when `enableImperativeEvents` is off (default)', () => {
+        it('removes the public EventTarget methods', () => {
+          const ref = createRef<HostInstance>();
+          const root = Fantom.createRoot();
+
+          Fantom.runTask(() => {
+            root.render(<View ref={ref} />);
+          });
+
+          const element = ensureReactNativeElement(
+            ref.current,
+          ) as MaybeEventTarget;
+          expect(typeof element.addEventListener).toBe('undefined');
+          expect(typeof element.removeEventListener).toBe('undefined');
+          expect(typeof element.dispatchEvent).toBe('undefined');
+        });
+
+        // Removing the public API must not affect native/prop event delivery,
+        // which goes through the internal (symbol-keyed) dispatch path.
+        (isOSS ? it.skip : it)(
+          'still delivers native events to prop handlers',
+          () => {
+            const ref = createRef<HostInstance>();
+            const onPointerUp = jest.fn();
+            const root = Fantom.createRoot();
+
+            Fantom.runTask(() => {
+              root.render(<View ref={ref} onPointerUp={onPointerUp} />);
+            });
+
+            expect(onPointerUp).toHaveBeenCalledTimes(0);
+
+            Fantom.dispatchNativeEvent(
+              ref,
+              'onPointerUp',
+              {x: 0, y: 0},
+              {
+                category: Fantom.NativeEventCategory.Discrete,
+              },
+            );
+
+            expect(onPointerUp).toHaveBeenCalledTimes(1);
+          },
+        );
+      });
+    }
+
+    if (ReactNativeFeatureFlags.enableImperativeEvents()) {
+      describe('when `enableImperativeEvents` is on', () => {
+        it('exposes the public EventTarget methods', () => {
+          const ref = createRef<HostInstance>();
+          const root = Fantom.createRoot();
+
+          Fantom.runTask(() => {
+            root.render(<View ref={ref} />);
+          });
+
+          const element = ensureReactNativeElement(
+            ref.current,
+          ) as MaybeEventTarget;
+          expect(typeof element.addEventListener).toBe('function');
+          expect(typeof element.removeEventListener).toBe('function');
+          expect(typeof element.dispatchEvent).toBe('function');
+        });
+
+        it('round-trips a listener via `addEventListener` + `dispatchEvent`', () => {
+          const ref = createRef<HostInstance>();
+          const root = Fantom.createRoot();
+
+          Fantom.runTask(() => {
+            root.render(<View ref={ref} />);
+          });
+
+          const element = ensureReactNativeElement(
+            ref.current,
+          ) as MaybeEventTarget;
+          const listener = jest.fn();
+
+          element.addEventListener?.('custom', listener);
+          const result = element.dispatchEvent?.(new Event('custom'));
+
+          expect(listener).toHaveBeenCalledTimes(1);
+          expect(result).toBe(true);
+
+          element.removeEventListener?.('custom', listener);
+          element.dispatchEvent?.(new Event('custom'));
+
+          expect(listener).toHaveBeenCalledTimes(1);
+        });
+      });
+    }
+  });
+
+  describe('global constructors', () => {
+    it('throws when constructing HTMLElement', () => {
+      expect(() => new HTMLElement()).toThrow(
+        "Failed to construct 'HTMLElement': Nodes cannot be imperatively created in React Native",
+      );
+    });
+
+    it('throws when constructing Element', () => {
+      expect(() => new Element()).toThrow(
+        "Failed to construct 'Element': Illegal constructor",
+      );
     });
   });
 });

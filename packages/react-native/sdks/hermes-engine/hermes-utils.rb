@@ -4,10 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 require 'digest'
-require 'net/http'
-require 'rexml/document'
-require 'open3' # [macOS]
-require 'json' # [macOS]
 require 'tmpdir' # [macOS]
 
 HERMES_GITHUB_URL = "https://github.com/facebook/hermes.git"
@@ -16,18 +12,17 @@ ENV_BUILD_FROM_SOURCE = "RCT_BUILD_HERMES_FROM_SOURCE"
 module HermesEngineSourceType
     LOCAL_PREBUILT_TARBALL = :local_prebuilt_tarball
     DOWNLOAD_PREBUILD_RELEASE_TARBALL = :download_prebuild_release_tarball
-    DOWNLOAD_PREBUILT_NIGHTLY_TARBALL = :download_prebuilt_nightly_tarball
     BUILD_FROM_GITHUB_COMMIT = :build_from_github_commit
     BUILD_FROM_GITHUB_TAG = :build_from_github_tag
-    BUILD_FROM_GITHUB_MAIN = :build_from_github_main
+    BUILD_FROM_GITHUB_STABLE_BRANCH = :build_from_github_stable_branch
     BUILD_FROM_LOCAL_SOURCE_DIR = :build_from_local_source_dir
 
     def HermesEngineSourceType.isPrebuilt(source_type)
-        return source_type == LOCAL_PREBUILT_TARBALL || source_type == DOWNLOAD_PREBUILD_RELEASE_TARBALL || source_type == DOWNLOAD_PREBUILT_NIGHTLY_TARBALL
+        return source_type == LOCAL_PREBUILT_TARBALL || source_type == DOWNLOAD_PREBUILD_RELEASE_TARBALL
     end
 
     def HermesEngineSourceType.isFromSource(source_type)
-        return source_type == BUILD_FROM_GITHUB_COMMIT || source_type == BUILD_FROM_GITHUB_TAG || source_type == BUILD_FROM_GITHUB_MAIN || source_type == BUILD_FROM_LOCAL_SOURCE_DIR
+        return source_type == BUILD_FROM_GITHUB_COMMIT || source_type == BUILD_FROM_GITHUB_TAG || source_type == BUILD_FROM_GITHUB_STABLE_BRANCH || source_type == BUILD_FROM_LOCAL_SOURCE_DIR
     end
 end
 
@@ -36,8 +31,9 @@ end
 # `HERMES_ENGINE_TARBALL_PATH=<path_to_tarball> bundle exec pod install`
 # - To force a build from source, install the dependencies with:
 # `RCT_BUILD_HERMES_FROM_SOURCE=true bundle exec pod install`
-# If none of the two are provided, Cocoapods will check whether there is a tarball for the current version
-# (either release or nightly). If not, it will fall back to building from source (the latest commit on main).
+# If none of the two are provided, Cocoapods will check whether there is a
+# release tarball for the current version on Maven. If not, it will fall back
+# to building from the stable Hermes branch.
 #
 # Parameters:
 # - version: current version of the pod
@@ -62,19 +58,15 @@ def hermes_source_type(version, react_native_path)
         return HermesEngineSourceType::BUILD_FROM_GITHUB_TAG
     end
 
-    if force_build_from_main(react_native_path)
-        return HermesEngineSourceType::BUILD_FROM_GITHUB_MAIN
+    if force_build_from_stable_branch(react_native_path)
+        return HermesEngineSourceType::BUILD_FROM_GITHUB_STABLE_BRANCH
     end
 
     if release_artifact_exists(version)
         return HermesEngineSourceType::DOWNLOAD_PREBUILD_RELEASE_TARBALL
     end
 
-    if nightly_artifact_exists(version)
-        return HermesEngineSourceType::DOWNLOAD_PREBUILT_NIGHTLY_TARBALL
-    end
-
-    return HermesEngineSourceType::BUILD_FROM_GITHUB_MAIN
+    return HermesEngineSourceType::BUILD_FROM_GITHUB_STABLE_BRANCH
 end
 
 def override_hermes_dir_envvar_defined()
@@ -89,24 +81,16 @@ def hermes_commit_envvar_defined()
     return ENV.has_key?('HERMES_COMMIT')
 end
 
-def hermes_v1_enabled()
-    return ENV['RCT_HERMES_V1_ENABLED'] != "0"
-end
-
 def force_build_from_tag(react_native_path)
     return ENV[ENV_BUILD_FROM_SOURCE] === 'true' && File.exist?(hermestag_file(react_native_path))
 end
 
-def force_build_from_main(react_native_path)
+def force_build_from_stable_branch(react_native_path)
     return ENV[ENV_BUILD_FROM_SOURCE] === 'true' && !File.exist?(hermestag_file(react_native_path))
 end
 
 def release_artifact_exists(version)
     return hermes_artifact_exists(release_tarball_url(version, :debug))
-end
-
-def nightly_artifact_exists(version)
-    return hermes_artifact_exists(nightly_tarball_url(version).gsub("\\", ""))
 end
 
 def podspec_source(source_type, version, react_native_path)
@@ -119,12 +103,10 @@ def podspec_source(source_type, version, react_native_path)
         return podspec_source_build_from_github_commit()
     when HermesEngineSourceType::BUILD_FROM_GITHUB_TAG
         return podspec_source_build_from_github_tag(react_native_path)
-    when HermesEngineSourceType::BUILD_FROM_GITHUB_MAIN
-        return podspec_source_build_from_github_main()
+    when HermesEngineSourceType::BUILD_FROM_GITHUB_STABLE_BRANCH
+        return podspec_source_build_from_github_stable_branch()
     when HermesEngineSourceType::DOWNLOAD_PREBUILD_RELEASE_TARBALL
         return podspec_source_download_prebuild_release_tarball(react_native_path, version)
-    when HermesEngineSourceType::DOWNLOAD_PREBUILT_NIGHTLY_TARBALL
-        return podspec_source_download_prebuilt_nightly_tarball(version)
     else
         abort "[Hermes] Unsupported or invalid source type provided: #{source_type}"
     end
@@ -179,18 +161,15 @@ end
 def podspec_source_build_from_github_tag(react_native_path)
     tag = File.read(hermestag_file(react_native_path)).strip
 
-    if hermes_v1_enabled()
-        hermes_log("Using tag defined in sdks/.hermesv1version: #{tag}")
-    else
-        hermes_log("Using tag defined in sdks/.hermesversion: #{tag}")
-    end
+    hermes_log("Using tag defined in sdks/.hermesv1version: #{tag}")
     return {:git => HERMES_GITHUB_URL, :tag => tag}
 end
 
-def podspec_source_build_from_github_main()
-    # branch = hermes_v1_enabled() ? "250829098.0.0-stable" : "main"
-    # hermes_log("Using the latest commit from #{branch}.")
-    # return {:git => HERMES_GITHUB_URL, :commit => `git ls-remote #{HERMES_GITHUB_URL} #{branch} | cut -f 1`.strip}
+HERMES_STABLE_BRANCH = "250829098.0.0-stable"
+
+def podspec_source_build_from_github_stable_branch()
+    # hermes_log("Using the latest commit from #{HERMES_STABLE_BRANCH}.")
+    # return {:git => HERMES_GITHUB_URL, :commit => `git ls-remote #{HERMES_GITHUB_URL} #{HERMES_STABLE_BRANCH} | cut -f 1`.strip}
 
     # [macOS
     # The logic for this is a bit different on macOS.
@@ -203,26 +182,6 @@ def podspec_source_build_from_github_main()
     hermes_log("Using Hermes commit from the merge base with facebook/react-native: #{commit} and timestamp: #{timestamp}")
     return {:git => HERMES_GITHUB_URL, :commit => commit}
     # macOS]
-end
-
-def podspec_source_download_prebuild_release_tarball(react_native_path, version)
-    url = release_tarball_url(version, :debug)
-    hermes_log("Using release tarball from URL: #{url}")
-    download_stable_hermes(react_native_path, version, :debug)
-    download_stable_hermes(react_native_path, version, :release)
-    return {:http => url}
-end
-
-def podspec_source_download_prebuilt_nightly_tarball(version)
-    url = nightly_tarball_url(version)
-    hermes_log("Using nightly tarball from URL: #{url}")
-    return {:http => url}
-end
-
-# HELPERS
-
-def artifacts_dir()
-    return File.join(Pod::Config.instance.project_pods_root, "hermes-engine-artifacts")
 end
 
 # [macOS
@@ -252,22 +211,18 @@ def hermes_commit_at_merge_base()
     commit = nil
     Dir.mktmpdir do |tmpdir|
         hermes_git_dir = File.join(tmpdir, "hermes.git")
-        # Pick the Hermes branch that matches the engine variant we resolve at:
-        #   V1 (Hermes 0.83+ split package) lives on `static_h`
-        #   V0 (legacy) lives on `main`
-        # Without this gate, RCT_HERMES_V1_ENABLED=1 + from-source fallback
-        # (no Maven artifact, RCT_BUILD_HERMES_FROM_SOURCE=true) would clone
-        # V0 source while the rest of the podspec expects hermesvm.framework
-        # (V1) artifacts. Mirror of the same fix on the JS side in PR #2952.
-        hermes_branch = hermes_v1_enabled() ? "static_h" : "main"
-        `git clone -q --bare --filter=blob:none --single-branch --branch #{hermes_branch} #{HERMES_GITHUB_URL} "#{hermes_git_dir}"`
+        # RN 0.87 is Hermes-V1-only, and V1 releases are cut from the pinned
+        # stable branch, so resolve the merge-base commit there. (Pre-0.87
+        # this picked static_h/main by RCT_HERMES_V1_ENABLED, which upstream
+        # removed along with the V0 engine.)
+        `git clone -q --bare --filter=blob:none --single-branch --branch #{HERMES_STABLE_BRANCH} #{HERMES_GITHUB_URL} "#{hermes_git_dir}"`
 
         # Resolve the Hermes commit at the time of the merge base on the
         # chosen branch.
-        commit = `git --git-dir="#{hermes_git_dir}" rev-list -1 --before="#{timestamp}" refs/heads/#{hermes_branch}`.strip
+        commit = `git --git-dir="#{hermes_git_dir}" rev-list -1 --before="#{timestamp}" refs/heads/#{HERMES_STABLE_BRANCH}`.strip
         if commit.empty?
             abort <<-EOS
-            [Hermes] Unable to find the Hermes commit hash at time #{timestamp} on branch '#{hermes_branch}'.
+            [Hermes] Unable to find the Hermes commit hash at time #{timestamp} on branch '#{HERMES_STABLE_BRANCH}'.
             EOS
         end
     end
@@ -276,12 +231,22 @@ def hermes_commit_at_merge_base()
 end
 # macOS]
 
+def podspec_source_download_prebuild_release_tarball(react_native_path, version)
+    url = release_tarball_url(version, :debug)
+    hermes_log("Using release tarball from URL: #{url}")
+    download_stable_hermes(react_native_path, version, :debug)
+    download_stable_hermes(react_native_path, version, :release)
+    return {:http => url}
+end
+
+# HELPERS
+
+def artifacts_dir()
+    return File.join(Pod::Config.instance.project_pods_root, "hermes-engine-artifacts")
+end
+
 def hermestag_file(react_native_path)
-    if hermes_v1_enabled()
-        return File.join(react_native_path, "sdks", ".hermesv1version")
-    else
-        return File.join(react_native_path, "sdks", ".hermesversion")
-    end
+    return File.join(react_native_path, "sdks", ".hermesv1version")
 end
 
 def release_tarball_url(version, build_type)
@@ -400,31 +365,6 @@ def download_hermes_tarball(react_native_path, tarball_url, version, configurati
     end
 
     return destination_path
-end
-
-def nightly_tarball_url(version)
-  artifact_coordinate = "hermes-ios"
-  artifact_name = "hermes-ios-debug.tar.gz"
-  namespace = "com/facebook/hermes"
-
-  xml_url = "https://central.sonatype.com/repository/maven-snapshots/#{namespace}/#{artifact_coordinate}/#{version}-SNAPSHOT/maven-metadata.xml"
-
-  begin # [macOS add exception handling
-    response = Net::HTTP.get_response(URI(xml_url))
-    if response.is_a?(Net::HTTPSuccess)
-      xml = REXML::Document.new(response.body)
-      timestamp = xml.elements['metadata/versioning/snapshot/timestamp'].text
-      build_number = xml.elements['metadata/versioning/snapshot/buildNumber'].text
-      full_version = "#{version}-#{timestamp}-#{build_number}"
-      final_url = "https://central.sonatype.com/repository/maven-snapshots/#{namespace}/#{artifact_coordinate}/#{version}-SNAPSHOT/#{artifact_coordinate}-#{full_version}-#{artifact_name}"
-
-      return final_url
-    else
-      return ""
-    end
-  rescue => e
-    return ""
-  end # macOS]
 end
 
 def resolve_url_redirects(url)

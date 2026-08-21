@@ -1,7 +1,12 @@
 {
   "name": "@react-native/popup-menu-android",
-  "version": "0.83.0-main",
+  "version": "0.87.0",
   "description": "PopupMenu for the Android platform",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react/react-native.git",
+    "directory": "packages/react-native-popup-menu-android"
+  },
   "main": "index.js",
   "files": [
     "js",
@@ -21,12 +26,12 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@react-native/codegen": "workspace:*"
+    "@react-native/codegen": "0.87.0"
   },
   "peerDependencies": {
     "@types/react": "^19.1.0",
     "react": "*",
-    "react-native": "*"
+    "react-native": "0.87.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {
@@ -47,6 +52,5 @@
     "android": {
       "javaPackageName": "com.facebook.react.viewmanagers"
     }
-  },
-  "private": true
+  }
 }

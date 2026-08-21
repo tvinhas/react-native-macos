@@ -1,11 +1,11 @@
 {
-  "name": "react-native-macos",
-  "version": "1000.0.0",
-  "description": "React Native for macOS",
+  "name": "react-native",
+  "version": "0.87.0",
+  "description": "A framework for building native apps using React",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/react-native-macos.git",
+    "url": "git+https://github.com/react/react-native.git",
     "directory": "packages/react-native"
   },
   "homepage": "https://reactnative.dev/",
@@ -19,54 +19,47 @@
     "app-framework",
     "mobile-development"
   ],
-  "bugs": "https://github.com/facebook/react-native/issues",
+  "bugs": "https://github.com/react/react-native/issues",
   "engines": {
-    "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0"
+    "node": "^22.13.0 || ^24.3.0 || >= 26.0.0"
   },
   "bin": {
-    "react-native": "cli.js",
-    "react-native-macos": "cli.js"
+    "react-native": "cli.js"
   },
   "main": "./index.js",
-  "types": "types",
   "exports": {
     ".": {
-      "react-native-strict-api": "./types_generated/index.d.ts",
-      "types": "./types/index.d.ts",
+      "react-native-legacy-deep-imports": "./types/index.d.ts",
+      "types": "./types_generated/index.d.ts",
       "default": "./index.js"
     },
-    "./*": {
-      "react-native-strict-api": null,
-      "types": "./*.d.ts",
-      "default": "./*.js"
+    "./Libraries/*": {
+      "react-native-legacy-deep-imports": "./Libraries/*.d.ts",
+      "types": null,
+      "default": "./Libraries/*.js"
     },
-    "./*.js": {
-      "react-native-strict-api": null,
-      "default": "./*.js"
+    "./Libraries/*.js": {
+      "types": null,
+      "default": "./Libraries/*.js"
     },
-    "./Libraries/*.d.ts": {
-      "react-native-strict-api": null,
-      "default": "./Libraries/*.d.ts"
+    "./scripts/*": "./scripts/*.js",
+    "./scripts/*.sh": "./scripts/*.sh",
+    "./scripts/*.rb": "./scripts/*.rb",
+    "./asset-registry": {
+      "types": null,
+      "default": "./src/asset-registry.js"
     },
-    "./scripts/*": "./scripts/*",
-    "./src/*": {
-      "react-native-strict-api": null,
-      "default": "./src/*.js"
+    "./react-private-interface": {
+      "types": null,
+      "default": "./src/react-private-interface.js"
     },
-    "./types/*.d.ts": {
-      "react-native-strict-api": null,
-      "default": "./types/*.d.ts"
+    "./setup-env": "./src/setup-env.js",
+    "./unstable-internals-do-not-use": {
+      "react-native-unstable-internals": "./src/unstable-internals-do-not-use.d.ts",
+      "types": null,
+      "default": "./src/unstable-internals-do-not-use.js"
     },
-    "./gradle/*": null,
-    "./React/*": null,
-    "./ReactAndroid/*": null,
-    "./ReactApple/*": null,
-    "./ReactCommon/*": null,
-    "./sdks/*": null,
     "./src/fb_internal/*": "./src/fb_internal/*",
-    "./third-party-podspecs/*": null,
-    "./types/*": null,
-    "./types_generated/*": null,
     "./package.json": "./package.json"
   },
   "jest-junit": {
@@ -81,14 +74,10 @@
     "gradle/libs.versions.toml",
     "index.js",
     "index.js.flow",
-    "interface.js",
-    "jest-preset.js",
     "Libraries",
     "LICENSE",
-    "local-cli",
     "React-Core.podspec",
     "React-Core-prebuilt.podspec",
-    "React-RCTUIKit.podspec",
     "react-native.config.js",
     "React.podspec",
     "React",
@@ -105,11 +94,10 @@
     "ReactApple",
     "ReactCommon",
     "README.md",
-    "rn-get-polyfills.js",
     "scripts/replace-rncore-version.js",
     "scripts/bundle.js",
-    "scripts/cocoapods/**",
-    "scripts/codegen/**",
+    "scripts/cocoapods",
+    "scripts/codegen",
     "scripts/compose-source-maps.js",
     "scripts/find-node-for-xcode.sh",
     "scripts/generate-codegen-artifacts.js",
@@ -126,14 +114,14 @@
     "scripts/react_native_pods_utils/script_phases.sh",
     "scripts/react_native_pods.rb",
     "scripts/react-native-xcode.sh",
-    "scripts/update-ruby.sh",
+    "scripts/setup-apple-spm.js",
+    "scripts/spm",
     "scripts/xcode/ccache-clang.sh",
     "scripts/xcode/ccache-clang++.sh",
     "scripts/xcode/ccache.conf",
     "scripts/xcode/with-environment.sh",
-    "sdks/.hermesversion",
     "sdks/.hermesv1version",
-    "sdks/hermes-engine/**",
+    "sdks/hermes-engine",
     "sdks/hermesc",
     "settings.gradle.kts",
     "src",
@@ -153,40 +141,32 @@
     "featureflags": "node ./scripts/featureflags/index.js"
   },
   "peerDependencies": {
-    "@react-native/jest-preset": "0.86.0",
     "@types/react": "^19.1.1",
     "react": "^19.2.3"
   },
   "peerDependenciesMeta": {
-    "@react-native/jest-preset": {
-      "optional": true
-    },
     "@types/react": {
       "optional": true
     }
   },
   "dependencies": {
-    "@jest/create-cache-key-function": "^29.7.0",
-    "@react-native-macos/virtualized-lists": "workspace:*",
-    "@react-native/assets-registry": "workspace:*",
-    "@react-native/codegen": "workspace:*",
-    "@react-native/community-cli-plugin": "workspace:*",
-    "@react-native/gradle-plugin": "workspace:*",
-    "@react-native/js-polyfills": "workspace:*",
-    "@react-native/normalize-colors": "workspace:*",
-    "abort-controller": "^3.0.0",
+    "@react-native/asset-utils": "0.87.0",
+    "@react-native/codegen": "0.87.0",
+    "@react-native/community-cli-plugin": "0.87.0",
+    "@react-native/gradle-plugin": "0.87.0",
+    "@react-native/normalize-colors": "0.87.0",
+    "@react-native/virtualized-lists": "0.87.0",
     "anser": "^1.4.9",
     "ansi-regex": "^5.0.0",
-    "babel-plugin-syntax-hermes-parser": "0.36.0",
+    "babel-plugin-syntax-hermes-parser": "0.36.1",
     "base64-js": "^1.5.1",
     "commander": "^12.0.0",
     "flow-enums-runtime": "^0.0.6",
-    "glob": "^7.1.1",
-    "hermes-compiler": "250829098.0.14",
+    "hermes-compiler": "250829098.0.16",
     "invariant": "^2.2.4",
     "memoize-one": "^5.0.0",
-    "metro-runtime": "^0.84.3",
-    "metro-source-map": "^0.84.3",
+    "metro-runtime": "^0.87.0",
+    "metro-source-map": "^0.87.0",
     "nullthrows": "^1.1.1",
     "pretty-format": "^29.7.0",
     "promise": "^8.3.0",
@@ -206,7 +186,7 @@
       {
         "name": "FBReactNativeSpec",
         "type": "all",
-        "macos": {
+        "ios": {
           "modules": {
             "AccessibilityManager": {
               "unstableRequiresMainQueueSetup": true
@@ -223,6 +203,9 @@
             "PlatformConstants": {
               "unstableRequiresMainQueueSetup": true
             },
+            "SampleTurboModule": {
+              "unstableRequiresMainQueueSetup": true
+            },
             "StatusBarManager": {
               "unstableRequiresMainQueueSetup": true
             }
@@ -231,27 +214,6 @@
         "android": {},
         "jsSrcsDir": "src"
       }
-    ]
-  },
-  "publishConfig": {
-    "executableFiles": [
-      "scripts/find-node-for-xcode.sh",
-      "scripts/ios-configure-glog.sh",
-      "scripts/node-binary.sh",
-      "scripts/packager.sh",
-      "scripts/react-native-xcode.sh",
-      "scripts/react_native_pods_utils/script_phases.sh",
-      "scripts/update-ruby.sh",
-      "scripts/xcode/ccache-clang.sh",
-      "scripts/xcode/ccache-clang++.sh",
-      "scripts/xcode/with-environment.sh",
-      "sdks/hermes-engine/utils/build-apple-framework.sh",
-      "sdks/hermes-engine/utils/build-hermes-xcode.sh",
-      "sdks/hermes-engine/utils/build-hermesc-xcode.sh",
-      "sdks/hermes-engine/utils/build-ios-framework.sh",
-      "sdks/hermes-engine/utils/build-mac-framework.sh",
-      "sdks/hermes-engine/utils/copy-hermes-xcode.sh",
-      "sdks/hermes-engine/utils/create-dummy-hermes-xcframework.sh"
     ]
   }
 }

@@ -184,13 +184,6 @@ NSString *kBundlePath = @"js/RNTesterApp.macos";
 }
 #endif
 
-#pragma mark - New Arch Enabled settings
-
-- (BOOL)newArchEnabled
-{
-  return YES;
-}
-
 #pragma mark - RCTComponentViewFactoryComponentProvider
 
 #ifndef RN_DISABLE_OSS_PLUGIN_HEADER

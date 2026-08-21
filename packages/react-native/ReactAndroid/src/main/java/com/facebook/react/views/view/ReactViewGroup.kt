@@ -60,7 +60,6 @@ import com.facebook.react.uimanager.ReactClippingViewGroup
 import com.facebook.react.uimanager.ReactClippingViewGroupHelper.calculateClippingRect
 import com.facebook.react.uimanager.ReactOverflowViewWithInset
 import com.facebook.react.uimanager.ReactPointerEventsView
-import com.facebook.react.uimanager.ReactZIndexedViewGroup
 import com.facebook.react.uimanager.style.BorderRadiusProp
 import com.facebook.react.uimanager.style.BorderStyle
 import com.facebook.react.uimanager.style.LogicalEdge
@@ -83,7 +82,6 @@ public open class ReactViewGroup public constructor(context: Context?) :
     ReactClippingViewGroup,
     ReactPointerEventsView,
     ReactHitSlopView,
-    ReactZIndexedViewGroup,
     ReactOverflowViewWithInset {
 
   public override val overflowInset: Rect = Rect()
@@ -129,7 +127,7 @@ public open class ReactViewGroup public constructor(context: Context?) :
    * override all possible add methods for [ViewGroup] so that we can control this process whenever
    * the option is set. We also override [ViewGroup#getChildAt] and [ViewGroup#getChildCount] so
    * those methods may return views that are not attached. This is risky but allows us to perform a
-   * correct cleanup in `NativeViewHierarchyManager`.
+   * correct cleanup.
    */
   internal var _removeClippedSubviews = false
 
@@ -240,7 +238,7 @@ public open class ReactViewGroup public constructor(context: Context?) :
   @SuppressLint("MissingSuperCall")
   override fun requestLayout() {
     // No-op, terminate `requestLayout` here, UIManager handles laying out children and
-    // `layout` is called on all RN-managed views by `NativeViewHierarchyManager`
+    // `layout` is called on all RN-managed views by the UIManager
   }
 
   @TargetApi(23)
@@ -652,19 +650,7 @@ public open class ReactViewGroup public constructor(context: Context?) :
     }
   }
 
-  /**
-   * No-op implementation for backward compatibility. Z-order is now managed at the C++ layer in
-   * Fabric.
-   */
-  override fun getZIndexMappedChildIndex(index: Int): Int = index
-
-  /**
-   * No-op implementation for backward compatibility. Z-order is now managed at the C++ layer in
-   * Fabric.
-   */
-  override fun updateDrawingOrder() {
-    // No-op: Z-order is managed at the C++ layer
-  }
+  override fun shouldDelayChildPressedState(): Boolean = false
 
   override fun dispatchSetPressed(pressed: Boolean) {
     // Prevents the ViewGroup from dispatching the pressed state

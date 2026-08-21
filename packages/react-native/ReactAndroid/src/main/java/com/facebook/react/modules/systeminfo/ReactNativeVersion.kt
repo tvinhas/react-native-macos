@@ -13,7 +13,7 @@ public object ReactNativeVersion {
   @JvmField
   public val VERSION: Map<String, Any?> = mapOf(
     "major" to 0,
-    "minor" to 86,
+    "minor" to 87,
     "patch" to 0,
     "prerelease" to null
   )

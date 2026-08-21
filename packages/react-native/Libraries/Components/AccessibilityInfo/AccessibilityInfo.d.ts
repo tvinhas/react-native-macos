@@ -11,16 +11,23 @@ import {HostInstance} from '../../../types/public/ReactNativeTypes';
 import {EmitterSubscription} from '../../vendor/emitter/EventEmitter';
 
 type AccessibilityChangeEventName =
-  | 'change' // deprecated, maps to screenReaderChanged
-  | 'boldTextChanged' // iOS-only Event
-  | 'grayscaleChanged' // iOS-only Event
+  /** Android only */
+  | 'accessibilityServiceChanged'
+  /** iOS only */
+  | 'boldTextChanged'
+  /** @deprecated Maps to 'screenReaderChanged' */
+  | 'change'
+  /** iOS only */
+  | 'darkerSystemColorsChanged'
+  | 'grayscaleChanged'
   | 'highContrastChanged' // [macOS]
-  | 'invertColorsChanged' // iOS-only Event
+  /** Android only */
+  | 'highTextContrastChanged'
+  | 'invertColorsChanged'
   | 'reduceMotionChanged'
-  | 'highTextContrastChanged' // Android-only Event
-  | 'darkerSystemColorsChanged' // iOS-only Event
-  | 'screenReaderChanged'
-  | 'reduceTransparencyChanged'; // iOS-only Event
+  /** iOS only */
+  | 'reduceTransparencyChanged'
+  | 'screenReaderChanged';
 
 type AccessibilityChangeEvent = boolean;
 
@@ -39,7 +46,11 @@ type AccessibilityAnnouncementFinishedEventHandler = (
   event: AccessibilityAnnouncementFinishedEvent,
 ) => void;
 
-type AccessibilityEventTypes = 'click' | 'focus' | 'viewHoverEnter';
+type AccessibilityEventTypes =
+  | 'click'
+  | 'focus'
+  | 'viewHoverEnter'
+  | 'windowStateChange';
 
 /**
  * @see https://reactnative.dev/docs/accessibilityinfo
