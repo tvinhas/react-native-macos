@@ -26,6 +26,7 @@
 #endif // [macOS]
   NSArray<NSString *> *_acceptDragAndDropTypes;
 #if TARGET_OS_OSX // [macOS
+  BOOL _enableFocusRing;
   NSArray<NSPasteboardType> *_readablePasteboardTypes;
 #endif // macOS]
   BOOL _disableKeyboardShortcuts;
@@ -65,6 +66,7 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
     // Fix blurry text on non-retina displays.
     self.canDrawSubviewsIntoLayer = YES;
     self.allowsUndo = YES;
+    _enableFocusRing = YES;
 #endif // macOS]
 
     _textInputDelegateAdapter = [[RCTBackedTextViewDelegateAdapter alloc] initWithTextView:self];
@@ -257,6 +259,72 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
   }
 
   return success;
+}
+
+// [Epistles] EP-531: keep AppKit's legacy mouse-tracking path on macOS 27+.
+//
+// macOS 27 moved NSTextView's click / drag / shift-click / double- and
+// triple-click selection off `NSEvent` mouse methods and onto a set of
+// NSGestureRecognizers driven by NSTextSelectionManager (AppKit macOS 27
+// release notes; TN3212 "Adopting gesture recognizers for Sidecar touch
+// support"). Placing the caret and taking first responder now happen in a
+// recognizer action instead of in `-mouseDown:`.
+//
+// That collides with React Native. AppKit gathers the candidate recognizers
+// with "a strict walk of the view hierarchy from the hit-tested top-most view
+// among siblings up to the window", so the walk that starts at this text view
+// also picks up `RCTSurfaceTouchHandler` — RN's own NSGestureRecognizer,
+// installed on the surface root above us. RN's recognizer recognizes
+// immediately (it sets its state to Began inside `-mouseDown:`) and declines
+// simultaneous recognition, so AppKit's text-selection recognizers never get
+// to act: a click no longer places the caret or makes this view first
+// responder. Tab still works, because keyboard focus goes through the
+// responder chain and never enters gesture arbitration — which is exactly the
+// shape users report ("cannot get focus by clicking, have to use Tab", and
+// clicking while typing drops focus without regaining it).
+//
+// TN3212 documents the escape hatch: a subclass that overrides the left-mouse
+// responder methods falls back to the pre-27 tracking-loop path. Overriding
+// them here — calling straight through to super — opts this text view out of
+// the new gesture path and restores macOS 26 behavior. The overrides are inert
+// on macOS 26 and earlier, where they are simply the normal event path.
+//
+// Do NOT "clean up" these no-op-looking overrides: their existence, not their
+// bodies, is the fix. See also RCTWrappedTextView.m, which carries the
+// separate EP-266 / EP-328 minSize floor for the same fields.
+- (void)mouseDown:(NSEvent *)event
+{
+  [super mouseDown:event];
+}
+
+- (void)mouseDragged:(NSEvent *)event
+{
+  [super mouseDragged:event];
+}
+
+- (void)mouseUp:(NSEvent *)event
+{
+  [super mouseUp:event];
+}
+
+- (NSFocusRingType)focusRingType
+{
+  return _enableFocusRing ? NSFocusRingTypeDefault : NSFocusRingTypeNone;
+}
+
+- (void)setEnableFocusRing:(BOOL)enableFocusRing
+{
+  if (_enableFocusRing != enableFocusRing) {
+    _enableFocusRing = enableFocusRing;
+  }
+
+  [super setFocusRingType:self.focusRingType];
+  [self setKeyboardFocusRingNeedsDisplayInRect:self.bounds];
+}
+
+- (BOOL)enableFocusRing
+{
+  return _enableFocusRing;
 }
 #endif // macOS]
 

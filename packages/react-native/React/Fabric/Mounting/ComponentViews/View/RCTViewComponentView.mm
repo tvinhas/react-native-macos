@@ -865,9 +865,39 @@ static BOOL RCTLayerTransformCollapsesAxis(CALayer *layer)
   _removeClippedSubviews = NO;
   _reactSubviews = [NSMutableArray new];
 #if TARGET_OS_OSX // [macOS
-    _allowsVibrancy = NO;
-    self.acceptsFirstMouse = NO;
-    self.mouseDownCanMoveWindow = YES;
+    // upstream #3008 (31e47c8535, cherry-picked): do NOT reset
+    // _allowsVibrancy / acceptsFirstMouse / mouseDownCanMoveWindow here.
+    // They are prop-derived; resetting them on recycle left recycled
+    // views with defaults instead of the values their next props set.
+
+    // Mouse-tracking state must NOT survive recycling — it belongs to the
+    // view's previous occupant, not its next one.
+    //
+    // `mouseEntered:` early-returns while `_hasMouseOver` is set, so a view
+    // recycled while the pointer happened to be over it comes back
+    // permanently deaf to hover: its next occupant never receives
+    // MouseEnter, and anything gated on hover (a row highlight, hover-only
+    // controls) never appears for that row. In a virtualized list, where
+    // recycling is constant and the pointer sits over the list the whole
+    // time, this reads as "hover works on some rows and not others" with no
+    // pattern — the dead rows are simply the recycled ones.
+    //
+    // The tracking area is likewise the previous occupant's: drop it and let
+    // `updateTrackingAreas` install a fresh one. Same for the clip-view
+    // bounds observer, which is registered against the scroll view the view
+    // used to live in and would otherwise be stale (and missing) if the view
+    // is recycled into a different scroll view.
+    _hasMouseOver = NO;
+    if (_trackingArea) {
+      [self removeTrackingArea:_trackingArea];
+      _trackingArea = nil;
+    }
+    if (_hasClipViewBoundsObserver) {
+      _hasClipViewBoundsObserver = NO;
+      [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                      name:NSViewBoundsDidChangeNotification
+                                                    object:nil];
+    }
 #endif // macOS]
   _layoutMetrics = {};
 }
@@ -2394,16 +2424,32 @@ enum MouseEventType {
   BOOL hasMouseEventHandler =
     _props->hostPlatformEvents[HostPlatformViewEvents::Offset::MouseEnter] ||
     _props->hostPlatformEvents[HostPlatformViewEvents::Offset::MouseLeave];
-  BOOL wouldRecreateIdenticalTrackingArea =
-    hasMouseEventHandler && _trackingArea && NSEqualRects(self.bounds, [_trackingArea rect]);
+  // The tracking area is created with `NSTrackingInVisibleRect`, which makes
+  // AppKit keep its rect glued to the view's visible area for as long as it
+  // is installed — it survives resizes, scrolls and re-layouts without ever
+  // being rebuilt (the `rect:` argument is ignored for such an area).
+  //
+  // It used to be created from a snapshot of `self.bounds`, which went stale
+  // the moment the view was laid out at a different size. Nothing rebuilt it
+  // then: this method runs from `finalizeUpdates` only when the layer needs
+  // invalidating, so a size change driven purely by layout left the hover
+  // rectangle describing the view's OLD geometry — hover firing over a
+  // region the view no longer occupies, and not firing over the region it
+  // does. With the rect self-maintaining, the only question left is whether
+  // an area is installed at all.
+  BOOL trackingAreaIsUpToDate = hasMouseEventHandler && _trackingArea != nil;
 
-  if (!wouldRecreateIdenticalTrackingArea) {
-    [self removeTrackingArea:_trackingArea];
+  if (!trackingAreaIsUpToDate) {
+    if (_trackingArea) {
+      [self removeTrackingArea:_trackingArea];
+      _trackingArea = nil;
+    }
     if (hasMouseEventHandler) {
-      _trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
-                                                   options:NSTrackingActiveAlways|NSTrackingMouseEnteredAndExited
-                                                     owner:self
-                                                  userInfo:nil];
+      _trackingArea = [[NSTrackingArea alloc]
+          initWithRect:self.bounds
+               options:NSTrackingActiveAlways|NSTrackingMouseEnteredAndExited|NSTrackingInVisibleRect
+                 owner:self
+              userInfo:nil];
       [self addTrackingArea:_trackingArea];
       [self updateMouseOverIfNeeded];
     }

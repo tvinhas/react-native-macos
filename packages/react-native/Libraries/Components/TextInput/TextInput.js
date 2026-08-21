@@ -702,7 +702,19 @@ function InternalTextInput(props: TextInputProps): React.Node {
       onPress: (event: GestureResponderEvent) => {
         onPress?.(event);
         if (editable !== false) {
-          if (inputRef.current != null) {
+          // [macOS] Skip the focus() re-dispatch for KEYBOARD-synthesized
+          // presses. Pressability on macOS turns a space/Enter keyDown into
+          // a press (mimicking native controls), so typing a space INSIDE
+          // the field re-entered focus() — and on multiline inputs the
+          // native `focus` command makes the RCTWrappedTextView (the
+          // wrapper NSScrollView) first responder, displacing the inner
+          // RCTUITextView: the caret vanished on every spacebar press.
+          // Keyboard-synthesized press events carry `nativeEvent.key`;
+          // pointer presses don't, so mouse/touch focus is unchanged.
+          if (
+            event?.nativeEvent?.key == null &&
+            inputRef.current != null
+          ) {
             inputRef.current.focus();
           }
         }

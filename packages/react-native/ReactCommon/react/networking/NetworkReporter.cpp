@@ -18,8 +18,12 @@
 namespace facebook::react {
 
 NetworkReporter& NetworkReporter::getInstance() {
-  static NetworkReporter instance;
-  return instance;
+  // [macOS] Use a process-lifetime singleton. RCTNetworking callbacks can
+  // still arrive while AppKit is running exit() handlers; destroying this
+  // object at static-storage lifetime end leaves late callbacks locking a
+  // destroyed std::mutex and aborting the process.
+  static NetworkReporter *instance = new NetworkReporter();
+  return *instance;
 }
 
 bool NetworkReporter::isDebuggingEnabled() const {

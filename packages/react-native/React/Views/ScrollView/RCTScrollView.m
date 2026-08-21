@@ -48,7 +48,6 @@
 @property (nonatomic, strong) UIView<RCTCustomRefreshControlProtocol> *customRefreshControl;
 @property (nonatomic, assign) BOOL pinchGestureEnabled;
 #else // [macOS
-+ (BOOL)isCompatibleWithResponsiveScrolling;
 @property (nonatomic, assign, getter=isInverted) BOOL inverted;
 @property (nonatomic, assign, getter=isScrollEnabled) BOOL scrollEnabled;
 @property (nonatomic, strong) NSPanGestureRecognizer *panGestureRecognizer;
@@ -108,10 +107,10 @@
 }
 
 #if TARGET_OS_OSX // [macOS
-+ (BOOL)isCompatibleWithResponsiveScrolling
-{
-  return YES;
-}
+// tvinhas fork: responsive scrolling is opted out for ALL RN scroll
+// views in the shared macOS base class — see RCTUIScrollView.m
+// (Epistles EP-723). This class inherits that answer; the per-class
+// override it carried in tvinhas.5 (EP-719) was removed as redundant.
 
 - (BOOL)isFlipped
 {

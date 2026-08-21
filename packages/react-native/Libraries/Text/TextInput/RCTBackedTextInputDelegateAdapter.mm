@@ -284,8 +284,16 @@ static void *TextFieldSelectionObservingContext = &TextFieldSelectionObservingCo
     }
     //escape
   } else if (commandSelector == @selector(cancelOperation:)) {
-    [textInputDelegate textInputDidCancel];
-    if (![textInputDelegate hasKeyDownEventOrKeyUpEvent:@"Escape"]) {
+    // [macOS] Guard with respondsToSelector — the delegate protocol gained
+    // these methods in 0.83; older delegate objects crash without the check.
+    if ([textInputDelegate respondsToSelector:@selector(textInputDidCancel)]) {
+      [textInputDelegate textInputDidCancel];
+    }
+    BOOL delegateHasEscapeHandler = NO;
+    if ([textInputDelegate respondsToSelector:@selector(hasKeyDownEventOrKeyUpEvent:)]) {
+      delegateHasEscapeHandler = [textInputDelegate hasKeyDownEventOrKeyUpEvent:@"Escape"];
+    }
+    if (!delegateHasEscapeHandler) {
       [[_backedTextInputView window] makeFirstResponder:nil];
     }
     commandHandled = YES;
@@ -526,12 +534,20 @@ static void *TextFieldSelectionObservingContext = &TextFieldSelectionObservingCo
     commandHandled = textInputDelegate != nil && ![textInputDelegate textInputShouldHandleDeleteForward:_backedTextInputView];
     //escape
   } else if (commandSelector == @selector(cancelOperation:)) {
-    [textInputDelegate textInputDidCancel];
-    if (![textInputDelegate hasKeyDownEventOrKeyUpEvent:@"Escape"]) {
+    // [macOS] Guard with respondsToSelector — the delegate protocol gained
+    // these methods in 0.83; older delegate objects crash without the check.
+    if ([textInputDelegate respondsToSelector:@selector(textInputDidCancel)]) {
+      [textInputDelegate textInputDidCancel];
+    }
+    BOOL delegateHasEscapeHandler = NO;
+    if ([textInputDelegate respondsToSelector:@selector(hasKeyDownEventOrKeyUpEvent:)]) {
+      delegateHasEscapeHandler = [textInputDelegate hasKeyDownEventOrKeyUpEvent:@"Escape"];
+    }
+    if (!delegateHasEscapeHandler) {
       [[_backedTextInputView window] makeFirstResponder:nil];
     }
     commandHandled = YES;
-    
+
   }
 
   return commandHandled;

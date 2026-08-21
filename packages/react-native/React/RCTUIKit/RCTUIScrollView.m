@@ -15,6 +15,24 @@
 
 @implementation RCTUIScrollView
 
++ (BOOL)isCompatibleWithResponsiveScrolling
+{
+  // tvinhas fork (Epistles EP-723): NO, deliberately — and on THIS class,
+  // not only the Paper RCTScrollView pair (EP-719). RCTUIScrollView is the
+  // macOS NSScrollView base for BOTH architectures: Paper's
+  // RCTCustomScrollView and Fabric's RCTEnhancedScrollView subclass it.
+  // Neither subclass overrides scrollWheel:, so AppKit's default keeps
+  // responsive scrolling (concurrent scroll-event dispatch) ENABLED for a
+  // Fabric app even after EP-719 turned it off for the Paper classes.
+  // Responsive scrolling moves a claimed scroll gesture's event stream onto
+  // AppKit's concurrent dispatch path, bypassing -[NSApplication sendEvent:]
+  // and every NSEvent local monitor: the app sees the gesture's Began and
+  // then silence (EP-723: first swipe delivers Began-only; the next stroke's
+  // Changed stream arrives with no Began of its own). Opting the base class
+  // out restores classic main-thread dispatch for every RN scroll view.
+  return NO;
+}
+
 - (instancetype)initWithFrame:(CGRect)frame
 {
   if (self = [super initWithFrame:frame]) {

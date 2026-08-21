@@ -46,9 +46,31 @@
     
     _forwardingTextView.verticallyResizable = YES;
     _forwardingTextView.horizontallyResizable = YES;
+    // [Epistles] EP-266 / EP-193 / EP-199: give the NSTextView a floor height.
+    // Upstream leaves a `verticallyResizable` NSTextView with no `minSize`, so
+    // it collapses to its CONTENT height — in a sparsely-filled multiline field
+    // only a one-line strip at the top is the real text view and the rest of the
+    // visible box is bare NSClipView that swallows clicks. Clicking there fails
+    // to focus (only Tab works). `minSize` is the documented "text view in a
+    // scroll view" floor; we keep its height matched to the visible box in
+    // -setFrameSize: below so the whole box stays clickable while the field can
+    // still grow past the box (scrolling) when content exceeds it.
+    //
+    // EP-328: the WIDTH component of `minSize` is load-bearing too and must
+    // never be 0. The text view is `horizontallyResizable` and the container
+    // has `widthTracksTextView`, so with a 0 floor the view shrinks to its
+    // CONTENT width, the container follows it down, and the text wraps after
+    // roughly one character (an empty field wraps its placeholder into a
+    // one-glyph column). Keep the floor at the visible box width — maintained
+    // on every layout pass in -setFrameSize: below.
+    _forwardingTextView.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+    _forwardingTextView.minSize = self.bounds.size;
     _forwardingTextView.textContainer.containerSize = NSMakeSize(FLT_MAX, FLT_MAX);
     _forwardingTextView.textContainer.widthTracksTextView = YES;
     _forwardingTextView.textInputDelegate = self;
+    if ([_forwardingTextView respondsToSelector:@selector(setEnableFocusRing:)]) {
+      [_forwardingTextView setEnableFocusRing:YES];
+    }
     
     _scrollView.documentView = _forwardingTextView;
     _scrollView.contentView.postsBoundsChangedNotifications = YES;
@@ -69,6 +91,38 @@
   }
 
   return self;
+}
+
+// [Epistles] EP-266: keep the editable text view at least as tall as the
+// visible box on every layout pass, so a click anywhere in the field lands on
+// a focusable view instead of dead NSClipView (see initWithFrame:). Runs after
+// super so the auto-resized scroll view already reports its new visible height.
+// The text view is only GROWN to fill, never shrunk, so content taller than the
+// box keeps scrolling normally.
+//
+// [Epistles] EP-328: the same floor applies to WIDTH. Without it the
+// horizontally-resizable text view collapses to its content width and, because
+// the text container tracks the text view, the text wraps one character per
+// line. Width is pinned to the visible box (there is no horizontal scroller),
+// height stays a floor only.
+- (void)setFrameSize:(NSSize)newSize
+{
+  [super setFrameSize:newSize];
+  NSSize visibleSize = _scrollView.contentSize;
+  _forwardingTextView.minSize = visibleSize;
+  NSRect textFrame = _forwardingTextView.frame;
+  BOOL needsResize = NO;
+  if (textFrame.size.width != visibleSize.width) {
+    textFrame.size.width = visibleSize.width;
+    needsResize = YES;
+  }
+  if (textFrame.size.height < visibleSize.height) {
+    textFrame.size.height = visibleSize.height;
+    needsResize = YES;
+  }
+  if (needsResize) {
+    _forwardingTextView.frame = textFrame;
+  }
 }
 
 - (BOOL)isFlipped
@@ -197,12 +251,19 @@
 
 - (BOOL)enableFocusRing
 {
+  if ([_forwardingTextView respondsToSelector:@selector(enableFocusRing)]) {
+    return [_forwardingTextView enableFocusRing];
+  }
+
   return _scrollView.enableFocusRing;
 }
 
 - (void)setEnableFocusRing:(BOOL)enableFocusRing 
 {
   _scrollView.enableFocusRing = enableFocusRing;
+  if ([_forwardingTextView respondsToSelector:@selector(setEnableFocusRing:)]) {
+    [_forwardingTextView setEnableFocusRing:enableFocusRing];
+  }
 }
 
 @end
