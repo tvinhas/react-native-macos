@@ -123,10 +123,12 @@ def use_react_native! (
   # This is needed as part of our migration away from cocoapods
   ENV['RCT_SKIP_CODEGEN'] = ENV['RCT_SKIP_CODEGEN'] == '1' || ENV['RCT_IGNORE_PODS_DEPRECATION'] == '1' ? '1' : '0'
 
-  # Use the React Native precompiled binaries by default.
-  # Users can still turn them off and build from source by setting the environment variable to 0.
-  ENV['RCT_USE_RN_DEP'] = ENV['RCT_USE_RN_DEP'] == '0' ? '0' : '1'
-  ENV['RCT_USE_PREBUILT_RNCORE'] = ENV['RCT_USE_PREBUILT_RNCORE'] == '0' ? '0' : '1'
+  # [macOS Upstream defaults to Meta's precompiled binaries; react-native-macos
+  # cannot use them (no macOS slices, none of the fork's source changes), so
+  # default to building from source. Explicitly setting 1 still opts in.
+  ENV['RCT_USE_RN_DEP'] = ENV['RCT_USE_RN_DEP'] == '1' ? '1' : '0'
+  ENV['RCT_USE_PREBUILT_RNCORE'] = ENV['RCT_USE_PREBUILT_RNCORE'] == '1' ? '1' : '0'
+  # macOS]
   # Make `REMOVE_LEGACY_ARCH` enabled by default. This will build React Native
   # excluding the legacy arch unless the user turns this flag off explicitly.
   ENV['RCT_REMOVE_LEGACY_ARCH'] = ENV['RCT_REMOVE_LEGACY_ARCH'] == '0' ? '0' : '1'

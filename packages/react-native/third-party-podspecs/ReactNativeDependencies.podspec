@@ -15,6 +15,12 @@ begin
 rescue => e
   # Fallback to the parent directory if the above command fails (e.g when building locally in OOT Platform)
   react_native_path = File.join(__dir__, "..", "..")
+  # [macOS] The package is named react-native-macos, so the resolve above
+  # fails, and in this repo the package root is one level up, not two.
+  unless File.exist?(File.join(react_native_path, "package.json"))
+    react_native_path = File.join(__dir__, "..")
+  end
+  # macOS]
 end
 
 # package.json
