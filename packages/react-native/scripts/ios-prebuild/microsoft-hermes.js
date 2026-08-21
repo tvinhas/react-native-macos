@@ -110,21 +110,24 @@ function hermesCommitAtMergeBase() /*: {| commit: string, timestamp: string |} *
   const hermesGitDir = path.join(tmpDir, 'hermes.git');
 
   try {
-    // Explicitly use Hermes 'main' branch since the default branch changed to 'static_h' (Hermes V1)
+    // RN 0.87 is Hermes-V1-only; V1 releases are cut from the pinned stable
+    // branch, so resolve the merge-base commit there (branch 'main' is the
+    // legacy V0 engine, removed in 0.87).
+    const HERMES_STABLE_BRANCH = '250829098.0.0-stable';
     execSync(
-      `git clone -q --bare --filter=blob:none --single-branch --branch main ${HERMES_GITHUB_URL} "${hermesGitDir}"`,
+      `git clone -q --bare --filter=blob:none --single-branch --branch ${HERMES_STABLE_BRANCH} ${HERMES_GITHUB_URL} "${hermesGitDir}"`,
       {stdio: 'pipe', timeout: 120000},
     );
 
-    // Find the Hermes commit at the time of the merge base on branch 'main'
+    // Find the Hermes commit at the time of the merge base on the stable branch
     const commit = execSync(
-      `git --git-dir="${hermesGitDir}" rev-list -1 --before="${timestamp}" refs/heads/main`,
+      `git --git-dir="${hermesGitDir}" rev-list -1 --before="${timestamp}" refs/heads/${HERMES_STABLE_BRANCH}`,
       {encoding: 'utf8'},
     ).trim();
 
     if (!commit) {
       abort(
-        `[Hermes] Unable to find the Hermes commit hash at time ${timestamp} on branch 'main'.`,
+        `[Hermes] Unable to find the Hermes commit hash at time ${timestamp} on branch '${HERMES_STABLE_BRANCH}'.`,
       );
     }
 

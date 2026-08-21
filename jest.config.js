@@ -30,6 +30,11 @@ module.exports = {
     // `resolver.js` strips `exports`, so alias this subpath to its `src/` impl.
     '^react-native/setup-env$':
       '<rootDir>/packages/react-native/src/setup-env.js',
+    // [macOS
+    // These mappers allow out-of-tree platforms tests to resolve RN imports
+    '^react-native/(.*)': '<rootDir>/packages/react-native/$1',
+    '^react-native$': '<rootDir>/packages/react-native/index.js',
+    // macOS]
   },
   setupFiles: ['./packages/jest-preset/jest/local-setup.js'],
   fakeTimers: {
@@ -54,13 +59,6 @@ module.exports = {
     defaultPlatform: 'ios',
     platforms: ['ios', 'android', 'macos'], // [macOS]
   },
-  // [macOS
-  moduleNameMapper: {
-    // These mappers allow out-of-tree platforms tests to resolve RN imports
-    '^react-native/(.*)': '<rootDir>/packages/react-native/$1',
-    '^react-native$': '<rootDir>/packages/react-native/index.js',
-  },
-  // macOS]
   moduleFileExtensions: [
     'fb.js',
     ...defaults.moduleFileExtensions,

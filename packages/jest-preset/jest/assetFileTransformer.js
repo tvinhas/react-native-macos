@@ -18,10 +18,17 @@ const path = require('path');
 
 // NOTE: This file used to be at `react-native/jest/assetFileTransformer.js`
 // To keep the mock `testUri` paths the same, we create a fake path that outputs the same relative path as before
-const basePath = path.resolve(
-  require.resolve('react-native/package.json'),
-  '../jest/',
-);
+// [macOS
+// In the react-native-macos monorepo the core workspace package is named
+// `react-native-macos`, so resolving `react-native` fails; fall back to it.
+let reactNativePackageJson;
+try {
+  reactNativePackageJson = require.resolve('react-native/package.json');
+} catch {
+  reactNativePackageJson = require.resolve('react-native-macos/package.json');
+}
+const basePath = path.resolve(reactNativePackageJson, '../jest/');
+// macOS]
 
 module.exports = {
   // Mocks asset requires to return the filename. Makes it possible to test that
