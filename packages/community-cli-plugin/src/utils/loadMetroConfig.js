@@ -61,9 +61,22 @@ function getCommunityCliDefaultConfig(
       // We can include multiple copies of setup-env here because Metro will
       // only add ones that are already part of the bundle
       getModulesRunBeforeMainModule: () => [
-        require.resolve('react-native/setup-env', {
-          paths: [ctx.root],
-        }),
+        // [macOS] Inside the react-native-macos monorepo there is no
+        // package named 'react-native' (the core workspace is
+        // react-native-macos), so this resolve throws when bundling
+        // rn-tester in-repo. Tolerate the miss; the out-of-tree platform
+        // entries below supply setup-env.
+        ...(() => {
+          try {
+            return [
+              require.resolve('react-native/setup-env', {
+                paths: [ctx.root],
+              }),
+            ];
+          } catch {
+            return [];
+          }
+        })(), // macOS]
         ...outOfTreePlatforms.map(platform =>
           require.resolve(
             `${ctx.platforms[platform].npmPackageName}/setup-env`,
