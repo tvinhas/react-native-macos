@@ -171,22 +171,40 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
 
 - (void)updateProps:(const Props::Shared &)props oldProps:(const Props::Shared &)oldProps
 {
-  const auto &oldParagraphProps = static_cast<const ParagraphProps &>(*_props);
   const auto &newParagraphProps = static_cast<const ParagraphProps &>(*props);
 
   _paragraphAttributes = newParagraphProps.paragraphAttributes;
   _textView.paragraphAttributes = _paragraphAttributes;
 
-  if (newParagraphProps.isSelectable != oldParagraphProps.isSelectable) {
-    // [macOS Replaced enableContextMenu/disableContextMenu with _enableSelection/_disableSelection
-    // to swap in a native text view that supports text selection.
-    if (newParagraphProps.isSelectable) {
-      [self _enableSelection];
-    } else {
-      [self _disableSelection];
-    }
-    // macOS]
+  // [macOS Replaced enableContextMenu/disableContextMenu with _enableSelection/_disableSelection
+  // to swap in a native text view that supports text selection.
+  //
+  // Driven from the NEW props every time, with no comparison against the
+  // old ones. Both helpers early-return when the view is already in the
+  // requested state, so this costs a branch; comparing first cost text
+  // selection outright.
+  //
+  // The comparison read `*_props`, and `prepareForRecycle` tears the
+  // selectable text view down WITHOUT resetting `_props` — the base
+  // class deliberately does not reset it either. So a recycled view came
+  // back with no NSTextView and `_props.isSelectable` still true, the
+  // comparison against equally-true new props found no change, and
+  // `_enableSelection` was never called again. The paragraph stayed
+  // unselectable for the rest of that view's life.
+  //
+  // Fabric recycles aggressively, so in practice this meant selection
+  // worked on the first paragraph a view ever rendered and on nothing
+  // afterwards. Reported against an email client whose plain-text bodies
+  // render as native Text: the first message read after launch could be
+  // selected and copied, every message after it could not, while HTML
+  // bodies (a WebView, no Paragraph involved) were unaffected the whole
+  // time.
+  if (newParagraphProps.isSelectable) {
+    [self _enableSelection];
+  } else {
+    [self _disableSelection];
   }
+  // macOS]
 
   [super updateProps:props oldProps:oldProps];
 }
