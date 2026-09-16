@@ -34,7 +34,10 @@
       "default": "./index.js"
     },
     "./Libraries/*": {
-      "react-native-legacy-deep-imports": "./types_DEPRECATED/Libraries/*.d.ts",
+      "react-native-legacy-deep-imports": [
+        "./types_DEPRECATED/Libraries/*.d.ts",
+        "./Libraries/*.d.ts"
+      ],
       "types": null,
       "default": "./Libraries/*.js"
     },
