@@ -222,6 +222,40 @@
   return self;
 }
 
+/**
+ * NSTextField does not implement `selectAll:` — NSControl's `selectText:`
+ * is the equivalent, and selects the whole of the field editor's contents.
+ *
+ * Fabric's `-[RCTTextInputComponentView focus]` sends `selectAll:` to
+ * whatever backs the input whenever `selectTextOnFocus` is set. The
+ * MULTILINE backing view is an NSTextView, which has `selectAll:`, so that
+ * path always worked and hid the asymmetry; this one inherits from
+ * NSTextField, which does not, so the message fell through to forwarding
+ * and raised NSInvalidArgumentException. An uncaught ObjC exception on the
+ * main thread aborts, so a `<TextInput selectTextOnFocus>` that is not
+ * multiline TERMINATED the app the moment it was clicked — clicking is
+ * enough, because TextInput.js re-dispatches `focus()` on press.
+ *
+ * Reported against Epistles 1.8.6 on macOS 27 as a crash when clicking the
+ * hour field of a calendar event editor:
+ *   -[RCTUITextField selectAll:]: unrecognized selector sent to instance
+ *   ... -[RCTTextInputComponentView focus] + 192
+ *
+ * Implemented here rather than guarded at the call site so that both macOS
+ * backing views honour the same contract, which is what the call site has
+ * always assumed. The multiline one meets it by forwarding: RCTWrappedTextView
+ * has no `selectAll:` either, but its `methodSignatureForSelector:` hands
+ * unknown selectors to the NSTextView it wraps. Deliberately NOT added to
+ * `RCTBackedTextInputViewProtocol` — that wrapper already relies on the same
+ * forwarding for four other protocol methods, so declaring this one would
+ * only add a fifth "does not implement" warning to a class that answers it
+ * correctly at runtime.
+ */
+- (void)selectAll:(nullable id)sender
+{
+  [self selectText:sender];
+}
+
 + (Class)cellClass
 {
   return RCTUITextFieldCell.class;
