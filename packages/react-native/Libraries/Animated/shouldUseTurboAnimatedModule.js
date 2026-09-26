@@ -15,7 +15,15 @@ function shouldUseTurboAnimatedModule(): boolean {
   if (ReactNativeFeatureFlags.cxxNativeAnimatedEnabled()) {
     return false;
   } else {
-    return Platform.OS === 'ios' && global.RN$Bridgeless === true;
+    // [macOS] Bridgeless macOS registers RCTNativeAnimatedTurboModule too.
+    // Checking 'ios' alone sent macOS to the legacy module, whose operations
+    // wait on Paper UIManager mounting that never happens: native-driven
+    // animations were queued, never ran, and never finished.
+    return (
+      (Platform.OS === 'ios' || Platform.OS === 'macos') &&
+      global.RN$Bridgeless === true
+    );
+    // macOS]
   }
 }
 
