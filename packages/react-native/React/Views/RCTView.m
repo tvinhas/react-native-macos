@@ -981,8 +981,14 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : unused)
     return NO;
   }
 
-  // If we've gained focus, notify listeners
-  [_eventDispatcher sendEvent:[RCTFocusChangeEvent focusEventWithReactTag:self.reactTag]];
+  // If we've gained focus, notify listeners. A view with no React tag (a
+  // legacy RCTView hosted under Fabric) has nobody to notify, and building
+  // the event with a nil tag inserts nil into an NSArray, which throws and
+  // aborts the app (Epistles EP-1692).
+  NSNumber *reactTag = self.reactTag;
+  if (reactTag != nil) {
+    [_eventDispatcher sendEvent:[RCTFocusChangeEvent focusEventWithReactTag:reactTag]];
+  }
 
   return YES;
 }
@@ -993,8 +999,13 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : unused)
     return NO;
   }
 
-  // If we've lost focus, notify listeners
-  [_eventDispatcher sendEvent:[RCTFocusChangeEvent blurEventWithReactTag:self.reactTag]];
+  // If we've lost focus, notify listeners. Same nil-tag guard as above:
+  // this is the path that crashed, when focus moved to a text field or a
+  // web view and the previous first responder was a tagless RCTView.
+  NSNumber *reactTag = self.reactTag;
+  if (reactTag != nil) {
+    [_eventDispatcher sendEvent:[RCTFocusChangeEvent blurEventWithReactTag:reactTag]];
+  }
 
   return YES;
 }
