@@ -29,10 +29,6 @@ const nullthrows = require('nullthrows');
 const GITHUB_OWNER = 'react';
 const GITHUB_REPO = 'react-native';
 
-// Upload POSTs are not preserved when GitHub redirects from the former owner.
-const GITHUB_OWNER = 'react';
-const GITHUB_REPO = 'react-native';
-
 /*::
 import type {DotSlashProvider, DotSlashHttpProvider, DotSlashArtifactInfo} from './utils/dotslash-utils';
 import type {IOctokit} from './utils/octokit-utils';

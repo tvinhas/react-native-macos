@@ -25,6 +25,18 @@ const ReactTestRenderer = require('react-test-renderer');
 
 jest.unmock('../TextInput');
 
+// [macOS] Since 0.88 the renderer resolves a native command's target through
+// react-native/react-private-interface, which finds no host node for a
+// react-test-renderer instance and logs an error. Native commands have no host
+// to reach in this legacy test; what it asserts is the JS-side state.
+jest.mock('../../../Utilities/codegenNativeCommands', () => ({
+  __esModule: true,
+  default: (options: {supportedCommands: ReadonlyArray<string>}) =>
+    Object.fromEntries(
+      options.supportedCommands.map(command => [command, jest.fn()]),
+    ),
+}));
+
 [true, false].forEach(useTextChildren => {
   describe(`TextInput tests (useTextChildren = ${String(useTextChildren)})`, () => {
     let input;
