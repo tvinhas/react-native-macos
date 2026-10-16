@@ -42,6 +42,7 @@ using namespace facebook::react;
 
 @end
 
+#if !TARGET_OS_OSX // [macOS]
 static NSDictionary *RCTConvertConnectionOptionsToLaunchOptions(UISceneConnectionOptions *connectionOptions)
 {
   NSMutableDictionary *launchOptions = [NSMutableDictionary dictionary];
@@ -68,6 +69,7 @@ static NSDictionary *RCTConvertConnectionOptionsToLaunchOptions(UISceneConnectio
 
   return launchOptions;
 }
+#endif // [macOS]
 
 @implementation RCTReactNativeFactory
 
@@ -129,6 +131,7 @@ static NSDictionary *RCTConvertConnectionOptionsToLaunchOptions(UISceneConnectio
 #endif // macOS]
 }
 
+#if !TARGET_OS_OSX // [macOS]
 #pragma mark - UIScene.ConnectionOptions
 
 - (void)startReactNativeWithModuleName:(NSString *)moduleName
@@ -151,6 +154,7 @@ static NSDictionary *RCTConvertConnectionOptionsToLaunchOptions(UISceneConnectio
                      initialProperties:initialProperties
                          launchOptions:RCTConvertConnectionOptionsToLaunchOptions(connectionOptions)];
 }
+#endif // [macOS]
 
 #pragma mark - RCTUIConfiguratorProtocol
 

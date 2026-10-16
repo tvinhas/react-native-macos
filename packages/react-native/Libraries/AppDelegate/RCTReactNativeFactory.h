@@ -82,6 +82,7 @@ typedef NS_ENUM(NSInteger, RCTReleaseLevel) { Canary, Experimental, Stable };
                      initialProperties:(NSDictionary *_Nullable)initialProperties
                          launchOptions:(NSDictionary *_Nullable)launchOptions;
 
+#if !TARGET_OS_OSX // [macOS]
 /**
  * SceneDelegate entrypoint to start a React Native instance with the specified module name, window, and connection
  * options for linking and user activity information. Only the first item in `URLContexts` and `userActivities` is used.
@@ -105,6 +106,7 @@ typedef NS_ENUM(NSInteger, RCTReleaseLevel) { Canary, Experimental, Stable };
                               inWindow:(UIWindow *_Nullable)window
                      initialProperties:(NSDictionary *_Nullable)initialProperties
                      connectionOptions:(UISceneConnectionOptions *_Nullable)connectionOptions;
+#endif // [macOS]
 
 #if !defined(RCT_REMOVE_LEGACY_ARCH)
 @property (nonatomic, nullable) RCTBridge *bridge
