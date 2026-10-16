@@ -49,7 +49,7 @@ using namespace facebook::react;
 
 const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
 
-#if !TARGET_OS_TV
+#if !TARGET_OS_TV && !TARGET_OS_OSX // [macOS]
 // iOS Full Keyboard Access only focuses a view when it is an accessibility
 // element that also exposes an interactive trait. Views that surface their
 // interactivity through a grouping accessibility element (rather than the
@@ -1866,7 +1866,7 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
 
 - (BOOL)canBecomeFocused
 {
-#if !TARGET_OS_TV
+#if !TARGET_OS_TV && !TARGET_OS_OSX // [macOS]
   return _focusable || RCTViewIsInteractiveAccessibilityElement(self, static_cast<const ViewProps &>(*_props));
 #else
   return _focusable;

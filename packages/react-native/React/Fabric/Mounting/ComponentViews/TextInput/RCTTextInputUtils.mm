@@ -26,7 +26,9 @@ void RCTCopyBackedTextInput(
   toTextInput.attributedText = RCTSanitizeAttributedString(fromTextInput.attributedText);
   toTextInput.placeholder = fromTextInput.placeholder;
   toTextInput.placeholderColor = fromTextInput.placeholderColor;
+#if !TARGET_OS_OSX // [macOS]
   toTextInput.tintColor = fromTextInput.tintColor;
+#endif // [macOS]
   toTextInput.textContainerInset = fromTextInput.textContainerInset;
 
 #if TARGET_OS_OSX // [macOS

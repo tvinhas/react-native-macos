@@ -66,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #define UIFontDescriptorTraitsAttribute          NSFontTraitsAttribute
 #define UIFontDescriptorFeatureSettingsAttribute NSFontFeatureSettingsAttribute
+#define UIFontDescriptorAttributeName            NSFontDescriptorAttributeName
 
 #define UIFontSymbolicTrait                      NSFontSymbolicTrait
 #define UIFontWeightTrait                        NSFontWeightTrait
