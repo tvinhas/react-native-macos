@@ -26,7 +26,7 @@ RCT_EXPORT_MODULE()
   return dispatch_get_main_queue();
 }
 
-RCT_EXPORT_METHOD(setString : (NSString *)content)
+- (void)setString:(NSString *)content
 {
 #if !TARGET_OS_OSX // [macOS]
 #if !TARGET_OS_TV
@@ -40,7 +40,7 @@ RCT_EXPORT_METHOD(setString : (NSString *)content)
 #endif // macOS]
 }
 
-RCT_EXPORT_METHOD(getString : (RCTPromiseResolveBlock)resolve reject : (__unused RCTPromiseRejectBlock)reject)
+- (void)getString:(RCTPromiseResolveBlock)resolve reject:(__unused RCTPromiseRejectBlock)reject
 {
 #if !TARGET_OS_OSX // [macOS]
 #if !TARGET_OS_TV

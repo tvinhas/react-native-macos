@@ -114,6 +114,12 @@ const PodspecExceptions /*: {[key: string]: PodSpecConfiguration} */ = {
           },
 
           {
+            name: 'viewUmbrella',
+            headerPatterns: ['react/renderer/components/view/React/*.h'],
+            headerDir: 'React',
+          },
+
+          {
             name: 'scrollview',
             headerPatterns: ['react/renderer/components/scrollview/**/*.h'],
             headerDir: 'react/renderer/components/scrollview',
@@ -281,6 +287,23 @@ const PodspecExceptions /*: {[key: string]: PodSpecConfiguration} */ = {
     headerPatterns: ['*.h'],
     headerDir: 'jsinspector-modern/tracing',
   },
+  'ReactCommon/react/featureflags/React-featureflags.podspec': {
+    name: 'React-featureflags',
+    headerPatterns: [],
+    headerDir: '',
+    subSpecs: [
+      {
+        name: 'featureflags',
+        headerPatterns: ['*.h'],
+        headerDir: 'react/featureflags',
+      },
+      {
+        name: 'featureflagsUmbrella',
+        headerPatterns: ['React/*.h'],
+        headerDir: 'React',
+      },
+    ],
+  },
   'React/React-RCTFabric.podspec': {
     name: 'React-RCTFabric',
     headerPatterns: ['Fabric/**/*.h'],
@@ -432,6 +455,52 @@ const PodspecExceptions /*: {[key: string]: PodSpecConfiguration} */ = {
       },
     ],
   },
+  'ReactCommon/React-Mapbuffer.podspec': {
+    name: 'React-Mapbuffer',
+    headerPatterns: ['react/renderer/mapbuffer/**/*.h'],
+    excludePatterns: [
+      'react/renderer/mapbuffer/tests',
+      'react/renderer/mapbuffer/React',
+    ],
+    headerDir: 'react/renderer/mapbuffer',
+    subSpecs: [
+      {
+        name: 'mapbufferUmbrella',
+        headerPatterns: ['react/renderer/mapbuffer/React/*.h'],
+        headerDir: 'React',
+      },
+    ],
+  },
+  'ReactCommon/callinvoker/React-callinvoker.podspec': {
+    name: 'React-callinvoker',
+    headerPatterns: ['**/*.h'],
+    excludePatterns: ['React/**'],
+    headerDir: 'ReactCommon',
+    subSpecs: [
+      {
+        name: 'callinvokerUmbrella',
+        headerPatterns: ['React/*.h'],
+        headerDir: 'React',
+      },
+    ],
+  },
+  'ReactCommon/react/debug/React-debug.podspec': {
+    name: 'React-debug',
+    headerPatterns: ['*.h'],
+    headerDir: 'react/debug',
+    subSpecs: [
+      {
+        name: 'debugUmbrella',
+        headerPatterns: ['React/*.h'],
+        headerDir: 'React',
+      },
+      {
+        name: 'redbox',
+        headerPatterns: ['redbox/*.h'],
+        headerDir: 'react/debug/redbox',
+      },
+    ],
+  },
   'React-Core.podspec': {
     name: 'React-Core',
     headerPatterns: [],
@@ -496,6 +565,23 @@ const PodspecExceptions /*: {[key: string]: PodSpecConfiguration} */ = {
     ],
   },
   'React.podspec': {disabled: true},
+  'ReactCommon/react/timing/React-timing.podspec': {
+    name: 'React-timing',
+    headerPatterns: [],
+    headerDir: '',
+    subSpecs: [
+      {
+        name: 'timing',
+        headerPatterns: ['*.h'],
+        headerDir: 'react/timing',
+      },
+      {
+        name: 'timingUmbrella',
+        headerPatterns: ['React/*.h'],
+        headerDir: 'React',
+      },
+    ],
+  },
   'Libraries/PushNotificationIOS/React-RCTPushNotification.podspec': {
     disabled: true,
   },

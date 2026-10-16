@@ -42,7 +42,17 @@
  * Per-artifact version overrides (mirrors existing env vars):
  *   HERMES_VERSION=<ver|nightly|latest-v1>
  *   RN_DEP_VERSION=<ver|nightly>
- *   ENTERPRISE_REPOSITORY=<url>   Custom Maven mirror (must match Maven structure)
+ *
+ * Repository selection:
+ *   Release tarballs are looked up on the React Native Maven mirror first,
+ *   with Maven Central as the fallback when the mirror doesn't have the
+ *   artifact (or errors). Nightlies/snapshots always come from Sonatype.
+ *   ENTERPRISE_REPOSITORY=<url>   Custom Maven repository (must match the
+ *                                 Maven structure). When set it is the ONLY
+ *                                 repository consulted (no mirror/Central).
+ *   RCT_REACT_NATIVE_MAVEN_MIRROR_ENABLED=false|0
+ *                                 Skip the mirror and go straight to Maven
+ *                                 Central.
  *
  * Output:
  *   <output>/React.xcframework/
@@ -57,10 +67,10 @@ const {
   makeLogger,
   sharedCacheDir,
 } = require('./spm-utils');
-const {execFileSync} = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const stream = require('stream');
+const {execFileSync} = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const stream = require('node:stream');
 const yargs = require('yargs');
 
 const {log, warn, die} = makeLogger('download-spm-artifacts');
@@ -128,36 +138,69 @@ function parseArgs(argv /*: Array<string> */) /*: DownloadArgs */ {
   };
 }
 
-const MAVEN_RELEASE =
-  process.env.ENTERPRISE_REPOSITORY ?? 'https://repo1.maven.org/maven2';
+const MAVEN_CENTRAL_REPOSITORY = 'https://repo1.maven.org/maven2';
+const REACT_NATIVE_MAVEN_MIRROR_REPOSITORY =
+  'https://repo.reactnative.dev/maven2';
 const MAVEN_SNAPSHOT =
   'https://central.sonatype.com/repository/maven-snapshots';
 
-function rnCoreReleaseUrl(
+/**
+ * The mirror is ON unless RCT_REACT_NATIVE_MAVEN_MIRROR_ENABLED is
+ * explicitly "false"/"0".
+ */
+function reactNativeMavenMirrorEnabled() /*: boolean */ {
+  const value = process.env.RCT_REACT_NATIVE_MAVEN_MIRROR_ENABLED;
+  if (value == null || value === '') {
+    return true;
+  }
+  return value.toLowerCase() !== 'false' && value !== '0';
+}
+
+/**
+ * Release repositories to try, in order.
+ * When ENTERPRISE_REPOSITORY is set it is the ONLY repository consulted.  
+ *
+ * Otherwise the React Native Maven mirror is kept before Maven Central so
+ * cached artifacts are tried first and Maven Central remains the fallback.
+ */
+function mavenRepositoryUrls() /*: Array<string> */ {
+  const enterpriseRepository = process.env.ENTERPRISE_REPOSITORY?.trim();
+  if (enterpriseRepository != null && enterpriseRepository !== '') {
+    return [enterpriseRepository.replace(/\/+$/, '')];
+  }
+  return reactNativeMavenMirrorEnabled()
+    ? [REACT_NATIVE_MAVEN_MIRROR_REPOSITORY, MAVEN_CENTRAL_REPOSITORY]
+    : [MAVEN_CENTRAL_REPOSITORY];
+}
+
+function rnCoreReleaseUrls(
   version /*: string */,
   flavor /*: string */,
-) /*: string */ {
-  return (
-    `${MAVEN_RELEASE}/com/facebook/react/react-native-artifacts/${version}/` +
-    `react-native-artifacts-${version}-reactnative-core-${flavor}.tar.gz`
+) /*: Array<string> */ {
+  return mavenRepositoryUrls().map(
+    repository =>
+      `${repository}/com/facebook/react/react-native-artifacts/${version}/` +
+      `react-native-artifacts-${version}-reactnative-core-${flavor}.tar.gz`,
   );
 }
-function rnDepsReleaseUrl(
+function rnDepsReleaseUrls(
   version /*: string */,
   flavor /*: string */,
-) /*: string */ {
-  return (
-    `${MAVEN_RELEASE}/com/facebook/react/react-native-artifacts/${version}/` +
-    `react-native-artifacts-${version}-reactnative-dependencies-${flavor}.tar.gz`
+) /*: Array<string> */ {
+  return mavenRepositoryUrls().map(
+    repository =>
+      `${repository}/com/facebook/react/react-native-artifacts/${version}/` +
+      `react-native-artifacts-${version}-reactnative-dependencies-${flavor}.tar.gz`,
   );
 }
-function hermesReleaseUrl(
+function hermesReleaseUrls(
   version /*: string */,
   flavor /*: string */,
-) /*: string */ {
-  return (
-    `${MAVEN_RELEASE}/com/facebook/hermes/hermes-ios/${version}/` +
-    `hermes-ios-${version}-hermes-ios-${flavor}.tar.gz`
+) /*: Array<string> */ {
+  return mavenRepositoryUrls().map(
+    repository =>
+      `${repository}/com/facebook/hermes/hermes-ios/${version}/` +
+      `hermes-ios-${version}-hermes-ios-${flavor}.tar.gz`,
   );
 }
 
@@ -320,10 +363,26 @@ async function exists(url /*: string */) /*: Promise<boolean> */ {
 }
 
 /**
+ * Probes candidate URLs in order and returns the first one that exists
+ * (HTTP 200 on HEAD), or null when none do.
+ */
+async function firstExistingUrl(
+  candidates /*: Array<string> */,
+) /*: Promise<string | null> */ {
+  for (const url of candidates) {
+    if (await exists(url)) {
+      return url;
+    }
+  }
+  return null;
+}
+
+/**
  * Returns {url, version} for the React Native core xcframework tarball.
  * Resolution order:
- *   1. Stable release on Maven Central
- *   2. Snapshot build on Sonatype
+ *   1. Stable release on the RN Maven mirror
+ *   2. Stable release on Maven Central
+ *   3. Snapshot build on Sonatype
  */
 async function resolveRNCoreArtifact(
   version /*: string */,
@@ -344,12 +403,12 @@ async function resolveRNCoreArtifact(
     log(`  Using LOCAL core tarball: ${localTarball}`);
     return {url: localTarball, version: `${version}-local`};
   }
-  const releaseUrl = rnCoreReleaseUrl(version, flavor);
-  if (await exists(releaseUrl)) {
+  const releaseUrl = await firstExistingUrl(rnCoreReleaseUrls(version, flavor));
+  if (releaseUrl != null) {
     log(`  Using stable release: ${releaseUrl}`);
     return {url: releaseUrl, version};
   }
-  log(`  Release not found, trying snapshot...`);
+  log(`  Release not found in any Maven repository, trying snapshot...`);
   const snapshotUrl = await rnCoreSnapshotUrl(version, flavor);
   return {url: snapshotUrl, version};
 }
@@ -383,22 +442,21 @@ async function resolveRNDepsArtifact(
     version = await resolveNightlyVersion('react-native');
   }
 
-  const releaseUrl = rnDepsReleaseUrl(version, flavor);
-  if (await exists(releaseUrl)) {
+  const releaseUrl = await firstExistingUrl(rnDepsReleaseUrls(version, flavor));
+  if (releaseUrl != null) {
     log(`  Using stable release: ${releaseUrl}`);
     return {url: releaseUrl, version};
   }
-  log(`  Release not found, trying snapshot...`);
+  log(`  Release not found in any Maven repository, trying snapshot...`);
   const snapshotUrl = await rnDepsSnapshotUrl(version, flavor);
   return {url: snapshotUrl, version};
 }
 
 /**
  * Resolves the `hermes-compiler` npm package's version from THIS project's own
- * node_modules — the exact same lookup generate-spm-xcodeproj.js's
- * resolveHermesCliPathSetting() uses to find the hermesc binary that will
- * compile the JS bundle, and the same one react-native-xcode.sh falls back to
- * for SwiftPM builds. Returns null when the package isn't resolvable (e.g.
+ * node_modules — the same lookup react-native-xcode.sh falls back to for
+ * SwiftPM builds to find the hermesc binary that compiles the JS bundle.
+ * Returns null when the package isn't resolvable (e.g.
  * USE_HERMES=false apps that never installed it) so the caller can fall back
  * to the npm dist-tag lookup.
  */
@@ -440,8 +498,8 @@ function resolveLocalHermesCompilerVersion(
  *   HERMES_VERSION unset       → version pinned by the locally installed
  *                                hermes-compiler package (node_modules).
  *                                This is the SAME source
- *                                resolveHermesCliPathSetting() reads for
- *                                HERMES_CLI_PATH, so the downloaded VM and
+ *                                react-native-xcode.sh resolves hermesc
+ *                                from, so the downloaded VM and
  *                                the hermesc that compiles the JS bundle
  *                                always agree — a mismatched pair crashes at
  *                                launch with "Wrong bytecode version" (#57917).
@@ -479,12 +537,12 @@ async function resolveHermesArtifact(
     version = await resolveLatestV1Version();
   }
 
-  const releaseUrl = hermesReleaseUrl(version, flavor);
-  if (await exists(releaseUrl)) {
+  const releaseUrl = await firstExistingUrl(hermesReleaseUrls(version, flavor));
+  if (releaseUrl != null) {
     log(`  Using stable release: ${releaseUrl}`);
     return {url: releaseUrl, version};
   }
-  log(`  Release not found, trying snapshot...`);
+  log(`  Release not found in any Maven repository, trying snapshot...`);
   const snapshotUrl = await hermesSnapshotUrl(version, flavor);
   return {url: snapshotUrl, version};
 }
@@ -1451,9 +1509,12 @@ module.exports = {
   REQUIRED_ARTIFACTS,
   validateArtifactsCache,
   // Exposed for unit tests (pure / fetch-stubbable helpers).
-  rnCoreReleaseUrl,
-  rnDepsReleaseUrl,
-  hermesReleaseUrl,
+  mavenRepositoryUrls,
+  reactNativeMavenMirrorEnabled,
+  rnCoreReleaseUrls,
+  rnDepsReleaseUrls,
+  hermesReleaseUrls,
+  firstExistingUrl,
   resolveSnapshotUrl,
   resolveNightlyVersion,
   resolveLatestV1Version,

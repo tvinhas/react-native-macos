@@ -13,15 +13,14 @@ import '@react-native/fantom/src/setUpDefaultReactNativeEnvironment';
 import type {AccessibilityProps, HostInstance} from 'react-native';
 
 import * as Fantom from '@react-native/fantom';
+import nullthrows from 'nullthrows';
 import * as React from 'react';
 import {createRef} from 'react';
 import {Image} from 'react-native';
 import * as ImageInjection from 'react-native/Libraries/Image/ImageInjection';
 import accessibilityPropsSuite from 'react-native/src/private/__tests__/utilities/accessibilityPropsSuite';
 import {testIDPropSuite} from 'react-native/src/private/__tests__/utilities/commonPropsSuite';
-import ensureInstance from 'react-native/src/private/__tests__/utilities/ensureInstance';
 import NativeFantom from 'react-native/src/private/testing/fantom/specs/NativeFantom';
-import ReactNativeElement from 'react-native/src/private/webapis/dom/nodes/ReactNativeElement';
 
 const LOGO_SOURCE = {uri: 'https://reactnative.dev/img/tiny_logo.png'};
 
@@ -103,19 +102,28 @@ describe('<Image>', () => {
         );
       });
 
-      it('sets the "Access-Control-Allow-Credentials" header in "use-credentials" mode', () => {
+      it('adds the credentials header without replacing source headers', () => {
         const root = Fantom.createRoot();
 
         Fantom.runTask(() => {
           root.render(
-            <Image crossOrigin="use-credentials" source={LOGO_SOURCE} />,
+            <Image
+              crossOrigin="use-credentials"
+              source={{
+                ...LOGO_SOURCE,
+                headers: {Authorization: 'Bearer token'},
+              }}
+            />,
           );
         });
 
         expect(
           root.getRenderedOutput({props: ['source-header']}).toJSX(),
         ).toEqual(
-          <rn-image source-header-Access-Control-Allow-Credentials="true" />,
+          <rn-image
+            source-header-Access-Control-Allow-Credentials="true"
+            source-header-Authorization="Bearer token"
+          />,
         );
       });
     });
@@ -214,7 +222,7 @@ describe('<Image>', () => {
 
           expect(onPropCallback).toHaveBeenCalledTimes(0);
 
-          const image = ensureInstance(ref.current, ReactNativeElement);
+          const image = nullthrows(ref.current);
           Fantom.dispatchNativeEvent(image, onProp, {});
 
           expect(onPropCallback).toHaveBeenCalledTimes(1);
@@ -621,6 +629,116 @@ describe('<Image>', () => {
       });
     });
 
+    describe('alt', () => {
+      it('is passed as accessibilityLabel and marks the image accessible', () => {
+        const root = Fantom.createRoot();
+        Fantom.runTask(() => {
+          root.render(<Image alt="a picture" source={LOGO_SOURCE} />);
+        });
+        expect(
+          root
+            .getRenderedOutput({props: ['accessibilityLabel', 'accessible']})
+            .toJSX(),
+        ).toEqual(
+          <rn-image accessibilityLabel="a picture" accessible="true" />,
+        );
+      });
+    });
+
+    describe('aria-label', () => {
+      it('is passed as accessibilityLabel', () => {
+        const root = Fantom.createRoot();
+        Fantom.runTask(() => {
+          root.render(<Image aria-label="labelled" source={LOGO_SOURCE} />);
+        });
+        expect(
+          root.getRenderedOutput({props: ['accessibilityLabel']}).toJSX(),
+        ).toEqual(<rn-image accessibilityLabel="labelled" />);
+      });
+    });
+
+    describe('accessibilityState', () => {
+      function getAccessibilityState(element: React.MixedElement) {
+        const root = Fantom.createRoot();
+
+        Fantom.runTask(() => {
+          root.render(element);
+        });
+
+        return root
+          .getRenderedOutput({props: ['accessibilityState']})
+          .toJSONObject().props.accessibilityState;
+      }
+
+      it('is not set when no state props are provided', () => {
+        const root = Fantom.createRoot();
+
+        Fantom.runTask(() => {
+          root.render(<Image />);
+        });
+
+        expect(
+          root.getRenderedOutput({props: ['accessibilityState']}).toJSX(),
+        ).toEqual(<rn-image />);
+      });
+
+      it('maps \'aria-busy\' to "busy"', () => {
+        expect(getAccessibilityState(<Image aria-busy={true} />)).toContain(
+          'busy:true',
+        );
+      });
+
+      it('maps \'aria-disabled\' to "disabled"', () => {
+        expect(getAccessibilityState(<Image aria-disabled={true} />)).toContain(
+          'disabled:true',
+        );
+      });
+
+      it('maps \'aria-expanded\' to "expanded"', () => {
+        expect(getAccessibilityState(<Image aria-expanded={true} />)).toContain(
+          'expanded:true',
+        );
+      });
+
+      it('maps \'aria-selected\' to "selected"', () => {
+        expect(getAccessibilityState(<Image aria-selected={true} />)).toContain(
+          'selected:true',
+        );
+      });
+
+      describe('maps \'aria-checked\' to "checked"', () => {
+        it('when set to true', () => {
+          expect(
+            getAccessibilityState(<Image aria-checked={true} />),
+          ).toContain('checked:Checked');
+        });
+
+        it('when set to false', () => {
+          expect(
+            getAccessibilityState(<Image aria-checked={false} />),
+          ).toContain('checked:Unchecked');
+        });
+
+        it("when set to 'mixed'", () => {
+          expect(
+            getAccessibilityState(<Image aria-checked="mixed" />),
+          ).toContain('checked:Mixed');
+        });
+      });
+
+      it('gives `aria-*` precedence over the matching field', () => {
+        const accessibilityState = getAccessibilityState(
+          <Image
+            accessibilityState={{busy: false, disabled: true}}
+            aria-busy={true}
+          />,
+        );
+
+        expect(accessibilityState).toContain('busy:true');
+        expect(accessibilityState).toContain('disabled:true');
+      });
+    });
+
     component TestComponent(testID?: ?string, ...props: AccessibilityProps) {
       return <Image {...props} testID={testID} source={LOGO_SOURCE} />;
     }
@@ -640,7 +758,7 @@ describe('<Image>', () => {
           root.render(<Image ref={elementRef} />);
         });
 
-        expect(elementRef.current).toBeInstanceOf(ReactNativeElement);
+        expect(elementRef.current).toBeInstanceOf(HTMLElement);
       });
 
       it('uses the "RN:Image" tag name', () => {
@@ -652,7 +770,7 @@ describe('<Image>', () => {
           root.render(<Image ref={elementRef} />);
         });
 
-        const element = ensureInstance(elementRef.current, ReactNativeElement);
+        const element = nullthrows(elementRef.current);
         expect(element.tagName).toBe('RN:Image');
       });
     });
@@ -1045,6 +1163,24 @@ describe('<Image>', () => {
         expect(result).toEqual(undefined);
         expect(error).toBeInstanceOf(Error);
         expect(error?.message).toBe('Failed to prefetch image');
+      });
+    });
+
+    describe('prefetchWithMetadata', () => {
+      it('prefetches the image', () => {
+        const uri = 'https://reactnative.dev/img/tiny_logo.png';
+
+        NativeFantom.setImageResponse(uri, {
+          width: 100,
+          height: 100,
+        });
+
+        let result;
+        Fantom.runTask(async () => {
+          result = await Image.prefetchWithMetadata(uri, 'queryRootName');
+        });
+
+        expect(result).toEqual(true);
       });
     });
 

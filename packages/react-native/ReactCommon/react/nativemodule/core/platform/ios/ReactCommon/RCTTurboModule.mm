@@ -143,7 +143,9 @@ jsi::Value convertObjCObjectToJSIValue(jsi::Runtime &runtime, id value)
 
 static NSString *convertJSIStringToNSString(jsi::Runtime &runtime, const jsi::String &value)
 {
-  return [NSString stringWithUTF8String:value.utf8(runtime).c_str()];
+  auto utf8 = value.utf8(runtime);
+  NSString *result = [[NSString alloc] initWithBytes:utf8.data() length:utf8.size() encoding:NSUTF8StringEncoding];
+  return result != nil ? result : @"";
 }
 
 static NSArray *convertJSIArrayToNSArray(
@@ -276,6 +278,35 @@ static jsi::JSError convertNSExceptionToJSError(
   jsi::Value error = createJSRuntimeError(runtime, message);
   error.asObject(runtime).setProperty(runtime, "cause", std::move(cause));
   return {runtime, std::move(error)};
+}
+
+/**
+ * userInfo key under which `addModuleIdentityToException` preserves the exception it wraps, so its
+ * raise-site `callStackReturnAddresses` and `callStackSymbols` stay available to symbolication.
+ */
+static NSString *const RCTTurboModuleOriginalExceptionKey = @"RCTTurboModuleOriginalException";
+
+/**
+ * Async and void method calls have no JS runtime to attach a JSError to, so an NSException raised
+ * by the module escapes to the process-level handler instead. The stack it arrives with has
+ * already unwound past the module, so unless the module and method names travel on the exception
+ * itself the resulting crash cannot be attributed to an owning module.
+ */
+static NSException *
+addModuleIdentityToException(NSException *exception, const std::string &moduleName, const std::string &methodName)
+{
+  // A newly constructed NSException captures its call stack at @throw rather than at the original
+  // raise, so the original exception is carried across whole.
+  NSMutableDictionary *userInfo =
+      [NSMutableDictionary dictionaryWithDictionary:exception.userInfo != nil ? exception.userInfo : @{}];
+  userInfo[RCTTurboModuleOriginalExceptionKey] = exception;
+
+  return [NSException exceptionWithName:exception.name
+                                 reason:[NSString stringWithFormat:@"%s.%s raised an exception: %@",
+                                                                   moduleName.c_str(),
+                                                                   methodName.c_str(),
+                                                                   exception.reason]
+                               userInfo:userInfo];
 }
 
 /**
@@ -448,7 +479,7 @@ id ObjCTurboModule::performMethodInvocation(
         // See https://github.com/reactwg/react-native-new-architecture/discussions/276#discussioncomment-12567155
         throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);
       } else {
-        @throw exception;
+        @throw addModuleIdentityToException(exception, std::string{moduleName}, methodNameStr);
       }
     } @finally {
       [retainedObjectsForInvocation removeAllObjects];
@@ -510,7 +541,7 @@ void ObjCTurboModule::performVoidMethodInvocation(
     } @catch (NSException *exception) {
       // Void methods are always async, re-throw instead of converting to
       // JSError, same as the async branch in performMethodInvocation.
-      @throw exception;
+      @throw addModuleIdentityToException(exception, std::string{moduleName}, methodNameStr);
     } @finally {
       [retainedObjectsForInvocation removeAllObjects];
     }
@@ -696,6 +727,12 @@ void ObjCTurboModule::setInvocationArg(
    */
   BOOL enableModuleArgumentNSNullConversionIOS = ReactNativeFeatureFlags::enableModuleArgumentNSNullConversionIOS();
   id objCArg = convertJSIValueToObjCObject(runtime, arg, jsInvoker_, enableModuleArgumentNSNullConversionIOS);
+
+  // A JS `null` in argument position must reach ObjC as `nil`; only nulls nested inside arrays and
+  // dictionaries are preserved as `kCFNull`. Skipping `setArgument:` leaves the slot zeroed.
+  if (enableModuleArgumentNSNullConversionIOS && objCArg == (id)kCFNull) {
+    return;
+  }
   if (objCArg != nullptr) {
     NSString *methodNameNSString = @(methodName);
 

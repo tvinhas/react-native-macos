@@ -82,12 +82,6 @@
 #endif // macOS]
 
 #if !TARGET_OS_OSX // [macOS]
-- (void)dealloc
-{
-}
-#endif // [macOS]
-
-#if !TARGET_OS_OSX // [macOS]
 - (void)show
 {
   [self becomeFirstResponder];

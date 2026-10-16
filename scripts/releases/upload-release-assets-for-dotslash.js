@@ -21,9 +21,13 @@ const {
   FIRST_PARTY_DOTSLASH_FILES,
 } = require('./write-dotslash-release-asset-urls');
 const {Octokit} = require('@octokit/rest');
+const path = require('node:path');
+const {parseArgs} = require('node:util');
 const nullthrows = require('nullthrows');
-const path = require('path');
-const {parseArgs} = require('util');
+
+// Upload POSTs are not preserved when GitHub redirects from the former owner.
+const GITHUB_OWNER = 'react';
+const GITHUB_REPO = 'react-native';
 
 // Upload POSTs are not preserved when GitHub redirects from the former owner.
 const GITHUB_OWNER = 'react';

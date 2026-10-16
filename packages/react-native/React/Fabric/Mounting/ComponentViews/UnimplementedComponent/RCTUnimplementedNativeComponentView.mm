@@ -11,6 +11,8 @@
 #import <react/renderer/components/FBReactNativeSpec/EventEmitters.h>
 #import <react/renderer/components/FBReactNativeSpec/Props.h>
 
+#import <React/RCTLog.h>
+
 using namespace facebook::react;
 
 @implementation RCTUnimplementedNativeComponentView {
@@ -24,14 +26,16 @@ using namespace facebook::react;
 
     CGRect bounds = self.bounds;
     _label = [[RCTUILabel alloc] initWithFrame:bounds];  // [macOS]
-    _label.backgroundColor = [RCTPlatformColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.3];
+#if RCT_DEV
+    _label.backgroundColor = [RCTPlatformColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.3]; // [macOS]
+    _label.textColor = [RCTPlatformColor whiteColor]; // [macOS]
+#endif
 #if !TARGET_OS_OSX // [macOS]
     _label.layoutMargins = UIEdgeInsetsMake(12, 12, 12, 12);
 #endif // [macOS]
     _label.lineBreakMode = NSLineBreakByWordWrapping;
     _label.numberOfLines = 0;
     _label.textAlignment = NSTextAlignmentCenter;
-    _label.textColor = [RCTPlatformColor whiteColor]; // [macOS]
 
 #if !TARGET_OS_OSX // [macOS]
     self.contentView = _label;
@@ -56,7 +60,20 @@ using namespace facebook::react;
   const auto &newViewProps = static_cast<const UnimplementedNativeViewProps &>(*props);
 
   if (oldViewProps.name != newViewProps.name) {
-    _label.text = [NSString stringWithFormat:@"'%s' is not Fabric compatible yet.", newViewProps.name.c_str()];
+    const std::string &name = newViewProps.name;
+#if RCT_DEV
+    _label.text = [NSString stringWithFormat:@"'%s' is not Fabric compatible yet.", name.c_str()];
+#endif
+    // Skip the empty initial prop-default pass — only log once the real component
+    // name has been propagated.
+    if (!name.empty()) {
+      // Log in all builds so missing components are reported in production.
+      RCTLogError(
+          @"UnimplementedNativeView: '%s' is not Fabric compatible yet. "
+           "Ensure the iOS library has migrated this component to Fabric and registered "
+           "a plugin entry for it.",
+          name.c_str());
+    }
   }
 
   [super updateProps:props oldProps:oldProps];

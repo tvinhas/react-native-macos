@@ -8,6 +8,7 @@
 #import "RCTSurfaceTouchHandler.h"
 
 #import <React/RCTIdentifierPool.h>
+#import <React/RCTLog.h>
 #import <React/RCTUtils.h>
 #import <React/RCTViewComponentView.h>
 #import <React/RCTUIKit.h>
@@ -270,8 +271,8 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithTarget : (id)target action : (SEL)act
 #else // [macOS
     auto iterator = _activeTouches.find(touch.eventNumber);
 #endif // macOS]
-    RCTAssert(iterator != _activeTouches.end(), @"Inconsistency between local and UIKit touch registries");
     if (iterator == _activeTouches.end()) {
+      RCTLogWarn(@"Inconsistency between local and UIKit touch registries");
       continue;
     }
 
@@ -287,8 +288,8 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithTarget : (id)target action : (SEL)act
 #else // [macOS
     auto iterator = _activeTouches.find(touch.eventNumber);
 #endif // macOS]
-    RCTAssert(iterator != _activeTouches.end(), @"Inconsistency between local and UIKit touch registries");
     if (iterator == _activeTouches.end()) {
+      RCTLogWarn(@"Inconsistency between local and UIKit touch registries");
       continue;
     }
     auto &activeTouch = iterator->second;
@@ -312,8 +313,8 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithTarget : (id)target action : (SEL)act
 #else // [macOS
     auto iterator = _activeTouches.find(touch.eventNumber);
 #endif // macOS]
-    RCTAssert(iterator != _activeTouches.end(), @"Inconsistency between local and UIKit touch registries");
     if (iterator == _activeTouches.end()) {
+      RCTLogWarn(@"Inconsistency between local and UIKit touch registries");
       continue;
     }
     activeTouches.push_back(iterator->second);

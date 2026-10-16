@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5c36c0a5e9e67b43016ab02eab0ecd8f>>
+ * @generated SignedSource<<891abee69433c105d062b45ed357fd5c>>
  */
 
 /**
@@ -47,11 +47,11 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enableAccumulatedUpdatesInRawPropsAndroid(): Boolean = false
 
-  override fun enableAndroidFontWeightAdjustment(): Boolean = true
-
   override fun enableAndroidTextMeasurementOptimizations(): Boolean = false
 
-  override fun enableBridgelessArchitecture(): Boolean = false
+  override fun enableBridgelessArchitecture(): Boolean = true
+
+  override fun enableBufferedCallInvoker(): Boolean = true
 
   override fun enableCppPropsIteratorSetter(): Boolean = false
 
@@ -81,7 +81,11 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enableImagePrefetchingAndroid(): Boolean = false
 
+  override fun enableImageTransparentTintColor(): Boolean = false
+
   override fun enableImmediateUpdateModeForContentOffsetChanges(): Boolean = false
+
+  override fun enableImperativeEvents(): Boolean = false
 
   override fun enableImperativeFocus(): Boolean = false
 
@@ -97,19 +101,17 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enableModuleArgumentNSNullConversionIOS(): Boolean = false
 
+  override fun enableMountingCoordinatorPullModelAndroid(): Boolean = false
+
   override fun enableMutationObserverByDefault(): Boolean = false
 
   override fun enableNativeCSSParsing(): Boolean = false
-
-  override fun enableNetworkEventReporting(): Boolean = true
 
   override fun enablePreparedTextLayout(): Boolean = false
 
   override fun enablePropsUpdateReconciliationAndroid(): Boolean = false
 
-  override fun enableRuntimeSchedulerQueueClearingOnError(): Boolean = false
-
-  override fun enableSchedulerDelegateInvalidation(): Boolean = false
+  override fun enableResizeObserverByDefault(): Boolean = false
 
   override fun enableSwiftUIBasedFilters(): Boolean = false
 
@@ -139,9 +141,9 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun fuseboxFrameRecordingEnabled(): Boolean = false
 
-  override fun fuseboxNetworkInspectionEnabled(): Boolean = true
+  override fun fuseboxScreenshotCaptureEnabled(): Boolean = true
 
-  override fun fuseboxScreenshotCaptureEnabled(): Boolean = false
+  override fun fuseboxWebSocketEventsEnabled(): Boolean = false
 
   override fun optimizedAnimatedPropUpdates(): Boolean = false
 

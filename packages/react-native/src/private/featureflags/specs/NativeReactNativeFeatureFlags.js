@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<68ccb8d73a8f29fbf88f15a183bd910b>>
+ * @generated SignedSource<<d6c54d6154c0f0771c211424e608f182>>
  * @flow strict
  * @noformat
  */
@@ -37,9 +37,9 @@ export interface Spec extends TurboModule {
   readonly disableViewPreallocationAndroid?: () => boolean;
   readonly enableAccessibilityOrder?: () => boolean;
   readonly enableAccumulatedUpdatesInRawPropsAndroid?: () => boolean;
-  readonly enableAndroidFontWeightAdjustment?: () => boolean;
   readonly enableAndroidTextMeasurementOptimizations?: () => boolean;
   readonly enableBridgelessArchitecture?: () => boolean;
+  readonly enableBufferedCallInvoker?: () => boolean;
   readonly enableCppPropsIteratorSetter?: () => boolean;
   readonly enableCustomFocusSearchOnClippedElementsAndroid?: () => boolean;
   readonly enableDestroyShadowTreeRevisionAsync?: () => boolean;
@@ -54,7 +54,9 @@ export interface Spec extends TurboModule {
   readonly enableIOSTextBaselineOffsetPerLine?: () => boolean;
   readonly enableIOSViewClipToPaddingBox?: () => boolean;
   readonly enableImagePrefetchingAndroid?: () => boolean;
+  readonly enableImageTransparentTintColor?: () => boolean;
   readonly enableImmediateUpdateModeForContentOffsetChanges?: () => boolean;
+  readonly enableImperativeEvents?: () => boolean;
   readonly enableImperativeFocus?: () => boolean;
   readonly enableInteropViewManagerClassLookUpOptimizationIOS?: () => boolean;
   readonly enableIntersectionObserverByDefault?: () => boolean;
@@ -62,13 +64,12 @@ export interface Spec extends TurboModule {
   readonly enableLayoutAnimationsOnAndroid?: () => boolean;
   readonly enableLayoutAnimationsOnIOS?: () => boolean;
   readonly enableModuleArgumentNSNullConversionIOS?: () => boolean;
+  readonly enableMountingCoordinatorPullModelAndroid?: () => boolean;
   readonly enableMutationObserverByDefault?: () => boolean;
   readonly enableNativeCSSParsing?: () => boolean;
-  readonly enableNetworkEventReporting?: () => boolean;
   readonly enablePreparedTextLayout?: () => boolean;
   readonly enablePropsUpdateReconciliationAndroid?: () => boolean;
-  readonly enableRuntimeSchedulerQueueClearingOnError?: () => boolean;
-  readonly enableSchedulerDelegateInvalidation?: () => boolean;
+  readonly enableResizeObserverByDefault?: () => boolean;
   readonly enableSwiftUIBasedFilters?: () => boolean;
   readonly enableViewCulling?: () => boolean;
   readonly enableViewRecycling?: () => boolean;
@@ -83,8 +84,8 @@ export interface Spec extends TurboModule {
   readonly fuseboxAssertSingleHostState?: () => boolean;
   readonly fuseboxEnabledRelease?: () => boolean;
   readonly fuseboxFrameRecordingEnabled?: () => boolean;
-  readonly fuseboxNetworkInspectionEnabled?: () => boolean;
   readonly fuseboxScreenshotCaptureEnabled?: () => boolean;
+  readonly fuseboxWebSocketEventsEnabled?: () => boolean;
   readonly optimizedAnimatedPropUpdates?: () => boolean;
   readonly overrideBySynchronousMountPropsAtMountingAndroid?: () => boolean;
   readonly perfIssuesEnabled?: () => boolean;

@@ -4,6 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
+ * @fantom_flags animatedKeepListenersOnDetach:*
  * @flow strict-local
  * @format
  */
@@ -11,6 +12,7 @@
 import '@react-native/fantom/src/setUpDefaultReactNativeEnvironment';
 
 import NativeAnimatedHelper from '../../../src/private/animated/NativeAnimatedHelper';
+import * as ReactNativeFeatureFlags from '../../../src/private/featureflags/ReactNativeFeatureFlags';
 import AnimatedValue from '../nodes/AnimatedValue';
 
 describe('AnimatedValue', () => {
@@ -128,7 +130,12 @@ describe('AnimatedValue', () => {
     node.addListener(callbackB);
 
     emitMockUpdate(node, 456, 60);
-    expect(callbackA).toBeCalledTimes(1);
+    if (ReactNativeFeatureFlags.animatedKeepListenersOnDetach()) {
+      // `callbackA` survives the detach and is resubscribed on re-attach.
+      expect(callbackA).toBeCalledTimes(2);
+    } else {
+      expect(callbackA).toBeCalledTimes(1);
+    }
     expect(callbackB).toBeCalledTimes(1);
   });
 
@@ -230,6 +237,8 @@ describe('AnimatedValue', () => {
       // $FlowFixMe[method-unbinding]
       const original = node.__onAnimatedValueUpdateReceived;
       const spy = jest.fn((...args: Array<unknown>) =>
+        /* $FlowFixMe[invalid-this-arg] Error exposed after fixing this typing
+         * unsoundness in flow */
         original.apply(node, args),
       );
       // $FlowFixMe[cannot-write]

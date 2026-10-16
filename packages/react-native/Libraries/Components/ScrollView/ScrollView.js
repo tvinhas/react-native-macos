@@ -199,8 +199,7 @@ export type DecelerationRateType = 'fast' | 'normal' | number;
 export type ScrollResponderType = ScrollViewImperativeMethods;
 
 export interface ScrollViewInstance
-  extends HostInstance,
-    ScrollViewImperativeMethods {}
+  extends HostInstance, ScrollViewImperativeMethods {}
 
 type InnerViewInstance = React.ElementRef<typeof View>;
 
@@ -394,10 +393,7 @@ export type ScrollViewPropsIOS = Readonly<{
    * @platform ios
    */
   contentInsetAdjustmentBehavior?: ?(
-    | 'automatic'
-    | 'scrollableAxes'
-    | 'never'
-    | 'always'
+    'automatic' | 'scrollableAxes' | 'never' | 'always'
   ),
 }>;
 
@@ -579,9 +575,11 @@ type ScrollViewBaseProps = Readonly<{
    *
    * @default `'none'`
    */
-  keyboardDismissMode?: ?// default
-  // cross-platform
-  ('none' | 'on-drag' | 'interactive'), // ios only
+  keyboardDismissMode?: ?(
+    // default
+    // cross-platform
+    'none' | 'on-drag' | 'interactive'
+  ), // ios only
   /**
    * Determines when the keyboard should stay visible after a tap.
    *
@@ -1083,6 +1081,8 @@ class ScrollView extends React.Component<ScrollViewProps, ScrollViewState> {
           nodeHandle,
           nullthrows(findNodeHandle<$FlowFixMe>(this)),
           // $FlowFixMe[method-unbinding] added when improving typing for this parameters
+          /* $FlowFixMe[incompatible-type] Error exposed after fixing this
+           * typing unsoundness in flow */
           this._textInputFocusError,
           this._inputMeasureAndScrollToKeyboard,
         );
@@ -1091,6 +1091,8 @@ class ScrollView extends React.Component<ScrollViewProps, ScrollViewState> {
           this._innerView.nativeInstance,
           this._inputMeasureAndScrollToKeyboard,
           // $FlowFixMe[method-unbinding] added when improving typing for this parameters
+          /* $FlowFixMe[incompatible-type] Error exposed after fixing this
+           * typing unsoundness in flow */
           this._textInputFocusError,
         );
       }

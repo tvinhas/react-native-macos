@@ -1280,8 +1280,7 @@ static RCTImageLoaderCancellationBlock RCTLoadImageURLFromLoader(
   return std::make_shared<facebook::react::NativeImageLoaderIOSSpecJSI>(params);
 }
 
-RCT_EXPORT_METHOD(
-    getSize : (NSString *)uri resolve : (RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject)
+- (void)getSize:(NSString *)uri resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
   NSURLRequest *request = [RCTConvert NSURLRequest:uri];
   [self getImageSizeForURLRequest:request
@@ -1297,9 +1296,10 @@ RCT_EXPORT_METHOD(
                             }];
 }
 
-RCT_EXPORT_METHOD(
-    getSizeWithHeaders : (NSString *)uri headers : (NSDictionary *)headers resolve : (RCTPromiseResolveBlock)
-        resolve reject : (RCTPromiseRejectBlock)reject)
+- (void)getSizeWithHeaders:(NSString *)uri
+                   headers:(NSDictionary *)headers
+                   resolve:(RCTPromiseResolveBlock)resolve
+                    reject:(RCTPromiseRejectBlock)reject
 {
   NSURL *URL = [RCTConvert NSURL:uri];
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
@@ -1316,15 +1316,16 @@ RCT_EXPORT_METHOD(
                             }];
 }
 
-RCT_EXPORT_METHOD(
-    prefetchImage : (NSString *)uri resolve : (RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject)
+- (void)prefetchImage:(NSString *)uri resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
   [self prefetchImageWithMetadata:uri queryRootName:nil rootTag:0 resolve:resolve reject:reject];
 }
 
-RCT_EXPORT_METHOD(
-    prefetchImageWithMetadata : (NSString *)uri queryRootName : (NSString *)queryRootName rootTag : (double)
-        rootTag resolve : (RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject)
+- (void)prefetchImageWithMetadata:(NSString *)uri
+                    queryRootName:(NSString *)queryRootName
+                          rootTag:(double)rootTag
+                          resolve:(RCTPromiseResolveBlock)resolve
+                           reject:(RCTPromiseRejectBlock)reject
 {
   NSURLRequest *request = [RCTConvert NSURLRequest:uri];
   [self loadImageWithURLRequest:request
@@ -1336,7 +1337,7 @@ RCT_EXPORT_METHOD(
                     attribution:{
                                     .queryRootName = queryRootName ? [queryRootName UTF8String] : "",
                                     .surfaceId = (int)rootTag,
-                                }
+  }
                   progressBlock:nil
                partialLoadBlock:nil
                 completionBlock:^(NSError *error, RCTPlatformImage *image, id completionMetadata) { // [macOS]
@@ -1348,8 +1349,7 @@ RCT_EXPORT_METHOD(
                 }];
 }
 
-RCT_EXPORT_METHOD(
-    queryCache : (NSArray *)uris resolve : (RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject)
+- (void)queryCache:(NSArray *)uris resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject
 {
   resolve([self getImageCacheStatus:uris]);
 }

@@ -1,6 +1,6 @@
 {
   "name": "@react-native-macos/virtualized-lists",
-  "version": "0.87.1",
+  "version": "0.88.0",
   "description": "Virtualized lists for React Native macOS.",
   "license": "MIT",
   "repository": {
@@ -48,7 +48,7 @@
     "nullthrows": "^1.1.1"
   },
   "devDependencies": {
-    "react-test-renderer": "19.2.3"
+    "react-test-renderer": "19.3.0"
   },
   "peerDependencies": {
     "@types/react": "^19.2.0",

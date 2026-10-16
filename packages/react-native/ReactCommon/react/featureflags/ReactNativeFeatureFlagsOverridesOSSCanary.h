@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5d286510a4f8642adcc9d38556dd60dd>>
+ * @generated SignedSource<<c26b8f81fcc99469d0535a89bac18280>>
  */
 
 /**
@@ -18,6 +18,8 @@
  */
 
 #pragma once
+
+#include <react/cxxstableapi/UmbrellaGuard.h>
 
 #include <react/featureflags/ReactNativeFeatureFlagsOverridesOSSStable.h>
 
@@ -35,7 +37,7 @@ class ReactNativeFeatureFlagsOverridesOSSCanary : public ReactNativeFeatureFlags
     return true;
   }
 
-  bool enableBridgelessArchitecture() override {
+  bool enableImperativeEvents() override {
     return true;
   }
 
@@ -44,6 +46,14 @@ class ReactNativeFeatureFlagsOverridesOSSCanary : public ReactNativeFeatureFlags
   }
 
   bool enableSwiftUIBasedFilters() override {
+    return true;
+  }
+
+  bool fuseboxFrameRecordingEnabled() override {
+    return true;
+  }
+
+  bool fuseboxWebSocketEventsEnabled() override {
     return true;
   }
 

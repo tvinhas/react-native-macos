@@ -86,7 +86,7 @@ function startVideoRecording(jsengine, currentAttempt) {
   );
 
   const recordingArgs =
-    `simctl io booted recordVideo video_record_${currentAttempt}.mov`.split(
+    `simctl io booted recordVideo --force video_record_${currentAttempt}.mov`.split(
       ' ',
     );
   const recordingProcess = childProcess.spawn('xcrun', recordingArgs, {
@@ -108,17 +108,12 @@ function stopVideoRecording(recordingProcess) {
   recordingProcess.kill('SIGINT');
 }
 
-function executeTestsWithRetries(
-  appId,
-  udid,
-  maestroFlow,
-  jsengine,
-  currentAttempt,
-) {
+function executeFlowWithRetries(appId, udid, flow, jsengine, currentAttempt) {
   const recProcess = startVideoRecording(jsengine, currentAttempt);
   try {
     const timeout = 1000 * 60 * 10; // 10 minutes
-    const command = `$HOME/.maestro/bin/maestro --udid="${udid}" test "${maestroFlow}" --format junit -e APP_ID="${appId}"`;
+    const command = `$HOME/.maestro/bin/maestro --udid="${udid}" test "${flow}" --format junit -e APP_ID="${appId}"`;
+    console.info(`Executing flow: ${flow} (attempt ${currentAttempt})`);
     console.log(command);
     childProcess.execSync(`MAESTRO_DRIVER_STARTUP_TIMEOUT=1500000 ${command}`, {
       stdio: 'inherit',
@@ -127,21 +122,32 @@ function executeTestsWithRetries(
 
     stopVideoRecording(recProcess);
   } catch (error) {
-    // Can't put this in the finally block because it will be executed after the
-    // recursive call of executeTestsWithRetries
     stopVideoRecording(recProcess);
 
     if (currentAttempt < MAX_ATTEMPTS) {
-      executeTestsWithRetries(
-        appId,
-        udid,
-        maestroFlow,
-        jsengine,
-        currentAttempt + 1,
-      );
+      console.info(`Retrying flow: ${flow}`);
+      executeFlowWithRetries(appId, udid, flow, jsengine, currentAttempt + 1);
     } else {
-      console.error(`Failed to execute flow after ${MAX_ATTEMPTS} attempts.`);
+      console.error(
+        `Failed to execute flow ${flow} after ${MAX_ATTEMPTS} attempts.`,
+      );
       throw error;
+    }
+  }
+}
+
+function executeFlows(appId, udid, maestroFlow, jsengine) {
+  if (!fs.existsSync(maestroFlow) || !fs.lstatSync(maestroFlow).isDirectory()) {
+    executeFlowWithRetries(appId, udid, maestroFlow, jsengine, 1);
+    return;
+  }
+
+  for (const file of fs.readdirSync(maestroFlow).sort()) {
+    const filePath = `${maestroFlow.replace(/\/$/, '')}/${file}`;
+    if (fs.lstatSync(filePath).isDirectory()) {
+      executeFlows(appId, udid, filePath, jsengine);
+    } else if (file.endsWith('.yml') || file.endsWith('.yaml')) {
+      executeFlowWithRetries(appId, udid, filePath, jsengine, 1);
     }
   }
 }
@@ -173,9 +179,8 @@ async function main(args = process.argv.slice(2)) {
   installAppOnSimulator(appPath);
   bringSimulatorInForeground();
   await launchAppOnSimulator(appId, simulator.udid, isDebug);
-  executeTestsWithRetries(appId, simulator.udid, maestroFlow, jsengine, 1);
+  executeFlows(appId, simulator.udid, maestroFlow, jsengine);
   console.log('Test finished');
-  process.exit(0);
 }
 
 if (require.main === module) {
@@ -183,5 +188,6 @@ if (require.main === module) {
 }
 
 module.exports = {
+  executeFlows,
   findAvailableSimulator,
 };

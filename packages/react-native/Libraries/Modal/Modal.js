@@ -13,10 +13,7 @@ import type {ViewProps} from '../Components/View/ViewPropTypes';
 import type {RootTag} from '../ReactNative/RootTag';
 import type {DirectEventHandler} from '../Types/CodegenTypes';
 
-import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
 import {type ColorValue} from '../StyleSheet/StyleSheet';
-import {type EventSubscription} from '../vendor/emitter/EventEmitter';
-import NativeModalManager from './NativeModalManager';
 import RCTModalHostView from './RCTModalHostViewNativeComponent';
 import VirtualizedLists from '@react-native-macos/virtualized-lists'; // [macOS]
 import * as React from 'react';
@@ -32,20 +29,7 @@ const Platform = require('../Utilities/Platform').default;
 const VirtualizedListContextResetter =
   VirtualizedLists.VirtualizedListContextResetter;
 
-type ModalEventDefinitions = {
-  modalDismissed: [{modalID: number}],
-};
-
 export type ModalInstance = HostInstance;
-
-const ModalEventEmitter =
-  Platform.OS === 'ios' && NativeModalManager != null
-    ? new NativeEventEmitter<ModalEventDefinitions>(
-        // T88715063: NativeEventEmitter only used this parameter on iOS. Now it uses it on all platforms, so this code was modified automatically to preserve its behavior
-        // If you want to use the native module on other platforms, please remove this condition and test its behavior
-        Platform.OS !== 'ios' ? null : NativeModalManager,
-      )
-    : null;
 
 // In order to route onDismiss callbacks, we need to uniquely identifier each
 // <Modal> on screen. There can be different ones, either nested or as siblings.
@@ -57,8 +41,7 @@ type OrientationChangeEvent = Readonly<{
   orientation: 'portrait' | 'landscape',
 }>;
 
-/** @build-types emit-as-interface Uniwind compatibility */
-export type ModalBaseProps = {
+type ModalBasePropsCore = {
   /**
    * Controls how the modal animates. `'slide'` slides in from the bottom,
    * `'fade'` fades into view, `'none'` appears without animation.
@@ -108,6 +91,9 @@ export type ModalBaseProps = {
   modalRef?: React.RefSetter<ModalInstance>,
 };
 
+/** @build-types emit-as-interface Uniwind compatibility */
+export type ModalBaseProps = ModalBasePropsCore;
+
 export type ModalPropsIOS = {
   /**
    * Controls how the modal appears.
@@ -117,10 +103,7 @@ export type ModalPropsIOS = {
    * @platform ios
    */
   presentationStyle?: ?(
-    | 'fullScreen'
-    | 'pageSheet'
-    | 'formSheet'
-    | 'overFullScreen'
+    'fullScreen' | 'pageSheet' | 'formSheet' | 'overFullScreen'
   ),
 
   /**
@@ -260,7 +243,6 @@ class Modal extends React.Component<ModalProps, ModalState> {
   static contextType: React.Context<RootTag> = RootTagContext;
 
   _identifier: number;
-  _eventSubscription: ?EventSubscription;
 
   constructor(props: ModalProps) {
     super(props);
@@ -273,28 +255,9 @@ class Modal extends React.Component<ModalProps, ModalState> {
     };
   }
 
-  componentDidMount() {
-    // 'modalDismissed' is for the old renderer in iOS only
-    if (ModalEventEmitter) {
-      this._eventSubscription = ModalEventEmitter.addListener(
-        'modalDismissed',
-        event => {
-          this.setState({isRendered: false}, () => {
-            if (event.modalID === this._identifier && this.props.onDismiss) {
-              this.props.onDismiss();
-            }
-          });
-        },
-      );
-    }
-  }
-
   componentWillUnmount() {
     if (Platform.OS === 'ios') {
       this.setState({isRendered: false});
-    }
-    if (this._eventSubscription) {
-      this._eventSubscription.remove();
     }
   }
 
@@ -378,6 +341,8 @@ class Modal extends React.Component<ModalProps, ModalState> {
         identifier={this._identifier}
         style={styles.modal}
         // $FlowFixMe[method-unbinding] added when improving typing for this parameters
+        /* $FlowFixMe[incompatible-type] Error exposed after fixing this typing
+         * unsoundness in flow */
         onStartShouldSetResponder={this._shouldSetResponder}
         supportedOrientations={this.props.supportedOrientations}
         onOrientationChange={this.props.onOrientationChange}
