@@ -173,6 +173,13 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
 {
   const auto &newParagraphProps = static_cast<const ParagraphProps &>(*props);
 
+  // [macOS] Line limit, ellipsizing and font fitting change the pixels even
+  // when the frame does not; `updateLayoutMetrics` no longer redraws a
+  // paragraph whose frame only moved, so redraw for these here.
+  if (!(_paragraphAttributes == newParagraphProps.paragraphAttributes)) {
+    [_textView setNeedsDisplay];
+  }
+  // macOS]
   _paragraphAttributes = newParagraphProps.paragraphAttributes;
   _textView.paragraphAttributes = _paragraphAttributes;
 
@@ -238,12 +245,25 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
 - (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
            oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics
 {
+  // [macOS] A paragraph that only moved draws the same pixels, and its layer
+  // moves with it. A redraw lays the whole text out again on the main thread
+  // (RCTTextLayoutManager builds a fresh NSTextStorage for every draw), so a
+  // list shifting by one row (new mail above, a row archived) re-laid out
+  // every text below it. Redraw only when something other than the origin
+  // changed: size, insets, scale, font multiplier, direction, display.
+  LayoutMetrics movedOnly = layoutMetrics;
+  movedOnly.frame.origin = _layoutMetrics.frame.origin;
+  const BOOL needsRedraw = !(movedOnly == _layoutMetrics);
+  // macOS]
+
   // Using stored `_layoutMetrics` as `oldLayoutMetrics` here to avoid
   // re-applying individual sub-values which weren't changed.
   [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:_layoutMetrics];
   _textView.layoutMetrics = _layoutMetrics;
   _textLayoutFrame = RCTCGRectFromRect(_layoutMetrics.getContentFrame());
-  [_textView setNeedsDisplay];
+  if (needsRedraw) { // [macOS]
+    [_textView setNeedsDisplay];
+  } // [macOS]
   [self setNeedsLayout];
 
   if (_selectableTextView) {
