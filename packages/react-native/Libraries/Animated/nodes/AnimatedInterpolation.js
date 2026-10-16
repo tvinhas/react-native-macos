@@ -28,9 +28,7 @@ import invariant from 'invariant';
 type ExtrapolateType = 'extend' | 'identity' | 'clamp';
 
 export type InterpolationConfigSupportedOutputType =
-  | number
-  | string
-  | NativeColorValue;
+  number | string | NativeColorValue;
 
 export type InterpolationConfigType<
   OutputT extends InterpolationConfigSupportedOutputType,
@@ -446,6 +444,8 @@ function sampleEasingStops(
 export default class AnimatedInterpolation<
   OutputT extends InterpolationConfigSupportedOutputType,
 > extends AnimatedWithChildren {
+  __isNativeValueNode: boolean = true;
+
   _parent: AnimatedNode;
   _config: InterpolationConfigType<OutputT>;
   _interpolation: ?(input: number) => OutputT;

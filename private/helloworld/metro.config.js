@@ -13,7 +13,7 @@ import type {InputConfigT} from 'metro-config';
 */
 
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
-const path = require('path');
+const path = require('node:path');
 
 function repositoryPath(relativePath /*: string */) {
   return path.join(__dirname, '..', '..', relativePath);
@@ -43,7 +43,9 @@ const config = {
   },
 };
 
-module.exports = mergeConfig(
+const mergedConfig /*: Readonly<InputConfigT> */ = mergeConfig(
   getDefaultConfig(__dirname),
   config,
-) /*:: as Readonly<InputConfigT> */;
+);
+
+module.exports = mergedConfig;

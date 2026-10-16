@@ -436,8 +436,3 @@ RCT_EXPORT_METHOD(setSendIdleEvents : (BOOL)sendIdleEvents)
 }
 
 @end
-
-Class RCTTimingCls(void)
-{
-  return RCTTiming.class;
-}

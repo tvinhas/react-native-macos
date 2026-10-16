@@ -218,6 +218,21 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
   if (_selectableTextView) {
     [self updateSelectableTextStorage];
   }
+
+  // If the attributed string has changed, we need to notify the accessibility system that something changed,
+  // otherwise it may hold on to stale values (this happens most often when an element is updated async)
+  // https://github.com/react/react-native/issues/58145
+  if (state && oldState) {
+    const auto &newData = std::static_pointer_cast<const ParagraphShadowNode::ConcreteState>(state)->getData();
+    const auto &oldData = std::static_pointer_cast<const ParagraphShadowNode::ConcreteState>(oldState)->getData();
+    if (!newData.attributedString.isContentEqual(oldData.attributedString)) {
+#if !TARGET_OS_OSX // [macOS]
+      UIAccessibilityPostNotification(UIAccessibilityLayoutChangedNotification, nil);
+#else // [macOS
+      NSAccessibilityPostNotification(self, NSAccessibilityLayoutChangedNotification);
+#endif // macOS]
+    }
+  }
 }
 
 - (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics

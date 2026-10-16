@@ -38,14 +38,12 @@ export function expectRectEquals(
   expected: {x: number, y: number, width: number, height: number},
 ): boolean {
   const {x, y, width, height} = expected;
-  if (
-    !(
-      rect.x === x &&
-      rect.y === y &&
-      rect.width === width &&
-      rect.height === height
-    )
-  ) {
+  if (!(
+    rect.x === x &&
+    rect.y === y &&
+    rect.width === width &&
+    rect.height === height
+  )) {
     const received = {
       x: rect.x,
       y: rect.y,
@@ -323,6 +321,10 @@ describe('IntersectionObserver', () => {
       expect(
         new IntersectionObserver(() => {}, {threshold: [0.5, 0, 1]}).thresholds,
       ).toEqual([0, 0.5, 1]);
+      expect(
+        new IntersectionObserver(() => {}, {threshold: [0.000001, 1e-7]})
+          .thresholds,
+      ).toEqual([1e-7, 0.000001]);
 
       // Does NOT deduplicate (browsers don't do it - shrug)
       expect(
@@ -429,6 +431,11 @@ describe('IntersectionObserver', () => {
         new IntersectionObserver(() => {}, {rnRootThreshold: [0.5, 0, 1]})
           .rnRootThresholds,
       ).toEqual([0, 0.5, 1]);
+      expect(
+        new IntersectionObserver(() => {}, {
+          rnRootThreshold: [0.000001, 1e-7],
+        }).rnRootThresholds,
+      ).toEqual([1e-7, 0.000001]);
 
       // Does NOT deduplicate (browsers don't do it - shrug)
       expect(

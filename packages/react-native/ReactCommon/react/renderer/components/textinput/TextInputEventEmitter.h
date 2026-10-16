@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <react/cxxstableapi/FrameworksGuard.h>
+
 #include <react/renderer/attributedstring/AttributedString.h>
 #include <react/renderer/components/view/ViewEventEmitter.h>
 #if TARGET_OS_OSX // [macOS
@@ -30,6 +32,7 @@ class TextInputEventEmitter : public ViewEventEmitter {
     int eventCount;
     Size layoutMeasurement;
     Float zoomScale;
+    bool responderIgnoreScroll{false};
     Tag target;
  #if TARGET_OS_OSX // [macOS
     bool autoCorrectEnabled;

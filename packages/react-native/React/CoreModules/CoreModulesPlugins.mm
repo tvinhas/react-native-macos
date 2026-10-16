@@ -104,10 +104,6 @@ Class RCTCoreModulesClassProvider(const char *name)
     return RCTStatusBarManagerCls();
   }
 
-  if (name == "Timing"sv) {
-    return RCTTimingCls();
-  }
-
   if (name == "WebSocketModule"sv) {
     return RCTWebSocketModuleCls();
   }

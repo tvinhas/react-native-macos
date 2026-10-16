@@ -47,8 +47,8 @@ const {
   makeLogger,
   runCodegenAndInstallTemplate,
 } = require('./spm-utils');
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const yargs = require('yargs');
 
 const {log} = makeLogger('sync-spm-autolinking');
@@ -81,6 +81,10 @@ async function main(
       type: 'string',
       demandOption: true,
       describe: 'Path to react-native package root',
+    })
+    .option('ios-deployment-target', {
+      type: 'string',
+      describe: 'Platform floor forwarded to the autolinker',
     })
     .help()
     .parseSync();
@@ -115,12 +119,17 @@ async function main(
   deps.installSpmCodegenTemplate(appRoot, reactNativeRoot, {log});
 
   log('Re-generating build/generated/autolinking/Package.swift...');
-  deps.generateAutolinking([
+  const autolinkingArgv = [
     '--app-root',
     appRoot,
     '--react-native-root',
     reactNativeRoot,
-  ]);
+  ];
+  const iosDeploymentTarget = parsed['ios-deployment-target'];
+  if (iosDeploymentTarget != null) {
+    autolinkingArgv.push('--ios-deployment-target', iosDeploymentTarget);
+  }
+  deps.generateAutolinking(autolinkingArgv);
 
   // Rebuild the per-app generated-headers farm (vended as the ReactAppHeaders
   // SPM target inside the codegen package). React core headers need no trees

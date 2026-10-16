@@ -15,16 +15,21 @@ const {
   findVersionAtMergeBase,
   getLatestStableVersionFromNPM,
 } = require('./microsoft-hermes'); // [macOS]
-const {computeNightlyTarballURL, createLogger} = require('./utils');
-const {execSync} = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const stream = require('stream');
-const {promisify} = require('util');
+const {
+  computeNightlyTarballURL,
+  createLogger,
+  getMavenRepositoryUrls,
+} = require('./utils');
+const {execSync} = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const stream = require('node:stream');
+const {promisify} = require('node:util');
 
 const pipeline = promisify(stream.pipeline);
 
 const dependencyLog = createLogger('ReactNativeDependencies');
+const artifactExistenceCache /*: Map<string, boolean> */ = new Map();
 
 /**
  * Downloads ReactNativeDependencies artifacts from the specified version and build type. If you want to specify a specific
@@ -247,16 +252,40 @@ function checkExistingVersion(
   return false;
 }
 
-function getTarballUrl(
+async function getTarballUrl(
   version /*: string */,
   buildType /*: BuildFlavor */,
-) /*: string */ {
-  // You can use the `ENTERPRISE_REPOSITORY` ariable to customise the base url from which artifacts will be downloaded.
-  // The mirror's structure must be the same of the Maven repo the react-native core team publishes on Maven Central.
-  const mavenRepoUrl =
-    process.env.ENTERPRISE_REPOSITORY ?? 'https://repo1.maven.org/maven2';
+) /*: Promise<string> */ {
+  const existingUrl = await findExistingTarballUrl(version, buildType);
+  if (existingUrl != null) {
+    return existingUrl;
+  }
+
+  return getTarballUrls(version, buildType)[0];
+}
+
+async function findExistingTarballUrl(
+  version /*: string */,
+  buildType /*: BuildFlavor */,
+) /*: Promise<?string> */ {
+  const candidates = getTarballUrls(version, buildType);
+  for (const url of candidates) {
+    if (await reactNativeDependenciesArtifactExists(url)) {
+      return url;
+    }
+  }
+  return null;
+}
+
+function getTarballUrls(
+  version /*: string */,
+  buildType /*: BuildFlavor */,
+) /*: Array<string> */ {
   const namespace = 'com/facebook/react';
-  return `${mavenRepoUrl}/${namespace}/react-native-artifacts/${version}/react-native-artifacts-${version}-reactnative-dependencies-${buildType.toLowerCase()}.tar.gz`;
+  return getMavenRepositoryUrls().map(
+    mavenRepoUrl =>
+      `${mavenRepoUrl}/${namespace}/react-native-artifacts/${version}/react-native-artifacts-${version}-reactnative-dependencies-${buildType.toLowerCase()}.tar.gz`,
+  );
 }
 
 async function getNightlyTarballUrl(
@@ -281,13 +310,21 @@ async function getNightlyTarballUrl(
 async function reactNativeDependenciesArtifactExists(
   tarballUrl /*: string */,
 ) /*: Promise<boolean> */ {
+  const cached = artifactExistenceCache.get(tarballUrl);
+  if (cached != null) {
+    return cached;
+  }
+
   try {
     const response /*: Response */ = await fetch(tarballUrl, {
       method: 'HEAD',
     });
 
-    return response.status === 200;
+    const exists = response.status === 200;
+    artifactExistenceCache.set(tarballUrl, exists);
+    return exists;
   } catch (e) {
+    artifactExistenceCache.set(tarballUrl, false);
     return false;
   }
 }
@@ -299,8 +336,7 @@ async function reactNativeDependenciesSourceType(
   version /*: string */,
   buildType /*: BuildFlavor */,
 ) /*: Promise<ReactNativeDependenciesEngineSourceType> */ {
-  const tarballUrl = getTarballUrl(version, buildType);
-  if (await reactNativeDependenciesArtifactExists(tarballUrl)) {
+  if ((await findExistingTarballUrl(version, buildType)) != null) {
     dependencyLog(`Using download prebuild ${buildType} tarball`);
     return ReactNativeDependenciesEngineSourceTypes.DOWNLOAD_PREBUILD_TARBALL;
   }
@@ -342,7 +378,7 @@ async function downloadPrebuildTarball(
   buildType /*: BuildFlavor */,
   artifactsPath /*: string*/,
 ) /*: Promise<string> */ {
-  const url = getTarballUrl(version, buildType);
+  const url = await getTarballUrl(version, buildType);
   dependencyLog(`Using release tarball from URL: ${url}`);
   return downloadStableReactNativeDependencies(
     version,
@@ -371,7 +407,7 @@ async function downloadStableReactNativeDependencies(
   buildType /*: BuildFlavor */,
   artifactsPath /*: string */,
 ) /*: Promise<string> */ {
-  const tarballUrl = getTarballUrl(version, buildType);
+  const tarballUrl = await getTarballUrl(version, buildType);
   return downloadReactNativeDependenciesTarball(
     tarballUrl,
     version,

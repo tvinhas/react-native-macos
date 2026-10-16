@@ -105,7 +105,7 @@ RCT_EXPORT_MODULE()
   // noop
 }
 
-RCT_EXPORT_METHOD(verifySnapshot : (RCTResponseSenderBlock)callback)
+- (void)verifySnapshot:(RCTResponseSenderBlock)callback
 {
   RCTAssert(_controller != nil, @"No snapshot controller configured.");
 
@@ -158,12 +158,12 @@ RCT_REMAP_METHOD(
   reject(nil, nil, nil);
 }
 
-RCT_EXPORT_METHOD(markTestCompleted)
+- (void)markTestCompleted
 {
   [self markTestPassed:YES];
 }
 
-RCT_EXPORT_METHOD(markTestPassed : (BOOL)success)
+- (void)markTestPassed:(BOOL)success
 {
   [_bridge.uiManager
       addUIBlock:^(

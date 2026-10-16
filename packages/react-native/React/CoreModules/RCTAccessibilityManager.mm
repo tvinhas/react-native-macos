@@ -378,9 +378,8 @@ RCT_EXPORT_MODULE()
   return _multipliers;
 }
 
-RCT_EXPORT_METHOD(
-    setAccessibilityContentSizeMultipliers : (
-        JS::NativeAccessibilityManager::SpecSetAccessibilityContentSizeMultipliersJSMultipliers &)JSMultipliers)
+- (void)setAccessibilityContentSizeMultipliers:
+    (JS::NativeAccessibilityManager::SpecSetAccessibilityContentSizeMultipliersJSMultipliers &)JSMultipliers
 {
   NSMutableDictionary<NSString *, NSNumber *> *multipliers = [NSMutableDictionary new];
 #if !TARGET_OS_OSX // [macOS]
@@ -414,7 +413,7 @@ static void setMultipliers(
   }
 }
 
-RCT_EXPORT_METHOD(setAccessibilityFocus : (double)reactTag)
+- (void)setAccessibilityFocus:(double)reactTag
 {
   dispatch_async(dispatch_get_main_queue(), ^{
     RCTPlatformView *view = [self.viewRegistry_DEPRECATED viewForReactTag:@(reactTag)]; // [macOS]
@@ -427,7 +426,7 @@ RCT_EXPORT_METHOD(setAccessibilityFocus : (double)reactTag)
   });
 }
 
-RCT_EXPORT_METHOD(announceForAccessibility : (NSString *)announcement)
+- (void)announceForAccessibility:(NSString *)announcement
 {
 #if !TARGET_OS_OSX // [macOS]
   UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, announcement);
@@ -444,9 +443,11 @@ RCT_EXPORT_METHOD(announceForAccessibility : (NSString *)announcement)
 #endif // macOS]
 }
 
-RCT_EXPORT_METHOD(
-    announceForAccessibilityWithOptions : (NSString *)announcement options : (
-        JS::NativeAccessibilityManager::SpecAnnounceForAccessibilityWithOptionsOptions &)options)
+- (void)
+    announceForAccessibilityWithOptions:(NSString *)announcement
+                                options:
+                                    (JS::NativeAccessibilityManager::SpecAnnounceForAccessibilityWithOptionsOptions &)
+                                        options
 {
 #if !TARGET_OS_OSX // [macOS]
   NSMutableDictionary<NSString *, id> *attrsDictionary = [NSMutableDictionary new];
@@ -492,47 +493,41 @@ RCT_EXPORT_METHOD(
 #endif // macOS]
 }
 
-RCT_EXPORT_METHOD(getMultiplier : (RCTResponseSenderBlock)callback)
+- (void)getMultiplier:(RCTResponseSenderBlock)callback
 {
   if (callback) {
     callback(@[ @(self.multiplier) ]);
   }
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentBoldTextState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentBoldTextState:(RCTResponseSenderBlock)onSuccess onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isBoldTextEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentGrayscaleState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentGrayscaleState:(RCTResponseSenderBlock)onSuccess onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isGrayscaleEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentInvertColorsState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentInvertColorsState:(RCTResponseSenderBlock)onSuccess onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isInvertColorsEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentReduceMotionState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentReduceMotionState:(RCTResponseSenderBlock)onSuccess onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isReduceMotionEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentDarkerSystemColorsState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)
-        onError)
+- (void)getCurrentDarkerSystemColorsState:(RCTResponseSenderBlock)onSuccess
+                                  onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isDarkerSystemColorsEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentPrefersCrossFadeTransitionsState : (RCTResponseSenderBlock)
-        onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentPrefersCrossFadeTransitionsState:(RCTResponseSenderBlock)onSuccess
+                                           onError:(__unused RCTResponseSenderBlock)onError
 {
 #if !TARGET_OS_OSX // [macOS]
   if (@available(iOS 14.0, *)) {
@@ -545,15 +540,13 @@ RCT_EXPORT_METHOD(
 #endif // macOS]
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentReduceTransparencyState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)
-        onError)
+- (void)getCurrentReduceTransparencyState:(RCTResponseSenderBlock)onSuccess
+                                  onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isReduceTransparencyEnabled) ]);
 }
 
-RCT_EXPORT_METHOD(
-    getCurrentVoiceOverState : (RCTResponseSenderBlock)onSuccess onError : (__unused RCTResponseSenderBlock)onError)
+- (void)getCurrentVoiceOverState:(RCTResponseSenderBlock)onSuccess onError:(__unused RCTResponseSenderBlock)onError
 {
   onSuccess(@[ @(_isVoiceOverEnabled) ]);
 }

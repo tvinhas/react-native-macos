@@ -42,6 +42,7 @@ Pod::Spec.new do |s|
   s.dependency "React-logger"
   s.dependency "React-Core"
   s.dependency "React-debug"
+  s.dependency "React-cxxstableapi"
   s.dependency "React-featureflags"
   s.dependency "React-runtimescheduler"
   s.dependency "React-cxxreact"
@@ -139,6 +140,12 @@ Pod::Spec.new do |s|
       sss.header_dir           = "react/renderer/components/view"
     end
 
+    ss.subspec "viewUmbrella" do |sss|
+      sss.source_files         = "react/renderer/components/view/React/*.h"
+      sss.header_dir           = ""
+      sss.header_mappings_dir  = "react/renderer/components/view"
+    end
+
     ss.subspec "scrollview" do |sss|
       sss.source_files         = podspec_sources("react/renderer/components/scrollview/**/*.{m,mm,cpp,h}", "react/renderer/components/scrollview/**/*.{h}")
       sss.header_dir           = "react/renderer/components/scrollview"
@@ -201,6 +208,12 @@ Pod::Spec.new do |s|
       sss.exclude_files        = "react/renderer/observers/mutation/tests"
       sss.header_dir           = "react/renderer/observers/mutation"
     end
+
+    ss.subspec "resize" do |sss|
+      sss.source_files         = podspec_sources("react/renderer/observers/resize/**/*.{m,mm,cpp,h}", "react/renderer/observers/resize/**/*.h")
+      sss.exclude_files        = "react/renderer/observers/resize/tests"
+      sss.header_dir           = "react/renderer/observers/resize"
+    end
   end
 
   s.subspec "telemetry" do |ss|
@@ -237,4 +250,6 @@ Pod::Spec.new do |s|
     ss.source_files         = podspec_sources("react/renderer/viewtransition/**/*.{m,mm,cpp,h}", "react/renderer/viewtransition/**/*.h")
     ss.header_dir           = "react/renderer/viewtransition"
   end
+
+  mark_as_react_native_build(s)
 end

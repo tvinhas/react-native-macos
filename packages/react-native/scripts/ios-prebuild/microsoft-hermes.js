@@ -110,10 +110,10 @@ function hermesCommitAtMergeBase() /*: {| commit: string, timestamp: string |} *
   const hermesGitDir = path.join(tmpDir, 'hermes.git');
 
   try {
-    // RN 0.87 is Hermes-V1-only; V1 releases are cut from the pinned stable
+    // RN 0.87+ is Hermes-V1-only; V1 releases are cut from the pinned stable
     // branch, so resolve the merge-base commit there (branch 'main' is the
     // legacy V0 engine, removed in 0.87).
-    const HERMES_STABLE_BRANCH = '250829098.0.0-stable';
+    const HERMES_STABLE_BRANCH = '260318099.0.0-stable';
     execSync(
       `git clone -q --bare --filter=blob:none --single-branch --branch ${HERMES_STABLE_BRANCH} ${HERMES_GITHUB_URL} "${hermesGitDir}"`,
       {stdio: 'pipe', timeout: 120000},

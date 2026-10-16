@@ -137,9 +137,8 @@ RCT_EXPORT_MODULE()
 }
 #endif // [macOS]
 
-RCT_EXPORT_METHOD(
-    showActionSheetWithOptions : (JS::NativeActionSheetManager::SpecShowActionSheetWithOptionsOptions &)
-        options callback : (RCTResponseSenderBlock)callback)
+- (void)showActionSheetWithOptions:(JS::NativeActionSheetManager::SpecShowActionSheetWithOptionsOptions &)options
+                          callback:(RCTResponseSenderBlock)callback
 {
 #if !TARGET_OS_OSX // [macOS]
   if (RCTRunningInAppExtension()) {
@@ -322,7 +321,7 @@ RCT_EXPORT_METHOD(
   });
 }
 
-RCT_EXPORT_METHOD(dismissActionSheet)
+- (void)dismissActionSheet
 {
 #if !TARGET_OS_OSX // [macOS]
   if (_alertControllers.count == 0) {
@@ -337,10 +336,10 @@ RCT_EXPORT_METHOD(dismissActionSheet)
 #endif // [macOS]
 }
 
-RCT_EXPORT_METHOD(
-    showShareActionSheetWithOptions : (JS::NativeActionSheetManager::SpecShowShareActionSheetWithOptionsOptions &)
-        options failureCallback : (RCTResponseSenderBlock)failureCallback successCallback : (RCTResponseSenderBlock)
-            successCallback)
+- (void)showShareActionSheetWithOptions:
+            (JS::NativeActionSheetManager::SpecShowShareActionSheetWithOptionsOptions &)options
+                        failureCallback:(RCTResponseSenderBlock)failureCallback
+                        successCallback:(RCTResponseSenderBlock)successCallback
 {
 #if !TARGET_OS_OSX // [macOS]
   if (RCTRunningInAppExtension()) {

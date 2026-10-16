@@ -9,7 +9,7 @@
  */
 
 import type {HostInstance} from '../../../src/private/types/HostInstance';
-import type {____TextStyle_Internal as TextStyleInternal} from '../../StyleSheet/StyleSheetTypes';
+import type {TextStyle} from '../../StyleSheet/StyleSheetTypes';
 import type {
   BlurEvent,
   FocusEvent,
@@ -333,11 +333,11 @@ function InternalTextInput(props: TextInputProps): React.Node {
       TextInputState.registerInput(inputRefValue);
 
       return () => {
-        TextInputState.unregisterInput(inputRefValue);
-
         if (TextInputState.currentlyFocusedInput() === inputRefValue) {
           nullthrows(inputRefValue).blur();
         }
+
+        TextInputState.unregisterInput(inputRefValue);
       };
     }
   }, []);
@@ -645,16 +645,16 @@ function InternalTextInput(props: TextInputProps): React.Node {
   let _style = props.style;
   const flattenedStyle = flattenStyle<TextStyleProp>(props.style);
   if (flattenedStyle != null) {
-    let overrides: ?{...TextStyleInternal} = null;
+    let overrides: ?{...TextStyle} = null;
     if (typeof flattenedStyle?.fontWeight === 'number') {
-      overrides = overrides || ({} as {...TextStyleInternal});
+      overrides = overrides || ({} as {...TextStyle});
       overrides.fontWeight =
         // $FlowFixMe[incompatible-type]
-        flattenedStyle.fontWeight.toString() as TextStyleInternal['fontWeight'];
+        flattenedStyle.fontWeight.toString() as TextStyle['fontWeight'];
     }
 
     if (flattenedStyle.verticalAlign != null) {
-      overrides = overrides || ({} as {...TextStyleInternal});
+      overrides = overrides || ({} as {...TextStyle});
       overrides.textAlignVertical =
         verticalAlignToTextAlignVerticalMap[flattenedStyle.verticalAlign];
       overrides.verticalAlign = undefined;
@@ -746,53 +746,54 @@ function InternalTextInput(props: TextInputProps): React.Node {
           ? selectionColor
           : selectionHandleColor,
     };
-    textInput = (
-      /* $FlowFixMe[prop-missing] the types for AndroidTextInput don't match up
-       * exactly with the props for TextInput. This will need to get fixed */
-      /* $FlowFixMe[incompatible-type] the types for AndroidTextInput don't
-       * match up exactly with the props for TextInput. This will need to get
-       * fixed */
-      /* $FlowFixMe[incompatible-type-arg] the types for AndroidTextInput don't
-       * match up exactly with the props for TextInput. This will need to get
-       * fixed */
-      <AndroidTextInput
-        // Figure out imperative + forward refs.
-        ref={ref as $FlowFixMe}
-        {...otherProps}
-        {...colorProps}
-        {...eventHandlers}
-        accessibilityLabel={_accessibilityLabel}
-        accessibilityLabelledBy={_accessibilityLabelledBy}
-        accessibilityState={_accessibilityState}
-        accessible={accessible}
-        acceptDragAndDropTypes={props.experimental_acceptDragAndDropTypes}
-        autoCapitalize={autoCapitalize}
-        submitBehavior={submitBehavior}
-        caretHidden={caretHidden}
-        children={children}
-        disableFullscreenUI={props.disableFullscreenUI}
-        focusable={tabIndex !== undefined ? !tabIndex : focusable}
-        importantForAccessibility={_importantForAccessibility}
-        mostRecentEventCount={mostRecentEventCount}
-        nativeID={id ?? props.nativeID}
-        numberOfLines={props.rows ?? props.numberOfLines}
-        onBlur={_onBlur}
-        onChange={_onChange}
-        onFocus={_onFocus}
-        /* $FlowFixMe[prop-missing] the types for AndroidTextInput don't match
-         * up exactly with the props for TextInput. This will need to get fixed
-         */
-        /* $FlowFixMe[incompatible-type] the types for AndroidTextInput
-         * don't match up exactly with the props for TextInput. This will need
-         * to get fixed */
-        onScroll={_onScroll}
-        onSelectionChange={_onSelectionChange}
-        placeholder={placeholder}
-        style={_style}
-        text={text}
-        textBreakStrategy={props.textBreakStrategy}
-      />
-    );
+    textInput =
+      (
+        /* $FlowFixMe[prop-missing] the types for AndroidTextInput don't match up
+         * exactly with the props for TextInput. This will need to get fixed */
+        /* $FlowFixMe[incompatible-type] the types for AndroidTextInput don't
+         * match up exactly with the props for TextInput. This will need to get
+         * fixed */
+        /* $FlowFixMe[incompatible-type-arg] the types for AndroidTextInput don't
+         * match up exactly with the props for TextInput. This will need to get
+         * fixed */
+        <AndroidTextInput
+          // Figure out imperative + forward refs.
+          ref={ref as $FlowFixMe}
+          {...otherProps}
+          {...colorProps}
+          {...eventHandlers}
+          accessibilityLabel={_accessibilityLabel}
+          accessibilityLabelledBy={_accessibilityLabelledBy}
+          accessibilityState={_accessibilityState}
+          accessible={accessible}
+          acceptDragAndDropTypes={props.experimental_acceptDragAndDropTypes}
+          autoCapitalize={autoCapitalize}
+          submitBehavior={submitBehavior}
+          caretHidden={caretHidden}
+          children={children}
+          disableFullscreenUI={props.disableFullscreenUI}
+          focusable={tabIndex !== undefined ? !tabIndex : focusable}
+          importantForAccessibility={_importantForAccessibility}
+          mostRecentEventCount={mostRecentEventCount}
+          nativeID={id ?? props.nativeID}
+          numberOfLines={props.rows ?? props.numberOfLines}
+          onBlur={_onBlur}
+          onChange={_onChange}
+          onFocus={_onFocus}
+          /* $FlowFixMe[prop-missing] the types for AndroidTextInput don't match
+           * up exactly with the props for TextInput. This will need to get fixed
+           */
+          /* $FlowFixMe[incompatible-type] the types for AndroidTextInput
+           * don't match up exactly with the props for TextInput. This will need
+           * to get fixed */
+          onScroll={_onScroll}
+          onSelectionChange={_onSelectionChange}
+          placeholder={placeholder}
+          style={_style}
+          text={text}
+          textBreakStrategy={props.textBreakStrategy}
+        />
+      );
   }
   return <TextAncestorContext value={true}>{textInput}</TextAncestorContext>;
 }

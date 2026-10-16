@@ -15,6 +15,7 @@
 #import <react/renderer/components/unimplementedview/UnimplementedViewShadowNode.h>
 
 #import <React/RCTConversions.h>
+#import <React/RCTLog.h>
 
 #import "RCTFabricComponentsPlugins.h"
 
@@ -29,12 +30,14 @@ using namespace facebook::react;
   if (self = [super initWithFrame:frame]) {
     _props = UnimplementedViewShadowNode::defaultSharedProps();
 
-    _label = [[RCTUILabel alloc] initWithFrame:self.bounds];
-    _label.backgroundColor = [RCTPlatformColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.3];
+    _label = [[RCTUILabel alloc] initWithFrame:self.bounds]; // [macOS]
+#if RCT_DEV
+    _label.backgroundColor = [RCTPlatformColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.3]; // [macOS]
+    _label.textColor = [RCTPlatformColor whiteColor]; // [macOS]
+#endif
     _label.lineBreakMode = NSLineBreakByCharWrapping;
     _label.numberOfLines = 0;
     _label.textAlignment = NSTextAlignmentCenter;
-    _label.textColor = [RCTPlatformColor whiteColor];
 #if !TARGET_OS_OSX // [macOS]
     _label.allowsDefaultTighteningForTruncation = YES;
     _label.adjustsFontSizeToFitWidth = YES;
@@ -63,8 +66,19 @@ using namespace facebook::react;
   const auto &newUnimplementedViewProps = static_cast<const UnimplementedViewProps &>(*props);
 
   if (oldUnimplementedViewProps.getComponentName() != newUnimplementedViewProps.getComponentName()) {
-    _label.text =
-        [NSString stringWithFormat:@"Unimplemented component: <%s>", newUnimplementedViewProps.getComponentName()];
+    const char *componentName = newUnimplementedViewProps.getComponentName();
+#if RCT_DEV
+    _label.text = [NSString stringWithFormat:@"Unimplemented component: <%s>", componentName];
+#endif
+    // Skip the empty initial prop-default pass — only log once the real component
+    // name has been propagated.
+    if (componentName != nullptr && *componentName != '\0') {
+      // Log in all builds so missing components are reported in production.
+      RCTLogError(
+          @"UnimplementedView: native component '%s' is not registered. "
+           "Ensure the iOS library defines a plugin entry for this component.",
+          componentName);
+    }
   }
 
   [super updateProps:props oldProps:oldProps];

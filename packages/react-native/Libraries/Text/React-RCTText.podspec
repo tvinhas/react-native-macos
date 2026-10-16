@@ -39,4 +39,6 @@ Pod::Spec.new do |s|
 
   s.dependency "Yoga"
   s.dependency "React-Core/RCTTextHeaders", version
+
+  mark_as_react_native_build(s)
 end

@@ -161,7 +161,7 @@ const definitions: FeatureFlagDefinitions = {
     enableAccessibilityOrder: {
       defaultValue: false,
       metadata: {
-        dateAdded: '2025-4-3',
+        dateAdded: '2025-04-03',
         description:
           'When enabled, the accessibilityOrder prop will propagate to native platforms and define the accessibility order.',
         expectedReleaseValue: true,
@@ -180,17 +180,6 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
-    enableAndroidFontWeightAdjustment: {
-      defaultValue: true,
-      metadata: {
-        dateAdded: '2026-06-29',
-        description:
-          'When enabled, Android Text measurement and rendering respects the system Bold text accessibility setting via `Configuration.fontWeightAdjustment`.',
-        expectedReleaseValue: true,
-        purpose: 'experimentation',
-      },
-      ossReleaseStage: 'none',
-    },
     enableAndroidTextMeasurementOptimizations: {
       defaultValue: false,
       metadata: {
@@ -203,13 +192,23 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enableBridgelessArchitecture: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         description: 'Feature flag to enable the new bridgeless architecture.',
         expectedReleaseValue: true,
         purpose: 'release',
       },
-      ossReleaseStage: 'canary',
+      ossReleaseStage: 'stable',
+    },
+    enableBufferedCallInvoker: {
+      defaultValue: true,
+      metadata: {
+        description:
+          'Route async CallInvoker work through the ReactInstance buffered runtime executor, so it is ordered against callable module calls and cannot run before the JS bundle has finished evaluating. invokeSync is unaffected.',
+        expectedReleaseValue: true,
+        purpose: 'release',
+      },
+      ossReleaseStage: 'none',
     },
     enableCppPropsIteratorSetter: {
       defaultValue: false,
@@ -246,10 +245,11 @@ const definitions: FeatureFlagDefinitions = {
     enableDoubleMeasurementFixAndroid: {
       defaultValue: false,
       metadata: {
+        dateAdded: '2025-04-29',
         description:
           'When enabled a subset of components will avoid double measurement on Android.',
         expectedReleaseValue: true,
-        purpose: 'operational',
+        purpose: 'experimentation',
       },
       ossReleaseStage: 'none',
     },
@@ -359,6 +359,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    enableImageTransparentTintColor: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-07-17',
+        description:
+          'When enabled, Image `tintColor` is handled as a true optional: any defined color is applied as a tint — including `transparent` (alpha 0), which renders the image invisible — and an unset value clears a previously applied tint. When disabled, the prior behavior is preserved, where a transparent `tintColor` is treated as unassigned and the image renders untinted.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableImmediateUpdateModeForContentOffsetChanges: {
       defaultValue: false,
       metadata: {
@@ -369,6 +380,16 @@ const definitions: FeatureFlagDefinitions = {
         purpose: 'experimentation',
       },
       ossReleaseStage: 'none',
+    },
+    enableImperativeEvents: {
+      defaultValue: false,
+      metadata: {
+        description:
+          'When enabled, ReactNativeElement and ReadOnlyText expose the public EventTarget API (addEventListener, removeEventListener, dispatchEvent). When disabled, those methods are removed from those final classes.',
+        expectedReleaseValue: true,
+        purpose: 'release',
+      },
+      ossReleaseStage: 'canary',
     },
     enableImperativeFocus: {
       defaultValue: true, // [macOS]
@@ -443,6 +464,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    enableMountingCoordinatorPullModelAndroid: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-07-14',
+        description:
+          'When enabled, Android mounts transactions with the pull model (like iOS): the commit thread no longer pulls and builds the mount batch in schedulerShouldRenderTransactions. Instead the UI thread pulls the transaction itself via a PullTransactionMountItem enqueued in the MountItemDispatcher, builds the IntBufferBatchMountItem, and applies it synchronously. Requires `enableAccumulatedUpdatesInRawPropsAndroid` to be enabled as well, since a single pull may collapse several commits into one diff and therefore needs complete accumulated rawProps; when used together with Props 2.0, also enable `enableExclusivePropsUpdateAndroid` and `enablePropsUpdateReconciliationAndroid`.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableMutationObserverByDefault: {
       defaultValue: false,
       metadata: {
@@ -460,16 +492,6 @@ const definitions: FeatureFlagDefinitions = {
           'Parse CSS strings using the Fabric CSS parser instead of ViewConfig processing',
         expectedReleaseValue: true,
         purpose: 'experimentation',
-      },
-      ossReleaseStage: 'none',
-    },
-    enableNetworkEventReporting: {
-      defaultValue: true,
-      metadata: {
-        description:
-          'Enable network event reporting hooks in each native platform through `NetworkReporter` (Web Perf APIs + CDP). This flag should be combined with `fuseboxNetworkInspectionEnabled` to enable Network CDP debugging.',
-        expectedReleaseValue: true,
-        purpose: 'release',
       },
       ossReleaseStage: 'none',
     },
@@ -494,27 +516,14 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
-    enableRuntimeSchedulerQueueClearingOnError: {
+    enableResizeObserverByDefault: {
       defaultValue: false,
       metadata: {
-        dateAdded: '2026-05-19',
-        description:
-          'When enabled, RuntimeScheduler_Modern clears pending tasks and rendering updates before handling an error.',
+        description: 'Enables the ResizeObserver Web API in React Native.',
         expectedReleaseValue: true,
-        purpose: 'experimentation',
+        purpose: 'release',
       },
-      ossReleaseStage: 'experimental',
-    },
-    enableSchedulerDelegateInvalidation: {
-      defaultValue: false,
-      metadata: {
-        dateAdded: '2026-05-04',
-        description:
-          'Gates a defensive guard around Scheduler::uiManagerDidDispatchCommand and uiManagerDidFinishTransaction that prevents queued rendering-update lambdas from dereferencing the SchedulerDelegate after it has been destroyed (use-after-free).',
-        expectedReleaseValue: true,
-        purpose: 'experimentation',
-      },
-      ossReleaseStage: 'experimental',
+      ossReleaseStage: 'none',
     },
     enableSwiftUIBasedFilters: {
       defaultValue: false,
@@ -666,21 +675,10 @@ const definitions: FeatureFlagDefinitions = {
         expectedReleaseValue: true,
         purpose: 'experimentation',
       },
-      ossReleaseStage: 'none',
-    },
-    fuseboxNetworkInspectionEnabled: {
-      defaultValue: true,
-      metadata: {
-        dateAdded: '2024-01-31',
-        description:
-          'Enable network inspection support in the React Native DevTools CDP backend. Requires `enableBridgelessArchitecture`. This flag is global and should not be changed across React Host lifetimes.',
-        expectedReleaseValue: true,
-        purpose: 'experimentation',
-      },
-      ossReleaseStage: 'none',
+      ossReleaseStage: 'canary',
     },
     fuseboxScreenshotCaptureEnabled: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2026-04-01',
         description:
@@ -688,7 +686,18 @@ const definitions: FeatureFlagDefinitions = {
         expectedReleaseValue: true,
         purpose: 'experimentation',
       },
-      ossReleaseStage: 'none',
+      ossReleaseStage: 'stable',
+    },
+    fuseboxWebSocketEventsEnabled: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-07-11',
+        description:
+          'Enable reporting of WebSocket network events (`Network.webSocket*` CDP events) to the React Native DevTools CDP backend.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'canary',
     },
     optimizedAnimatedPropUpdates: {
       defaultValue: false,
@@ -737,10 +746,9 @@ const definitions: FeatureFlagDefinitions = {
     preparedTextCacheSize: {
       defaultValue: 200,
       metadata: {
-        dateAdded: '2025-06-25',
         description: 'Number cached PreparedLayouts in TextLayoutManager cache',
         expectedReleaseValue: 200,
-        purpose: 'experimentation',
+        purpose: 'operational',
       },
       ossReleaseStage: 'none',
     },
@@ -867,7 +875,7 @@ const definitions: FeatureFlagDefinitions = {
         description:
           'Should this application enable the Fabric Interop Layer for Android? If yes, the application will behave so that it can accept non-Fabric components and render them on Fabric. This toggle is controlling extra logic such as custom event dispatching that are needed for the Fabric Interop Layer to work correctly.',
         expectedReleaseValue: false,
-        purpose: 'release',
+        purpose: 'operational',
       },
       ossReleaseStage: 'none',
     },
@@ -896,7 +904,7 @@ const definitions: FeatureFlagDefinitions = {
     useSharedAnimatedBackend: {
       defaultValue: false,
       metadata: {
-        dateAdded: '2025-08-2',
+        dateAdded: '2025-08-02',
         description: 'Use shared animation backend in C++ Animated',
         expectedReleaseValue: true,
         purpose: 'experimentation',
@@ -906,7 +914,7 @@ const definitions: FeatureFlagDefinitions = {
     useTraitHiddenOnAndroid: {
       defaultValue: false,
       metadata: {
-        dateAdded: '2025-10-9',
+        dateAdded: '2025-10-09',
         description: 'Use Trait::hidden on Android',
         expectedReleaseValue: true,
         purpose: 'experimentation',
@@ -927,11 +935,10 @@ const definitions: FeatureFlagDefinitions = {
     viewCullingOutsetRatio: {
       defaultValue: 0,
       metadata: {
-        dateAdded: '2025-09-18',
         description:
           'Outset the culling context frame with the provided ratio. The culling context frame size will be outset by width * ratio on the left and right, and height * ratio on the top and bottom.',
         expectedReleaseValue: 0,
-        purpose: 'experimentation',
+        purpose: 'operational',
       },
       ossReleaseStage: 'none',
     },
@@ -992,6 +999,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    animatedKeepListenersOnDetach: {
+      defaultValue: true,
+      metadata: {
+        dateAdded: '2026-08-14',
+        description:
+          'When enabled, detaching an animated node from the graph retains listeners registered with `addListener` instead of removing them, so an `Animated.Value` that outlives the components using it still notifies them once it is attached again.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     animatedShouldSyncValueBeforeStartCallback: {
       defaultValue: true,
       metadata: {
@@ -1014,18 +1032,18 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
-    enableImperativeEvents: {
+    enableImperativeEvents_DEPRECATED: {
       defaultValue: false,
       metadata: {
         description:
-          'When enabled, ReactNativeElement and ReadOnlyText expose the public EventTarget API (addEventListener, removeEventListener, dispatchEvent). When disabled, those methods are removed from those final classes.',
+          'Deprecated in favor of the common flag with the same name, which is the one that can be configured by OSS release stage. This is only kept so JS bundles delivered to older native builds, where the common flag is unavailable, can still enable the feature.',
         expectedReleaseValue: true,
         purpose: 'release',
       },
       ossReleaseStage: 'none',
     },
     enableNativeEventTargetEventDispatching: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2026-04-13',
         description:

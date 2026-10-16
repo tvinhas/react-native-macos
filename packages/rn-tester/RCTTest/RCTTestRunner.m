@@ -189,7 +189,7 @@ RCT_NOT_IMPLEMENTED(-(instancetype)init)
     batchedBridge = [bridge batchedBridge];
 
 #if !TARGET_OS_OSX // [macOS]
-    UIViewController *vc = RCTSharedApplication().delegate.window.rootViewController;
+    UIViewController *vc = RCTKeyWindow().rootViewController;
     vc.view = [UIView new];
 #endif // [macOS]
 

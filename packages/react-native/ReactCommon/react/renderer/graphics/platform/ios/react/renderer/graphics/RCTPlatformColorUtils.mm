@@ -336,7 +336,7 @@ facebook::react::ColorComponents RCTPlatformColorComponentsFromSemanticItems(std
   return _ColorComponentsFromUIColor(RCTPlatformColorFromSemanticItems(semanticItems));
 }
 
-RCTPlatformColor *RCTPlatformColorFromSemanticItems(std::vector<std::string> &semanticItems) // [macOS]
+RCTPlatformColor *_Nullable RCTPlatformColorFromSemanticItemsOrNil(std::vector<std::string> &semanticItems) // [macOS]
 {
   for (const auto &semanticCString : semanticItems) {
     NSString *semanticNSString = _NSStringFromCString(semanticCString);
@@ -350,7 +350,15 @@ RCTPlatformColor *RCTPlatformColorFromSemanticItems(std::vector<std::string> &se
     }
   }
 
-  return RCTPlatformColor.clearColor; // [macOS]
+  return nil;
+}
+
+RCTPlatformColor *RCTPlatformColorFromSemanticItems(std::vector<std::string> &semanticItems) // [macOS]
+{
+  // Non-null contract (e.g. for RCTPlatformColorComponentsFromSemanticItems);
+  // callers needing to detect a miss use the OrNil variant.
+  RCTPlatformColor *uiColor = RCTPlatformColorFromSemanticItemsOrNil(semanticItems); // [macOS]
+  return uiColor != nil ? uiColor : RCTPlatformColor.clearColor; // [macOS]
 }
 
 RCTPlatformColor *RCTPlatformColorFromColor(const facebook::react::Color &color) // [macOS]
