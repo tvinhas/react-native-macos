@@ -53,9 +53,9 @@ const AccessibilityInfo = {
     $FlowFixMe,
   >,
   // [macOS
-  isHighContrastEnabled: (jest.fn(() =>
+  isHighContrastEnabled: jest.fn(() =>
     Promise.resolve(false),
-  ): () => Promise<boolean>),
+  ) as () => Promise<boolean>,
   // macOS]
   setAccessibilityFocus: jest.fn() as JestMockFn<$FlowFixMe, $FlowFixMe>,
   sendAccessibilityEvent: jest.fn() as JestMockFn<$FlowFixMe, $FlowFixMe>,

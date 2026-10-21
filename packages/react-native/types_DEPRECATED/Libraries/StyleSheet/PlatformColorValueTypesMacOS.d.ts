@@ -18,11 +18,7 @@ export function DynamicColorMacOS(
 ): OpaqueColorValue;
 
 type SystemEffectMacOS =
-  | 'none'
-  | 'pressed'
-  | 'deepPressed'
-  | 'disabled'
-  | 'rollover';
+  'none' | 'pressed' | 'deepPressed' | 'disabled' | 'rollover';
 
 export function ColorWithSystemEffectMacOS(
   color: ColorValue,

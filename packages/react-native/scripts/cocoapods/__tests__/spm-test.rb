@@ -13,7 +13,7 @@ require_relative "../spm.rb"
 # from how `Pod::Project` hands out UUIDs, and cannot be observed against a mock.
 class SPMTests < Test::Unit::TestCase
   PodSpecStub = Struct.new(:name)
-  InstallerStub = Struct.new(:pods_project)
+  InstallerStub = Struct.new(:pods_project, :aggregate_targets)
 
   POD_NAME = "ReactNativeEnrichedMarkdown"
   TMP_DIR = File.join(Dir.tmpdir, "rn-spm-test")
@@ -37,7 +37,7 @@ class SPMTests < Test::Unit::TestCase
     project
   end
 
-  def inject_spm(project)
+  def inject_spm(project, aggregates = [])
     manager = SPMManager.new
     manager.dependency(
       PodSpecStub.new(POD_NAME),
@@ -45,7 +45,7 @@ class SPMTests < Test::Unit::TestCase
       requirement: { kind: "upToNextMajorVersion", minimumVersion: "0.1.0" },
       products: ["RaTeX"]
     )
-    manager.apply_on_post_install(InstallerStub.new(project))
+    manager.apply_on_post_install(InstallerStub.new(project, aggregates))
     project.save
   end
 
@@ -96,5 +96,42 @@ class SPMTests < Test::Unit::TestCase
     reopened = assert_loadable_project(project.path)
     uuids = reopened.objects.map(&:uuid)
     assert_equal(uuids.length, uuids.uniq.length, "all object UUIDs must be unique")
+  end
+
+  def test_static_pod_uses_shared_products_and_rewrites_saved_aggregate_config
+    project = build_project(1)
+    config = Xcodeproj::Config.new(
+      "OTHER_CFLAGS" => "$(inherited) -fmodule-map-file=${PODS_CONFIGURATION_BUILD_DIR}/#{POD_NAME}/#{POD_NAME}.modulemap",
+      "OTHER_SWIFT_FLAGS" => "$(inherited) -Xcc -fmodule-map-file=${PODS_CONFIGURATION_BUILD_DIR}/#{POD_NAME}/#{POD_NAME}.modulemap"
+    )
+    aggregate = Struct.new(:xcconfigs, :output) do
+      def xcconfig_path(name)
+        Pathname.new(output)
+      end
+    end.new({"Debug" => config}, File.join(TMP_DIR, "aggregate.xcconfig"))
+    inject_spm(project, [aggregate])
+    target = project.targets.find { |t| t.name == POD_NAME }
+    target.build_configurations.each do |build_config|
+      assert_equal('${PODS_CONFIGURATION_BUILD_DIR}', target.build_settings(build_config.name)['CONFIGURATION_BUILD_DIR'])
+    end
+    %w[OTHER_CFLAGS OTHER_SWIFT_FLAGS].each do |key|
+      assert_include(config.attributes[key], "${PODS_CONFIGURATION_BUILD_DIR}/#{POD_NAME}.modulemap")
+      assert_not_include(config.attributes[key], "/#{POD_NAME}/#{POD_NAME}.modulemap")
+    end
+    assert_include(File.read(aggregate.output), "${PODS_CONFIGURATION_BUILD_DIR}/#{POD_NAME}.modulemap")
+  end
+
+  def test_dynamic_framework_keeps_its_build_directory
+    project = build_project(1)
+    target = project.targets.find { |t| t.name == POD_NAME }
+    target.product_type = 'com.apple.product-type.framework'
+    target.build_configurations.each do |config|
+      target.build_settings(config.name)['CONFIGURATION_BUILD_DIR'] = 'original-products'
+    end
+    inject_spm(project)
+    target.build_configurations.each do |config|
+      assert_equal('original-products', target.build_settings(config.name)['CONFIGURATION_BUILD_DIR'])
+      assert_include(target.build_settings(config.name)['SWIFT_INCLUDE_PATHS'], '${SYMROOT}/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/')
+    end
   end
 end

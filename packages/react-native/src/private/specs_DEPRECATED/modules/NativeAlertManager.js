@@ -25,7 +25,7 @@ export type Args = {
   keyboardType?: string,
   userInterfaceStyle?: string,
   // [macOS
-  defaultInputs?: Array<Object>,
+  defaultInputs?: Array<UnsafeObject>,
   modal?: ?boolean,
   critical?: ?boolean,
   // macOS]

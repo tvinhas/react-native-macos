@@ -38,11 +38,7 @@ export const DynamicColorMacOS = (
 };
 
 export type SystemEffectMacOS =
-  | 'none'
-  | 'pressed'
-  | 'deepPressed'
-  | 'disabled'
-  | 'rollover';
+  'none' | 'pressed' | 'deepPressed' | 'disabled' | 'rollover';
 
 export const ColorWithSystemEffectMacOS = (
   color: ColorValue,

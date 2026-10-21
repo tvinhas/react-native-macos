@@ -33,11 +33,7 @@ export const PlatformColor = (...names: Array<string>): ColorValue => {
 };
 
 export type SystemEffectMacOSPrivate =
-  | 'none'
-  | 'pressed'
-  | 'deepPressed'
-  | 'disabled'
-  | 'rollover';
+  'none' | 'pressed' | 'deepPressed' | 'disabled' | 'rollover';
 
 export const ColorWithSystemEffectMacOSPrivate = (
   color: ColorValue,

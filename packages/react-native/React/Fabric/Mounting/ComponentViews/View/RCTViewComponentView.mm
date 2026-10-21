@@ -309,7 +309,7 @@ static BOOL RCTLayerTransformCollapsesAxis(CALayer *layer)
         @(index),
         @([childComponentView.superview tag]));
 #ifndef NS_BLOCK_ASSERTIONS
-    NSArray<UIView *> *containerSubviews = self.currentContainerView.subviews;
+    NSArray<RCTPlatformView *> *containerSubviews = self.currentContainerView.subviews; // [macOS]
     BOOL isIndexInBounds = index >= 0 && (NSUInteger)index < containerSubviews.count;
     RCTAssert(
         isIndexInBounds && [containerSubviews objectAtIndex:index] == childComponentView,
@@ -2104,8 +2104,11 @@ static NSString *RCTRecursiveAccessibilityLabel(RCTUIView *view) // [macOS]
   // no-op, leaving programmatic `ref.blur()` from JS without effect. The
   // correct AppKit equivalent is `makeFirstResponder:nil`, which clears
   // the current first responder. Mirrors the working pattern at
-  // RCTTextInputComponentView.mm:995-997.
-  [[self window] makeFirstResponder:nil];
+  // RCTTextInputComponentView.mm:995-997. Only resign when this view holds
+  // focus, so blurring one view doesn't unfocus another (upstream #3015).
+  if ([[self window] firstResponder] == self) {
+    [[self window] makeFirstResponder:nil];
+  }
 }
 
 - (BOOL)needsPanelToBecomeKey

@@ -7,8 +7,9 @@
 
 #import "RCTFrameTimingsObserver.h"
 
-#if !TARGET_OS_OSX // [macOS] iOS-only screenshot/CADisplayLink frame timings
-#import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h> // [macOS]
+#import <React/RCTPlatformDisplayLink.h> // [macOS]
+#import <React/RCTUIKit.h> // [macOS]
 
 #import <mach/thread_act.h>
 #import <pthread.h>
@@ -23,15 +24,24 @@
 
 using namespace facebook::react;
 
+#if !TARGET_OS_OSX // [macOS]
 static constexpr CGFloat kScreenshotScaleFactor = 1.0;
+#endif // [macOS]
 static constexpr CGFloat kScreenshotJPEGQuality = 0.8;
+#if TARGET_OS_OSX // [macOS
+// AppKit has no GPU snapshot API: CALayer renderInContext: composites the
+// layer tree on the CPU (shadows are blurred in software), so budget it.
+// Frames in between are still emitted, just without a screenshot.
+static constexpr CGFloat kMacOSScreenshotScaleFactor = 0.5;
+static constexpr CFTimeInterval kMacOSMinScreenshotInterval = 0.25;
+#endif // macOS]
 
 namespace {
 
 // Stores a captured frame screenshot and its associated metadata, used for
 // buffering frames during dynamic sampling.
 struct FrameData {
-  UIImage *image;
+  RCTPlatformImage *image; // [macOS]
   uint64_t frameId;
   jsinspector_modern::tracing::ThreadId threadId;
   HighResTimeStamp beginTimestamp;
@@ -44,13 +54,16 @@ struct FrameData {
 @implementation RCTFrameTimingsObserver {
   BOOL _screenshotsEnabled;
   RCTFrameTimingCallback _callback;
-  CADisplayLink *_displayLink;
+  RCTPlatformDisplayLink *_displayLink; // [macOS]
   uint64_t _frameCounter;
   // Serial queue for encoding work (single background thread). We limit to 1
   // thread to minimize the performance impact of screenshot recording.
   dispatch_queue_t _encodingQueue;
   std::atomic<bool> _running;
   uint64_t _lastScreenshotHash;
+#if TARGET_OS_OSX // [macOS
+  CFTimeInterval _lastScreenshotCaptureTime;
+#endif // macOS]
 
   // Stores the most recently captured frame to opportunistically encode after
   // the current frame. Replaced frames are emitted as timings without
@@ -77,7 +90,12 @@ struct FrameData {
 
 - (void)start
 {
-  _running.store(true, std::memory_order_relaxed);
+  // [macOS Ignore repeated starts so a second display link is never attached.
+  bool expected = false;
+  if (!_running.compare_exchange_strong(expected, true, std::memory_order_relaxed)) {
+    return;
+  }
+  // macOS]
   _frameCounter = 0;
   _lastScreenshotHash = 0;
   _encodingInProgress.store(false, std::memory_order_relaxed);
@@ -92,13 +110,17 @@ struct FrameData {
   auto now = HighResTimeStamp::now();
   [self _emitFrameTimingWithBeginTimestamp:now endTimestamp:now vsyncInterval:HighResDuration::zero()];
 
-  _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(_displayLinkTick:)];
+  _displayLink = [RCTPlatformDisplayLink displayLinkWithTarget:self selector:@selector(_displayLinkTick:)]; // [macOS]
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
 - (void)stop
 {
-  _running.store(false, std::memory_order_relaxed);
+  // [macOS
+  if (!_running.exchange(false, std::memory_order_relaxed)) {
+    return;
+  }
+  // macOS]
   [_displayLink invalidate];
   _displayLink = nil;
   {
@@ -107,7 +129,7 @@ struct FrameData {
   }
 }
 
-- (void)_displayLinkTick:(CADisplayLink *)sender
+- (void)_displayLinkTick:(RCTPlatformDisplayLink *)sender // [macOS]
 {
   // CADisplayLink.timestamp and targetTimestamp are in the same timebase as
   // CACurrentMediaTime() / mach_absolute_time(), which on Apple platforms maps
@@ -131,8 +153,12 @@ struct FrameData {
   uint64_t frameId = _frameCounter++;
   auto threadId = static_cast<jsinspector_modern::tracing::ThreadId>(pthread_mach_thread_np(pthread_self()));
 
-  if (!_screenshotsEnabled) {
-    // Screenshots disabled - emit without screenshot
+  if (!_screenshotsEnabled
+#if TARGET_OS_OSX // [macOS
+      || ![self _shouldCaptureScreenshotNow]
+#endif // macOS]
+  ) {
+    // Screenshots disabled (or throttled on macOS) - emit without screenshot
     [self _emitFrameEventWithFrameId:frameId
                             threadId:threadId
                       beginTimestamp:beginTimestamp
@@ -142,7 +168,7 @@ struct FrameData {
     return;
   }
 
-  UIImage *image = [self _captureScreenshot];
+  RCTPlatformImage *image = [self _captureScreenshot]; // [macOS]
   if (image == nil) {
     // Screenshot unchanged (duplicate hash) or capture failed — don't emit
     // a frame event. The serializer will fill the resulting gap with an idle
@@ -236,15 +262,29 @@ struct FrameData {
   });
 }
 
+#if TARGET_OS_OSX // [macOS
+// Main thread only (display link ticks on the main run loop).
+- (BOOL)_shouldCaptureScreenshotNow
+{
+  CFTimeInterval now = CACurrentMediaTime();
+  if (now - _lastScreenshotCaptureTime < kMacOSMinScreenshotInterval) {
+    return NO;
+  }
+  _lastScreenshotCaptureTime = now;
+  return YES;
+}
+#endif // macOS]
+
 // Captures a screenshot of the current window. Must be called on the main
 // thread. Returns nil if capture fails or if the frame content is unchanged.
-- (UIImage *)_captureScreenshot
+- (RCTPlatformImage *)_captureScreenshot // [macOS]
 {
-  UIWindow *keyWindow = [self _getKeyWindow];
+  RCTPlatformWindow *keyWindow = [self _getKeyWindow]; // [macOS]
   if (keyWindow == nil) {
     return nil;
   }
 
+#if !TARGET_OS_OSX // [macOS]
   UIView *rootView = keyWindow.rootViewController.view ?: keyWindow;
   CGSize viewSize = rootView.bounds.size;
   CGSize scaledSize = CGSizeMake(viewSize.width * kScreenshotScaleFactor, viewSize.height * kScreenshotScaleFactor);
@@ -256,10 +296,55 @@ struct FrameData {
   UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
     [rootView drawViewHierarchyInRect:CGRectMake(0, 0, scaledSize.width, scaledSize.height) afterScreenUpdates:NO];
   }];
+#else // [macOS Capture the app's own content view; needs no screen recording permission.
+  // AppKit has no equivalent of drawViewHierarchyInRect:afterScreenUpdates:NO.
+  // cacheDisplayInRect: re-draws every view at the backing scale on the main
+  // thread, which saturates it at 60 fps and starves the trace teardown.
+  // Composite the existing layer tree at point size instead, like iOS.
+  NSView *rootView = keyWindow.contentViewController.view ?: keyWindow.contentView;
+  NSRect bounds = rootView.bounds;
+  CALayer *rootLayer = rootView.layer;
+  if (NSIsEmptyRect(bounds) || rootLayer == nil) {
+    return nil;
+  }
+
+  size_t width = (size_t)ceil(bounds.size.width * kMacOSScreenshotScaleFactor);
+  size_t height = (size_t)ceil(bounds.size.height * kMacOSScreenshotScaleFactor);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate(
+      nullptr, width, height, 8, 0, colorSpace, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+  CGColorSpaceRelease(colorSpace);
+  if (context == nullptr) {
+    return nil;
+  }
+  if (rootView.isFlipped) {
+    CGContextTranslateCTM(context, 0, height);
+    CGContextScaleCTM(context, 1, -1);
+  }
+  CGContextScaleCTM(context, kMacOSScreenshotScaleFactor, kMacOSScreenshotScaleFactor);
+  [rootLayer renderInContext:context];
+  CGImageRef cgSnapshot = CGBitmapContextCreateImage(context);
+  CGContextRelease(context);
+  if (cgSnapshot == nil) {
+    return nil;
+  }
+  NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgSnapshot];
+  CGImageRelease(cgSnapshot);
+
+  RCTUIImage *image = [[RCTUIImage alloc] initWithSize:bounds.size];
+  [image addRepresentation:bitmap];
+#endif // macOS]
 
   // Skip duplicate frames via sampled FNV-1a pixel hash
-  CGImageRef cgImage = image.CGImage;
-  CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(cgImage));
+  CGImageRef cgImage = UIImageGetCGImageRef(image); // [macOS]
+  CGDataProviderRef dataProvider = cgImage == nil ? nil : CGImageGetDataProvider(cgImage); // [macOS]
+  if (dataProvider == nil) { // [macOS]
+    return nil; // [macOS]
+  } // [macOS]
+  CFDataRef pixelData = CGDataProviderCopyData(dataProvider); // [macOS]
+  if (pixelData == nil) { // [macOS]
+    return nil; // [macOS]
+  } // [macOS]
   uint64_t hash = 0xcbf29ce484222325ULL;
   const uint8_t *ptr = CFDataGetBytePtr(pixelData);
   CFIndex length = CFDataGetLength(pixelData);
@@ -278,9 +363,19 @@ struct FrameData {
   return image;
 }
 
-- (std::optional<std::vector<uint8_t>>)_encodeScreenshot:(UIImage *)image
+- (std::optional<std::vector<uint8_t>>)_encodeScreenshot:(RCTPlatformImage *)image // [macOS]
 {
+#if !TARGET_OS_OSX // [macOS]
   NSData *jpegData = UIImageJPEGRepresentation(image, kScreenshotJPEGQuality);
+#else // [macOS
+  NSImageRep *imageRep = image.representations.firstObject;
+  if (![imageRep isKindOfClass:[NSBitmapImageRep class]]) {
+    return std::nullopt;
+  }
+  NSData *jpegData =
+      [(NSBitmapImageRep *)imageRep representationUsingType:NSBitmapImageFileTypeJPEG
+                                                 properties:@{NSImageCompressionFactor : @(kScreenshotJPEGQuality)}];
+#endif // macOS]
   if (jpegData == nil) {
     return std::nullopt;
   }
@@ -289,8 +384,9 @@ struct FrameData {
   return std::vector<uint8_t>(bytes, bytes + jpegData.length);
 }
 
-- (UIWindow *)_getKeyWindow
+- (RCTPlatformWindow *)_getKeyWindow // [macOS]
 {
+#if !TARGET_OS_OSX // [macOS]
   for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
     if (scene.activationState == UISceneActivationStateForegroundActive &&
         [scene isKindOfClass:[UIWindowScene class]]) {
@@ -303,26 +399,25 @@ struct FrameData {
     }
   }
   return nil;
-}
+#else // [macOS
+  NSMutableOrderedSet<NSWindow *> *windows = [NSMutableOrderedSet new];
+  if (NSApp.mainWindow != nil) {
+    [windows addObject:NSApp.mainWindow];
+  }
+  if (NSApp.keyWindow != nil) {
+    [windows addObject:NSApp.keyWindow];
+  }
+  [windows addObjectsFromArray:NSApp.orderedWindows];
 
-@end
-#else // [macOS macOS no-op stub
-@implementation RCTFrameTimingsObserver
-
-#ifdef __cplusplus
-- (instancetype)initWithScreenshotsEnabled:(BOOL)screenshotsEnabled callback:(RCTFrameTimingCallback)callback
-{
-  return [super init];
-}
-#endif
-
-- (void)start
-{
-}
-
-- (void)stop
-{
-}
-
-@end
+  for (NSWindow *window in windows) {
+    NSView *contentView = window.contentViewController.view ?: window.contentView;
+    if (window.isVisible && !window.isMiniaturized && window.screen != nil && contentView.window == window &&
+        !NSIsEmptyRect(contentView.bounds)) {
+      return window;
+    }
+  }
+  return nil;
 #endif // macOS]
+}
+
+@end

@@ -1232,9 +1232,16 @@ enum class RowKind : uint8_t {
                                                   defer:NO];
   _redBoxWindow.releasedWhenClosed = NO;
   _redBoxWindow.level = NSStatusWindowLevel;
+  // Window levels are global: without this the status-level RedBox keeps floating over
+  // other apps' windows (e.g. the editor the developer switched to in order to fix the
+  // error). Hide it while the app is inactive; AppKit shows it again on activation.
+  _redBoxWindow.hidesOnDeactivate = YES;
   _redBoxWindow.opaque = YES;
   _redBoxWindow.backgroundColor = RCTRedBox2BackgroundColor();
   _redBoxWindow.contentViewController = self;
+  // Assigning contentViewController resizes the window to the view's own size;
+  // restore the frame so the RedBox covers the app window (or screen).
+  [_redBoxWindow setFrame:frame display:NO];
   [_redBoxWindow makeKeyAndOrderFront:nil];
   [_redBoxWindow makeFirstResponder:self.view];
   _isPresented = YES;

@@ -8,18 +8,18 @@
 #import "AppDelegate.h"
 
 #if !TARGET_OS_TV
+#import <React/RCTPushNotificationManager.h>
 #import <UserNotifications/UserNotifications.h>
 #endif
 
+#if TARGET_OS_OSX // [macOS
+#import "NativeExampleViews/FlexibleSizeExampleView.h"
+#import "NativeExampleViews/UpdatePropertiesExampleView.h"
+
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTDefines.h>
-#import <React/RCTLinkingManager.h>
 #import <ReactCommon/RCTSampleTurboModule.h>
 #import <ReactCommon/RCTTurboModuleManager.h>
-
-#if !TARGET_OS_TV
-#import <React/RCTPushNotificationManager.h>
-#endif
 
 #import <NativeCxxModuleExample/NativeCxxModuleExample.h>
 #ifndef RN_DISABLE_OSS_PLUGIN_HEADER
@@ -27,27 +27,18 @@
 #endif
 
 #if __has_include(<ReactAppDependencyProvider/RCTAppDependencyProvider.h>)
-#define USE_OSS_CODEGEN 1
 #import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
-#else
-#define USE_OSS_CODEGEN 0
 #endif
 
-#if RCT_DEV_MENU
-#import <React/RCTDevMenu.h>
-#endif
-
-#if !TARGET_OS_OSX // [macOS]
-NSString *kBundlePath = @"js/RNTesterApp.ios";
-#else // [macOS
-NSString *kBundlePath = @"js/RNTesterApp.macos";
+static NSString *const kBundlePath = @"js/RNTesterApp.macos";
 #endif // macOS]
+
+#if TARGET_OS_VISION // [visionOS
+#import "SceneDelegate.h"
+#endif // visionOS]
 
 #if !TARGET_OS_TV
 @interface AppDelegate () <UNUserNotificationCenterDelegate>
-@end
-#else
-@interface AppDelegate ()
 @end
 #endif
 
@@ -55,78 +46,55 @@ NSString *kBundlePath = @"js/RNTesterApp.macos";
 
 #if !TARGET_OS_OSX // [macOS]
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+#if !TARGET_OS_TV
+  [[UNUserNotificationCenter currentNotificationCenter] setDelegate:self];
+#endif
+  return YES;
+}
 #else // [macOS
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
-#endif // macOS]
 {
   self.reactNativeFactory = [[RCTReactNativeFactory alloc] initWithDelegate:self];
-#if USE_OSS_CODEGEN
+#if __has_include(<ReactAppDependencyProvider/RCTAppDependencyProvider.h>)
   self.dependencyProvider = [RCTAppDependencyProvider new];
 #endif
 
-#if !TARGET_OS_OSX // [macOS]
-#if !TARGET_OS_VISION // [visionOS]
-#if RCT_DEV_MENU
-
-  RCTDevMenuConfiguration *devMenuConfiguration = [[RCTDevMenuConfiguration alloc] initWithDevMenuEnabled:true
-                                                                                      shakeGestureEnabled:true
-                                                                                 keyboardShortcutsEnabled:true];
-  [self.reactNativeFactory setDevMenuConfiguration:devMenuConfiguration];
-
-#endif
-
-  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-#else  // [visionOS
-  self.window = [[UIWindow alloc] initWithFrame:CGRectMake(0, 0, 1280, 720)];
-#endif // visionOS]
-#else // [macOS
-  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,1280,720)
-                                            styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskResizable | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable
+  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1280, 720)
+                                            styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskResizable |
+                                            NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
   self.window.title = @"RNTesterApp";
-  NSDictionary *launchOptions = [notification userInfo];
-#endif // macOS]
 
   [self.reactNativeFactory startReactNativeWithModuleName:@"RNTesterApp"
                                                  inWindow:self.window
                                         initialProperties:[self prepareInitialProps]
-                                            launchOptions:launchOptions];
+                                            launchOptions:[notification userInfo]];
 
-#if !TARGET_OS_TV
   [[UNUserNotificationCenter currentNotificationCenter] setDelegate:self];
-#endif
-
-#if !TARGET_OS_OSX // [macOS]
-  return YES;
-#endif // macOS]
 }
 
 - (NSDictionary *)prepareInitialProps
 {
-  NSMutableDictionary *initProps = [NSMutableDictionary new];
-
-  NSString *_routeUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"route"];
-  if (_routeUri) {
-    initProps[@"exampleFromAppetizeParams"] = [NSString stringWithFormat:@"rntester://example/%@Example", _routeUri];
+  NSMutableDictionary *initProps = [NSMutableDictionary dictionary];
+  NSString *routeUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"route"];
+  if (routeUri != nil) {
+    NSString *example = [NSString stringWithFormat:@"rntester://example/%@Example", routeUri];
+    initProps[@"exampleFromAppetizeParams"] = example;
   }
-
-  return initProps;
+  return [initProps copy];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:kBundlePath];
+  return [self bundleURL];
 }
 
-#if !TARGET_OS_OSX // [macOS]
-- (BOOL)application:(UIApplication *)app
-            openURL:(NSURL *)url
-            options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options
+- (NSURL *)bundleURL
 {
-  return [RCTLinkingManager application:app openURL:url options:options];
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:kBundlePath];
 }
-#endif // [macOS]
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:(const std::string &)name
                                                       jsInvoker:(std::shared_ptr<facebook::react::CallInvoker>)jsInvoker
@@ -138,16 +106,53 @@ NSString *kBundlePath = @"js/RNTesterApp.macos";
   return [super getTurboModule:name jsInvoker:jsInvoker];
 }
 
+- (NSArray<id<RCTBridgeModule>> *)extraModulesForBridge:(__unused RCTBridge *)bridge
+{
+  return @[
+    [[FlexibleSizeExampleViewManager alloc] initWithRootViewFactory:self.reactNativeFactory.rootViewFactory],
+    [[UpdatePropertiesExampleViewManager alloc] initWithRootViewFactory:self.reactNativeFactory.rootViewFactory],
+  ];
+}
+
+#ifndef RN_DISABLE_OSS_PLUGIN_HEADER
+- (nonnull NSDictionary<NSString *, Class<RCTComponentViewProtocol>> *)thirdPartyFabricComponents
+{
+  NSMutableDictionary *dict = [super thirdPartyFabricComponents].mutableCopy;
+  if (!dict[@"RNTMyNativeView"]) {
+    dict[@"RNTMyNativeView"] = NSClassFromString(@"RNTMyNativeViewComponentView");
+  }
+  if (!dict[@"SampleNativeComponent"]) {
+    dict[@"SampleNativeComponent"] = NSClassFromString(@"RCTSampleNativeComponentComponentView");
+  }
+  return dict;
+}
+#endif
+#endif // macOS]
+
+#if TARGET_OS_VISION // [visionOS
+// The visionOS Info.plist declares a scene manifest without configurations,
+// so hand out the shared SceneDelegate here.
+- (UISceneConfiguration *)application:(UIApplication *)application
+    configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession
+                                   options:(UISceneConnectionOptions *)options
+{
+  UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:nil
+                                                                       sessionRole:connectingSceneSession.role];
+  configuration.delegateClass = [SceneDelegate class];
+  return configuration;
+}
+#endif // visionOS]
+
 #if !TARGET_OS_TV
 // Required for the remoteNotificationsRegistered event.
-- (void)application:(__unused RCTPlatformApplication *)application
+- (void)application:(__unused UIApplication *)application
     didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
   [RCTPushNotificationManager didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
 }
 
 // Required for the remoteNotificationRegistrationError event.
-- (void)application:(__unused RCTPlatformApplication *)application
+- (void)application:(__unused UIApplication *)application
     didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
 {
   [RCTPushNotificationManager didFailToRegisterForRemoteNotificationsWithError:error];
@@ -183,26 +188,5 @@ NSString *kBundlePath = @"js/RNTesterApp.macos";
   completionHandler();
 }
 #endif
-
-#pragma mark - RCTComponentViewFactoryComponentProvider
-
-#ifndef RN_DISABLE_OSS_PLUGIN_HEADER
-- (nonnull NSDictionary<NSString *, Class<RCTComponentViewProtocol>> *)thirdPartyFabricComponents
-{
-  NSMutableDictionary *dict = [super thirdPartyFabricComponents].mutableCopy;
-  if (!dict[@"RNTMyNativeView"]) {
-    dict[@"RNTMyNativeView"] = NSClassFromString(@"RNTMyNativeViewComponentView");
-  }
-  if (!dict[@"SampleNativeComponent"]) {
-    dict[@"SampleNativeComponent"] = NSClassFromString(@"RCTSampleNativeComponentComponentView");
-  }
-  return dict;
-}
-#endif
-
-- (NSURL *)bundleURL
-{
-  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:kBundlePath];
-}
 
 @end

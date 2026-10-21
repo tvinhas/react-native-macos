@@ -68,6 +68,11 @@ function expandDirectoriesIntoFiles(
       }
       return globSync('**/*{,.fb}.{js,ts,tsx}', {
         expandDirectories: false,
+        // [macOS] Don't walk dependency symlinks or generated/native trees
+        // (e.g. rn-tester's `jsSrcsDir: "."` contains Pods/ and build/).
+        followSymbolicLinks: false,
+        ignore: ['**/build/**', '**/node_modules/**', '**/Pods/**'],
+        // macOS]
         onlyFiles: true,
         absolute: true,
         cwd: file,
@@ -117,4 +122,5 @@ module.exports = {
   combineSchemas,
   combineSchemasInFileList,
   combineSchemasInFileListAndWriteToFile,
+  expandDirectoriesIntoFiles, // [macOS]
 };

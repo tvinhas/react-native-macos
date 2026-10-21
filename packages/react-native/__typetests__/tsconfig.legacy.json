@@ -5,6 +5,11 @@
   // hand-written types in `types_DEPRECATED/`.
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "customConditions": ["react-native-legacy-deep-imports"]
+    "customConditions": ["react-native-legacy-deep-imports"],
+    // [macOS] Resolve `react-native` to the fork's hand-written types in-repo.
+    "paths": {
+      "react-native": ["../types_DEPRECATED/index.d.ts"],
+      "react-native/*": ["../types_DEPRECATED/*", "../*"]
+    }
   }
 }

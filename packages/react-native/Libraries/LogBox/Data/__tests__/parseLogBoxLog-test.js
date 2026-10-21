@@ -14,8 +14,7 @@ import type {ExtendedExceptionData} from '../parseLogBoxLog';
 const {parseLogBoxException, parseLogBoxLog} = require('../parseLogBoxLog');
 
 describe('parseLogBoxLog', () => {
-  // [macOS Github#1766: Disable this failing test for now
-  describe.skip('Handles component stack frames formatted as call stacks in JSC', () => {
+  describe('Handles component stack frames formatted as call stacks in JSC', () => {
     // In new versions of React, the component stack frame format changed to match call stacks.
     it('detects a component stack in an interpolated warning', () => {
       expect(
@@ -363,5 +362,89 @@ describe('parseLogBoxLog', () => {
       });
     });
   });
-  // macOS]
 });
+
+// [macOS
+describe('adversarial parser inputs', () => {
+  function createError(message: string): ExtendedExceptionData {
+    return {
+      id: 0,
+      isFatal: false,
+      isComponentError: false,
+      message,
+      originalMessage: message,
+      name: '',
+      componentStack: null,
+      stack: [],
+    };
+  }
+
+  // Each of these took seconds to minutes with the previous regexes.
+  it('handles long stack-frame-like component messages', () => {
+    expect(parseLogBoxLog([`Component@${'@'.repeat(50_000)}\n`])).toBeDefined();
+    expect(parseLogBoxLog([`Component@${'@'.repeat(50_000)}`])).toBeDefined();
+  });
+
+  it('handles long Metro and Babel error headers', () => {
+    expect(
+      parseLogBoxException(
+        createError(
+          `InternalError Metro has encountered an error: ${': value'.repeat(
+            50_000,
+          )}`,
+        ),
+      ),
+    ).toMatchObject({level: 'error'});
+    expect(
+      parseLogBoxException(
+        createError(`SyntaxError: ${': value'.repeat(50_000)}`),
+      ),
+    ).toMatchObject({level: 'error'});
+  });
+
+  it('handles long code-frame headers', () => {
+    expect(
+      parseLogBoxException(createError(`${' /'.repeat(10_000)}\n> 1 | code`)),
+    ).toMatchObject({level: 'error'});
+    expect(
+      parseLogBoxException(
+        createError(` ${'/'.repeat(10_000)}: message\n> 1 | code`),
+      ),
+    ).toMatchObject({
+      level: 'syntax',
+      codeFrame: {fileName: '/'.repeat(10_000), content: '> 1 | code'},
+    });
+  });
+
+  it('preserves structured errors with parentheses in their messages', () => {
+    expect(
+      parseLogBoxException(
+        createError(
+          'TransformError SyntaxError: /path/file.js: Cannot use import() keyword (1:10)\n\n> 1 | import()',
+        ),
+      ),
+    ).toMatchObject({
+      level: 'syntax',
+      message: {content: 'Cannot use import() keyword'},
+      codeFrame: {
+        fileName: '/path/file.js',
+        location: {row: 1, column: 10},
+      },
+    });
+    expect(
+      parseLogBoxException(
+        createError(
+          'InternalError Metro has encountered an error: Cannot transform (require is not defined): /path/file.js (12:3)\n\n> 12 | require()',
+        ),
+      ),
+    ).toMatchObject({
+      level: 'fatal',
+      message: {content: 'Cannot transform (require is not defined)'},
+      codeFrame: {
+        fileName: '/path/file.js',
+        location: {row: 12, column: 3},
+      },
+    });
+  });
+});
+// macOS]

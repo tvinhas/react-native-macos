@@ -18,7 +18,7 @@ const {
   stubSlicesFromXcframework,
 } = require('../../../packages/react-native/scripts/ios-prebuild/headers-xcframework');
 const {HEADERS_FOLDER, TARGET_FOLDER} = require('./constants');
-const {execSync} = require('node:child_process');
+const {execFileSync} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -55,19 +55,15 @@ async function createFramework(
 
   console.log('Output path:', output);
 
-  const frameworksArgs = frameworkPaths
-    .map(
-      framework =>
-        `-framework ${path.join(
-          framework,
-          'PackageFrameworks',
-          `${scheme}.framework`,
-        )}`,
-    )
-    .join(' ');
-
-  const command = `xcodebuild -create-xcframework ${frameworksArgs} -output ${output} `;
-  execSync(command, {stdio: 'inherit'});
+  const buildArguments = ['-create-xcframework'];
+  frameworkPaths.forEach(framework => {
+    buildArguments.push(
+      '-framework',
+      path.join(framework, 'PackageFrameworks', `${scheme}.framework`),
+    );
+  });
+  buildArguments.push('-output', output);
+  execFileSync('xcodebuild', buildArguments, {stdio: 'inherit'});
 
   // Copy bundles into the framework
   copyBundles(scheme, dependencies, output, frameworkPaths);
@@ -129,7 +125,13 @@ function copyHeaders(
     );
 
     // Copy all header files from the dependency to headerTempFolder
-    execSync(`cp -r ${depHeaders}/* ${headeDestinationFolder}/`);
+    fs.readdirSync(depHeaders).forEach(header => {
+      fs.cpSync(
+        path.join(depHeaders, header),
+        path.join(headeDestinationFolder, header),
+        {recursive: true},
+      );
+    });
   });
 }
 
@@ -189,7 +191,7 @@ function copyBundles(
           );
 
           // A bundle is a directory, so we need to copy the whole directory
-          execSync(`cp -r "${sourceBundlePath}/" "${targetBundlePath}"`);
+          fs.cpSync(sourceBundlePath, targetBundlePath, {recursive: true});
         } else {
           throw Error(
             `Could not find target architecture for folder ${path.relative(outputFolder, frameworkPath)}. Expected to find ${frameworkPlatforms}`,
@@ -258,14 +260,19 @@ function copySymbols(
       scheme + '.framework.dSYM',
     );
     fs.mkdirSync(targetSymbolPath, {recursive: true});
-    execSync(`cp -r "${sourceSymbolPath}/" "${targetSymbolPath}"`);
+    fs.cpSync(sourceSymbolPath, targetSymbolPath, {recursive: true});
   });
 }
 
 function getArchsFromFramework(frameworkPath /*:string*/) {
-  return execSync(`vtool -show-build ${frameworkPath}|grep platform`)
+  const platformLines = execFileSync('vtool', ['-show-build', frameworkPath])
     .toString()
     .split('\n')
+    .filter(line => line.includes('platform'));
+  if (platformLines.length === 0) {
+    throw new Error(`No platforms found in framework ${frameworkPath}`);
+  }
+  return platformLines
     .map(p => p.trim().split(' ')[1])
     .sort((a, b) => a.localeCompare(b))
     .join(' ');
@@ -276,8 +283,11 @@ function signXCFramework(
   xcframeworkPath /*: string */,
 ) {
   console.log('Signing XCFramework...');
-  const command = `codesign --timestamp --sign "${identity}" ${xcframeworkPath}`;
-  execSync(command, {stdio: 'inherit'});
+  execFileSync(
+    'codesign',
+    ['--timestamp', '--sign', identity, xcframeworkPath],
+    {stdio: 'inherit'},
+  );
 }
 
 module.exports = {createFramework};

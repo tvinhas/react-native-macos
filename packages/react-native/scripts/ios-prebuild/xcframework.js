@@ -13,12 +13,13 @@
 const {
   generateFBReactNativeSpecIOS,
 } = require('../codegen/generate-artifacts-executor/generateFBReactNativeSpecIOS');
+const {stubSlicesFromXcframework} = require('./headers-xcframework');
 const utils = require('./utils');
 const childProcess = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const {execSync, execFileSync} = childProcess;
+const {execFileSync} = childProcess; // [macOS]
 const {createLogger, findFirst} = utils;
 
 const frameworkLog = createLogger('XCFramework');
@@ -81,20 +82,22 @@ function buildXCFrameworks(
   }
 
   // Build the XCFrameworks by using each framework folder as input
-  const frameworks = frameworkFolders
-    .map(frameworkFolder => {
-      return `-framework "${frameworkFolder}"`;
-    })
-    .join(' ');
+  // [macOS
+  const buildArguments = ['-create-xcframework'];
+  frameworkFolders.forEach(frameworkFolder => {
+    buildArguments.push('-framework', frameworkFolder);
+  });
+  buildArguments.push('-output', outputPath, '-allow-internal-distribution');
+  // macOS]
 
-  const buildCommand = `xcodebuild -create-xcframework ${frameworks} -output ${outputPath} -allow-internal-distribution`;
-
-  frameworkLog(buildCommand);
+  frameworkLog(`xcodebuild ${buildArguments.join(' ')}`);
   try {
-    execSync(buildCommand, {
+    // [macOS
+    execFileSync('xcodebuild', buildArguments, {
       cwd: rootFolder,
       stdio: 'inherit',
     });
+    // macOS]
   } catch (error) {
     frameworkLog(
       `Error building XCFramework: ${error.message}. Check if the build was successful.`,
@@ -139,7 +142,7 @@ function buildXCFrameworks(
     path.dirname(outputPath),
     plan,
     rootFolder,
-    true, // include the mac-catalyst slice in the real compose
+    stubSlicesFromXcframework(outputPath),
     hermesHeaders,
     overlayDir,
   );
@@ -261,19 +264,28 @@ function copySymbols(
         `  ${path.relative(outputPath, sourceSymbolPath)} → ${path.basename(targetFolder)}`,
       );
       fs.mkdirSync(targetSymbolPath, {recursive: true});
-      execSync(`cp -r ${sourceSymbolPath} ${targetSymbolPath}`);
+      // [macOS
+      fs.cpSync(
+        sourceSymbolPath,
+        path.join(targetSymbolPath, path.basename(sourceSymbolPath)),
+        {recursive: true},
+      );
+      // macOS]
     }
   });
 }
 
 function getArchsFromFramework(frameworkPath /*:string*/) {
   try {
-    return execSync(`vtool -show-build ${frameworkPath}|grep platform`)
+    // [macOS
+    return execFileSync('vtool', ['-show-build', frameworkPath])
       .toString()
       .split('\n')
+      .filter(line => line.includes('platform'))
       .map(p => p.trim().split(' ')[1])
       .sort((a, b) => a.localeCompare(b))
       .join(' ');
+    // macOS]
   } catch (error) {
     return '';
   }
@@ -284,8 +296,13 @@ function signXCFramework(
   xcframeworkPath /*: string */,
 ) {
   frameworkLog('Signing XCFramework...');
-  const command = `codesign --timestamp --sign "${identity}" ${xcframeworkPath}`;
-  execSync(command, {stdio: 'inherit'});
+  // [macOS
+  execFileSync(
+    'codesign',
+    ['--timestamp', '--sign', identity, xcframeworkPath],
+    {stdio: 'inherit'},
+  );
+  // macOS]
 }
 
 module.exports = {

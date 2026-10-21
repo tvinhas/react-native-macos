@@ -316,7 +316,6 @@ export type {DynamicColorMacOSTuple} from './Libraries/StyleSheet/PlatformColorV
 export {DynamicColorMacOS} from './Libraries/StyleSheet/PlatformColorValueTypesMacOS';
 // macOS]
 
-
 export type {EasingFunction} from './Libraries/Animated/Easing';
 export {default as Easing} from './Libraries/Animated/Easing';
 
@@ -465,6 +464,22 @@ export {default as Vibration} from './Libraries/Vibration/Vibration';
 
 // #endregion
 // #region APIs (types only)
+
+// [macOS] macOS-only public types (also exported by the legacy
+// types_DEPRECATED surface).
+export type {
+  PasteEvent,
+  TextInputMacOSProps,
+} from './Libraries/Components/TextInput/TextInput.flow';
+export type {ViewPropsMacOS} from './Libraries/Components/View/ViewPropTypes';
+export type {SystemEffectMacOS} from './Libraries/StyleSheet/PlatformColorValueTypesMacOS';
+export type {
+  DragEvent,
+  HandledKeyEvent,
+  KeyboardEventPayload,
+  KeyboardEventPayload as NativeKeyEvent,
+} from './Libraries/Types/CoreEventTypes';
+// macOS]
 
 export type {
   BlurEvent,

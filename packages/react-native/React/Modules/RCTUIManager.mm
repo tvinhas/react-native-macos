@@ -18,7 +18,6 @@
 #import "RCTComponent.h"
 #import "RCTComponentData.h"
 #import "RCTConvert.h"
-#import "RCTDevSettings.h" // [macOS]
 #import "RCTEventDispatcherProtocol.h"
 #import "RCTLayoutAnimation.h"
 #import "RCTLayoutAnimationGroup.h"
@@ -39,7 +38,6 @@
 #import "RCTViewManager.h"
 #import "UIView+React.h"
 #import "RCTUIKit.h" // [macOS]
-#import "RCTDeviceInfo.h" // [macOS]
 
 #import <React/RCTUIKit.h> // [macOS]
 

@@ -44,6 +44,7 @@
       "default": "./Libraries/*.js"
     },
     "./scripts/*": "./scripts/*.js",
+    "./scripts/codegen/generate-artifacts-executor": "./scripts/codegen/generate-artifacts-executor/index.js",
     "./scripts/*.sh": "./scripts/*.sh",
     "./scripts/*.rb": "./scripts/*.rb",
     "./asset-registry": {
@@ -169,8 +170,10 @@
     "hermes-compiler": "260318099.0.4",
     "invariant": "^2.2.4",
     "memoize-one": "^5.0.0",
+    "metro": "^0.87.1",
     "metro-runtime": "^0.87.1",
     "metro-source-map": "^0.87.1",
+    "micromatch": "^4.0.4",
     "nullthrows": "^1.1.1",
     "pretty-format": "^29.7.0",
     "promise": "^8.3.0",
@@ -190,7 +193,7 @@
       {
         "name": "FBReactNativeSpec",
         "type": "all",
-        "ios": {
+        "macos": {
           "modules": {
             "AccessibilityManager": {
               "unstableRequiresMainQueueSetup": true

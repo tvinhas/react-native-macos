@@ -28,7 +28,6 @@ import type {
 import type {
   DragEvent,
   HandledKeyEvent,
-  KeyEvent,
   ScrollEvent,
 } from '../../Types/CoreEventTypes';
 // macOS]
@@ -64,13 +63,13 @@ type DirectEventProps = Readonly<{
    * This event is fired when the scrollView's inverted property changes.
    * @platform macos
    */
-  onInvertedDidChange?: ?() => mixed,
+  onInvertedDidChange?: ?() => unknown,
 
   /**
    * This event is fired when the system's preferred scroller style changes.
    * The `preferredScrollerStyle` key will be `legacy` or `overlay`.
    */
-  onPreferredScrollerStyleDidChange?: ?(event: ScrollEvent) => mixed,
+  onPreferredScrollerStyleDidChange?: ?(event: ScrollEvent) => unknown,
   // macOS]
 
   /**
@@ -108,12 +107,12 @@ export type KeyboardEventProps = Readonly<{
   /**
    * Called after a key down event is detected.
    */
-  onKeyDown?: ?(event: KeyEvent) => void,
+  onKeyDown?: ?(event: KeyDownEvent) => void,
 
   /**
    * Called after a key up event is detected.
    */
-  onKeyUp?: ?(event: KeyEvent) => void,
+  onKeyUp?: ?(event: KeyUpEvent) => void,
 
   /**
    * Array of keys to receive key down events for. These events have their default native behavior prevented.
@@ -502,7 +501,7 @@ export type ViewPropsIOS = Readonly<{
 }>;
 
 // [macOS
-type MacOSViewProps = Readonly<{
+export type ViewPropsMacOS = Readonly<{
   /**
    * Fired when a file is dragged into the view via the mouse.
    *
@@ -710,7 +709,7 @@ export type ViewProps = Readonly<{
   ...KeyboardEventProps, // [macOS]
   ...ViewPropsAndroid,
   ...ViewPropsIOS,
-  ...MacOSViewProps, // [macOS]
+  ...ViewPropsMacOS, // [macOS]
   ...AccessibilityProps,
   ...ViewBaseProps,
 }>;

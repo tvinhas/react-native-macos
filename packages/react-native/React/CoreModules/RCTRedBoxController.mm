@@ -715,6 +715,9 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder *)aDecoder)
     _lastErrorMessage = [messageWithoutAnsi substringToIndex:MIN((NSUInteger)10000, messageWithoutAnsi.length)];
     _lastErrorCookie = errorCookie;
 
+    // Create the table before reloading it on the first presentation; until the view
+    // loads, _stackTraceTableView is nil and the reload/scroll below are no-ops.
+    (void)self.view;
     [_stackTraceTableView reloadData];
 
     if (!isRootViewControllerPresented) {
@@ -726,8 +729,11 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder *)aDecoder)
 
 - (void)dismiss
 {
+  // Dismiss through the controller that presented the sheet. While the sheet is up the
+  // key window is the sheet itself (or nil when the app is inactive, e.g. a reload
+  // triggered from Metro), so going through RCTKeyWindow() can leave the RedBox up.
   if (self.presentingViewController) {
-    [[RCTKeyWindow() contentViewController] dismissViewController:self];
+    [self.presentingViewController dismissViewController:self];
   }
 }
 
@@ -821,7 +827,7 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder *)aDecoder)
     label.drawsBackground = NO;
     label.bezeled = NO;
     label.editable = NO;
-    label.selectable = NO;
+    label.selectable = YES; // Let developers select and copy part of the message.
     label.accessibilityIdentifier = @"redbox-error";
     label.lineBreakMode = NSLineBreakByWordWrapping;
     label.maximumNumberOfLines = 0;

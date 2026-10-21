@@ -110,8 +110,8 @@ RCT_EXPORT_MODULE()
          selector:@selector(applicationWillChangeStatusBarFrame:)
              name:UIApplicationWillChangeStatusBarFrameNotification
            object:nil];
-#endif // [visionOS]
 #pragma clang diagnostic pop
+#endif // [visionOS]
 }
 
 - (void)stopObserving

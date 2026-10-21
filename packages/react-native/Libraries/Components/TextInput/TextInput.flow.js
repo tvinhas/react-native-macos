@@ -20,7 +20,8 @@ import type {
 import type {
   DataTransfer,
   HandledKeyEvent,
-  KeyEvent,
+  KeyDownEvent,
+  KeyUpEvent,
 } from '../../Types/CoreEventTypes';
 // macOS]
 import type {ViewProps} from '../View/ViewPropTypes';
@@ -148,7 +149,7 @@ export type TextInputEditingEvent =
 
 // [macOS macOS-only
 export type SettingChangeEvent = NativeSyntheticEvent<
-  $ReadOnly<{|
+  Readonly<{|
     autoCorrectEnabled: boolean,
     spellCheckEnabled: boolean,
     grammarCheckEnabled: boolean,
@@ -156,12 +157,12 @@ export type SettingChangeEvent = NativeSyntheticEvent<
 >;
 
 export type PasteEvent = NativeSyntheticEvent<
-  $ReadOnly<{|
+  Readonly<{|
     dataTransfer: DataTransfer,
   |}>,
 >;
 
-export type SubmitKeyEvent = $ReadOnly<{|
+export type SubmitKeyEvent = Readonly<{|
   key: string,
   altKey?: ?boolean,
   ctrlKey?: ?boolean,
@@ -427,7 +428,7 @@ export type TextInputIOSProps = Readonly<{
 }>;
 
 // [macOS
-type TextInputMacOSProps = Readonly<{
+export type TextInputMacOSProps = Readonly<{
   /**
    * If `true`, clears the text field synchronously before `onSubmitEditing` is emitted.
    *
@@ -465,7 +466,7 @@ type TextInputMacOSProps = Readonly<{
    *
    * @platform macos
    */
-  onAutoCorrectChange?: ?(e: SettingChangeEvent) => mixed,
+  onAutoCorrectChange?: ?(e: SettingChangeEvent) => unknown,
 
   /**
    * Callback that is called when the text input's spellCheck setting changes.
@@ -475,7 +476,7 @@ type TextInputMacOSProps = Readonly<{
    *
    * @platform macos
    */
-  onSpellCheckChange?: ?(e: SettingChangeEvent) => mixed,
+  onSpellCheckChange?: ?(e: SettingChangeEvent) => unknown,
 
   /**
    * Callback that is called when the text input's grammarCheck setting changes.
@@ -485,7 +486,7 @@ type TextInputMacOSProps = Readonly<{
    *
    * @platform macos
    */
-  onGrammarCheckChange?: ?(e: SettingChangeEvent) => mixed,
+  onGrammarCheckChange?: ?(e: SettingChangeEvent) => unknown,
 
   /**
    * Enables Paste support for certain types of pasted types
@@ -504,7 +505,7 @@ type TextInputMacOSProps = Readonly<{
    * Configures keys that can be used to submit editing for the TextInput. Defaults to 'Enter' key.
    * @platform macos
    */
-  submitKeyEvents?: ?$ReadOnlyArray<SubmitKeyEvent>,
+  submitKeyEvents?: ?ReadonlyArray<SubmitKeyEvent>,
 
   /**
    * Specifies the tooltip.
@@ -518,26 +519,26 @@ type TextInputMacOSProps = Readonly<{
    * When a key event matches one of these specifications, event propagation will be stopped.
    * @platform macos
    */
-  keyDownEvents?: ?$ReadOnlyArray<HandledKeyEvent>,
+  keyDownEvents?: ?ReadonlyArray<HandledKeyEvent>,
 
   /**
    * An array of key events that should be handled by the TextInput.
    * When a key event matches one of these specifications, event propagation will be stopped.
    * @platform macos
    */
-  keyUpEvents?: ?$ReadOnlyArray<HandledKeyEvent>,
+  keyUpEvents?: ?ReadonlyArray<HandledKeyEvent>,
 
   /**
    * Callback that is called when a key is pressed down.
    * @platform macos
    */
-  onKeyDown?: ?(e: KeyEvent) => mixed,
+  onKeyDown?: ?(e: KeyDownEvent) => unknown,
 
   /**
    * Callback that is called when a key is released.
    * @platform macos
    */
-  onKeyUp?: ?(e: KeyEvent) => mixed,
+  onKeyUp?: ?(e: KeyUpEvent) => unknown,
 }>;
 // macOS]
 

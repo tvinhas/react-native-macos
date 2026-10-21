@@ -263,10 +263,13 @@ function resolveReactNativeRoot(
   function addAncestorCandidates(startDir /*: string */) /*: void */ {
     let dir = path.resolve(startDir);
     while (true) {
-      const candidate = path.join(dir, 'node_modules', 'react-native');
-      if (!seen.has(candidate)) {
-        seen.add(candidate);
-        candidates.push(candidate);
+      // [macOS] Prefer this fork when both packages are installed.
+      for (const name of ['react-native-macos', 'react-native']) {
+        const candidate = path.join(dir, 'node_modules', name);
+        if (!seen.has(candidate)) {
+          seen.add(candidate);
+          candidates.push(candidate);
+        }
       }
       const parent = path.dirname(dir);
       if (parent === dir) {

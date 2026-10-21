@@ -365,6 +365,21 @@ describe('AccessibilityInfo', () => {
       });
     });
 
+    // [macOS
+    describe('macOS', () => {
+      it('should call getCurrentReduceTransparencyState if available', async () => {
+        /* $FlowFixMe[incompatible-type] */
+        Platform.OS = 'macos';
+
+        const isReduceTransparencyEnabled =
+          await AccessibilityInfo.isReduceTransparencyEnabled();
+
+        expect(mockGetCurrentReduceTransparencyState).toHaveBeenCalled();
+        expect(isReduceTransparencyEnabled).toBe(true);
+      });
+    });
+    // macOS]
+
     describe('iOS', () => {
       it('should call getCurrentReduceTransparencyState if available', async () => {
         /* $FlowFixMe[incompatible-type] */

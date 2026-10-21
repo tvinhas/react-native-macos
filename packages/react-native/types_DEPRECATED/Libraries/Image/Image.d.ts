@@ -95,9 +95,11 @@ interface ImagePropsAndroid {
   fadeDuration?: number | undefined;
 }
 
+// [macOS
 interface ImagePropsMacOS {
   tooltip?: string | undefined;
 }
+// macOS]
 
 /**
  * @see https://reactnative.dev/docs/image#source
@@ -147,7 +149,8 @@ export interface ImageResolvedAssetSource {
  * @see https://reactnative.dev/docs/image
  */
 export interface ImagePropsBase
-  extends ImagePropsIOS,
+  extends
+    ImagePropsIOS,
     ImagePropsAndroid,
     ImagePropsMacOS, // [macOS]
     AccessibilityProps {

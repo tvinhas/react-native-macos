@@ -37,7 +37,7 @@ export interface Spec extends TurboModule {
   // [macOS
   readonly getCurrentHighContrastState: (
     onSuccess: (isHighContrastEnabled: boolean) => void,
-    onError: (error: Object) => void,
+    onError: (error: UnsafeObject) => void,
   ) => void;
   // macOS]
   readonly getCurrentPrefersCrossFadeTransitionsState?: (

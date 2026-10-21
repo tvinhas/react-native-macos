@@ -13,8 +13,8 @@
     "node": "^22.13.0 || ^24.3.0 || >= 26.0.0"
   },
   "scripts": {
-    "start": "react-native start",
-    "android": "react-native run-android",
+    "start": "react-native-macos start",
+    "android": "react-native-macos run-android",
     "install-android": "../../gradlew :packages:rn-tester:android:app:installDebug",
     "clean-android": "rm -rf android/app/build",
     "prepare-ios": "node ./cli.js bootstrap ios",
@@ -60,6 +60,7 @@
     "@react-native/core-cli-utils": "*",
     "commander": "^12.0.0",
     "listr2": "^6.4.1",
+    "react-native-macos": "workspace:*",
     "rxjs": "npm:@react-native-community/rxjs@6.5.4-custom"
   },
   "swiftpmConfig": {

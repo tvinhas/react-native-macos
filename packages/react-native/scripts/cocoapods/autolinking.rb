@@ -9,6 +9,17 @@ require 'cocoapods'
 require_relative './autolinking_utils.rb'
 require_relative '../react_native_pods.rb'
 
+# [macOS
+# The react-native config key for the platform of the given CocoaPods target:
+# "macos" for macOS targets, "ios" for everything else (including targets that
+# don't declare a platform).
+def autolinking_platform_key(target_definition)
+  platform = target_definition.platform
+  return "ios" if platform.nil?
+  return [:osx, :macos].include?(platform.name) ? "macos" : "ios"
+end
+# macOS]
+
 # Your project will have to depend on the @react-native-community/cli if you use this method
 # for listing React native modules.
 #
@@ -38,7 +49,13 @@ def list_native_modules!(config_command)
   config = JSON.parse(json)
 
   packages = config["dependencies"]
-  ios_project_root = Pathname.new(config["project"]["ios"]["sourceDir"])
+  # [macOS] A macOS target reads the macOS project and dependency config; every
+  # other target keeps reading the iOS one. Either falls back to iOS when the
+  # config has no macOS entry (e.g. a config command that only knows iOS).
+  platform_key = autolinking_platform_key(current_target_definition)
+  project_config = config["project"][platform_key] || config["project"]["ios"]
+  ios_project_root = Pathname.new(project_config["sourceDir"])
+  # macOS]
   react_native_path = Pathname.new(config["reactNativePath"])
   codegen_output_path = ios_project_root.join("build/generated/autolinking/autolinking.json")
 
@@ -49,7 +66,7 @@ def list_native_modules!(config_command)
   found_pods = []
 
   packages.each do |package_name, package|
-    next unless package_config = package["platforms"]["ios"]
+    next unless package_config = package["platforms"][platform_key] || package["platforms"]["ios"] # [macOS]
 
     name = package["name"]
     podspec_path = package_config["podspecPath"]

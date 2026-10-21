@@ -238,4 +238,42 @@ describe('parseHermesStack', () => {
       }
     `);
   });
+
+  // [macOS
+  test('treats a long malformed frame as message text', () => {
+    // Took quadratic time with the previous frame regex.
+    const malformedFrame = `    at ${'functionName ('.repeat(10_000)}`;
+
+    expect(parseHermesStack(malformedFrame)).toEqual({
+      entries: [],
+      message: '',
+    });
+  });
+
+  test('source URL containing " ("', () => {
+    expect(
+      parseHermesStack(
+        [
+          'Error: boom',
+          '    at foo (/Applications/My App (Beta).app/Contents/Resources/main.jsbundle:1:2)',
+        ].join('\n'),
+      ),
+    ).toEqual({
+      message: 'Error: boom',
+      entries: [
+        {
+          type: 'FRAME',
+          functionName: 'foo',
+          location: {
+            type: 'SOURCE',
+            sourceUrl:
+              '/Applications/My App (Beta).app/Contents/Resources/main.jsbundle',
+            line1Based: 1,
+            column1Based: 2,
+          },
+        },
+      ],
+    });
+  });
+  // macOS]
 });

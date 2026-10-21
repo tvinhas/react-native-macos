@@ -8,8 +8,16 @@ set -f
 
 basepath=$(dirname "${0}")
 
+# [macOS] These suites need the real CocoaPods gem, Open3 or Pathname, which
+# the class mocks in cocoapods/__tests__/test_utils replace, so each one runs
+# in its own process.
+isolated_pattern='/(maven_mirror_flag|spm)-test\.rb$'
+
 # shellcheck disable=SC2207
-files=( $(find . -name '*-test.rb') )
+files=( $(find . -name '*-test.rb' | grep -Ev "${isolated_pattern}") )
+# shellcheck disable=SC2207
+isolated_files=( $(find . -name '*-test.rb' | grep -E "${isolated_pattern}") )
+# macOS]
 
 test_suite="${basepath}/all_tests.rb"
 touch "${test_suite}"
@@ -26,4 +34,13 @@ done
 ruby -Itest "${test_suite}"
 RES=$?
 rm "${test_suite}"
+
+# [macOS
+for i in "${isolated_files[@]}"
+do
+    echo "running ${i} in its own process"
+    ruby -Itest "${i}" || RES=1
+done
+# macOS]
+
 exit $RES

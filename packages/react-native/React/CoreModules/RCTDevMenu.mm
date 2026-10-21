@@ -540,7 +540,7 @@ RCT_EXPORT_MODULE()
     return;
   }
 #else // [macOS
-  if (_alert) {
+  if (_alert || !_devMenuEnabled) {
     return;
   }
 #endif // [macOS]

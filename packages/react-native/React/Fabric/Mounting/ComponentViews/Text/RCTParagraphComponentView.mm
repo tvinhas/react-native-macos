@@ -558,6 +558,7 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
 #pragma mark - Context Menu
 
 #if !TARGET_OS_OSX // [macOS]
+#if !TARGET_OS_TV
 - (void)enableContextMenu
 {
   _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
@@ -598,6 +599,15 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
     [menuController showMenuFromView:self rect:self.bounds];
   }
 }
+#else
+- (void)enableContextMenu
+{
+}
+
+- (void)disableContextMenu
+{
+}
+#endif
 #endif // [macOS]
 
 #pragma mark - macOS Mouse Event Handling

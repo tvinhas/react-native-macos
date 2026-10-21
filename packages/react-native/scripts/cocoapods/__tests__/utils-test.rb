@@ -5,6 +5,7 @@
 
 require "test/unit"
 require_relative "../utils.rb"
+require_relative "../rncore.rb"
 require_relative "./test_utils/PodMock.rb"
 require_relative "./test_utils/InstallerMock.rb"
 require_relative "./test_utils/EnvironmentMock.rb"
@@ -236,9 +237,11 @@ class UtilsTests < Test::Unit::TestCase
         # Assert
         build_setting = "GCC_PREPROCESSOR_DEFINITIONS"
         expected_value = "$(inherited) HERMES_ENABLE_DEBUGGER=1"
-        assert_equal(expected_value, react_hermes_debug_config.build_settings[build_setting])
+        # React-hermes also gets HERMES_V1_ENABLED=1, matching the Android/CMake build.
+        expected_react_hermes_value = "$(inherited) HERMES_ENABLE_DEBUGGER=1 HERMES_V1_ENABLED=1"
+        assert_equal(expected_react_hermes_value, react_hermes_debug_config.build_settings[build_setting])
         assert_nil(react_hermes_release_config.build_settings[build_setting])
-        assert_equal(expected_value, react_hermes_debug_config_rename.build_settings[build_setting])
+        assert_equal(expected_react_hermes_value, react_hermes_debug_config_rename.build_settings[build_setting])
         assert_nil(react_hermes_release_config_rename.build_settings[build_setting])
 
         assert_nil(react_core_debug_config.build_settings[build_setting])
@@ -741,7 +744,7 @@ class UtilsTests < Test::Unit::TestCase
         # Assert
         user_project_mock.build_configurations.each do |config|
             received_search_path = config.build_settings["HEADER_SEARCH_PATHS"]
-            expected_search_path = "$(inherited) ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core ${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx ${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-featureflags/React_featureflags.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-renderercss/React_renderercss.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-cxxstableapi/React_cxxstableapi.framework/Headers"
+            expected_search_path = "$(inherited) ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core ${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/scrollview/platform/cxx ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/scrollview/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-FabricComponents/React_FabricComponents.framework/Headers/react/renderer/textlayoutmanager/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-FabricComponents/React_FabricComponents.framework/Headers/react/renderer/components/text/platform/cxx ${PODS_CONFIGURATION_BUILD_DIR}/React-FabricComponents/React_FabricComponents.framework/Headers/react/renderer/components/textinput/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-FabricComponents/React_FabricComponents.framework/Headers/react/renderer/components/switch/iosswitch ${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-bridging/React_bridging.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios ${PODS_CONFIGURATION_BUILD_DIR}/React-featureflags/React_featureflags.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-renderercss/React_renderercss.framework/Headers ${PODS_CONFIGURATION_BUILD_DIR}/React-cxxstableapi/React_cxxstableapi.framework/Headers"
             assert_equal(expected_search_path, received_search_path)
         end
 
@@ -966,6 +969,41 @@ class UtilsTests < Test::Unit::TestCase
     # ===================== #
     # TEST - Add Dependency #
     # ===================== #
+    data("normal" => [nil, [""]],
+         "single platform" => [["iOS"], [""]],
+         "three platforms" => [["iOS", "macOS", "visionOS"], ["-iOS", "-macOS", "-visionOS"]])
+    def test_addDependency_forDynamicPodDependencies_preservesVersionsAndTargetSettings(platforms_and_suffixes)
+        $RN_PLATFORMS, suffixes = platforms_and_suffixes
+        ENV['USE_FRAMEWORKS'] = 'dynamic'
+
+        [
+            ["React-debug", "React_debug", '1000.0.0'],
+            ["React-utils", "React_utils", '1000.0.0'],
+            ["React-featureflags", "React_featureflags", '1000.0.0'],
+            ["React-RCTFabric", "RCTFabric", nil],
+            ["ReactCodegen", "ReactCodegen", nil],
+        ].each do |pod_name, framework_name, version|
+            spec = SpecMock.new
+            spec.pod_target_xcconfig = {
+                "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\"",
+                "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
+            }
+
+            ReactNativePodsUtils.add_dependency(spec, pod_name, "PODS_CONFIGURATION_BUILD_DIR", framework_name, :version => version)
+
+            expected_dependency = {:dependency_name => pod_name}
+            expected_dependency["version"] = version if version
+            expected_paths = ["\"$(PODS_TARGET_SRCROOT)/ReactCommon\""] + suffixes.map do |suffix|
+                "\"${PODS_CONFIGURATION_BUILD_DIR}/#{pod_name}#{suffix}/#{framework_name}.framework/Headers\""
+            end
+            assert_equal([expected_dependency], spec.dependencies, pod_name)
+            assert_equal({
+                "HEADER_SEARCH_PATHS" => expected_paths.join(" "),
+                "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
+            }, spec.to_hash["pod_target_xcconfig"], pod_name)
+        end
+    end
+
     def test_addDependency_whenNoHeaderSearchPathAndNoVersion_addsThem
         spec = SpecMock.new
 

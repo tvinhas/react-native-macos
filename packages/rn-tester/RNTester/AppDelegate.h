@@ -5,10 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// ZERO-I: bare angle includes have no framework spelling, so the SPM zero-I
-// build uses the <React/...> form. rn-tester also builds via CocoaPods, where
-// only the bare form resolves — hence the dual. Single-mode consumers write
-// just the form matching their setup.
+#import <React/RCTUIKit.h> // [macOS]
+
+#if !TARGET_OS_OSX // [macOS]
+@interface AppDelegate : UIResponder <UIApplicationDelegate>
+#else // [macOS
 #if __has_include(<React/RCTDefaultReactNativeFactoryDelegate.h>)
 #import <React/RCTDefaultReactNativeFactoryDelegate.h>
 #import <React/RCTReactNativeFactory.h>
@@ -16,15 +17,13 @@
 #import <RCTDefaultReactNativeFactoryDelegate.h>
 #import <RCTReactNativeFactory.h>
 #endif
-#import <React/RCTUIKit.h> // [macOS]
 
-#if !TARGET_OS_OSX // [macOS]
-@interface AppDelegate : RCTDefaultReactNativeFactoryDelegate <UIApplicationDelegate>
-#else // [macOS
+// macOS has no UIScene lifecycle, so the app delegate hosts React Native
+// directly. iOS and visionOS host it from SceneDelegate.
 @interface AppDelegate : RCTDefaultReactNativeFactoryDelegate <NSApplicationDelegate>
-#endif // macOS]
 
-@property (nonatomic, strong, nonnull) RCTPlatformWindow *window; // [macOS]
+@property (nonatomic, strong, nonnull) NSWindow *window;
 @property (nonatomic, strong, nonnull) RCTReactNativeFactory *reactNativeFactory;
+#endif // macOS]
 
 @end

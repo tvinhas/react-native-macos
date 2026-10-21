@@ -73,9 +73,13 @@ try {
 // [macOS
 let apple;
 try {
+  const iosPath = require.resolve('@react-native-community/cli-platform-ios', {
+    paths: [process.cwd()],
+  });
   // $FlowFixMe[untyped-import]
   apple = findCommunityPlatformPackage(
     '@react-native-community/cli-platform-apple',
+    iosPath,
   );
 } catch {
   if (verbose) {
@@ -84,8 +88,19 @@ try {
     );
   }
 }
-// $FlowFixMe[untyped-import]
-const macosCommands = require('./local-cli/runMacOS/runMacOS');
+let macosCommands;
+// Loading `runMacOS` requires `@react-native-community/cli`which is an
+// optional peer dependency and is not installed when using Expo CLI.
+try {
+  // $FlowFixMe[untyped-import]
+  macosCommands = require('./local-cli/runMacOS/runMacOS');
+} catch (e) {
+  if (verbose) {
+    console.warn(
+      `Failed to load runMacOS commands, the react-native.config.js may be unusable: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+}
 // macOS]
 
 const commands /*: Array<Command> */ = [];
@@ -97,7 +112,62 @@ const {
   startCommand,
 } = require('@react-native/community-cli-plugin');
 
-commands.push(bundleCommand, startCommand, spmCommand, codegenCommand);
+// [macOS
+// The plugin's `codegen` and `spm` commands run `react-native/scripts/*`,
+// which resolves to upstream react-native in an app (and to nothing inside
+// this monorepo) instead of this package's macOS-aware scripts. Keep the
+// plugin's command definitions, but run the scripts shipped here.
+const macosCodegenCommand /*: Command */ = {
+  ...codegenCommand,
+  func: (_argv, _config, args) =>
+    require('./scripts/codegen/generate-artifacts-executor').execute(
+      args.path,
+      args.platform,
+      args.outputPath,
+      args.source,
+    ),
+};
+
+const macosSpmCommand /*: Command */ = {
+  ...spmCommand,
+  func: async (argv, _config, args) => {
+    const passthrough /*: Array<string> */ = [];
+    if (argv[0] != null) {
+      passthrough.push(argv[0]);
+    }
+    const stringOpts /*: Array<[string, string]> */ = [
+      ['version', '--version'],
+      ['productName', '--product-name'],
+      ['xcodeproj', '--xcodeproj'],
+      ['artifacts', '--artifacts'],
+      ['download', '--download'],
+    ];
+    for (const [key, flag] of stringOpts) {
+      if (args[key] != null) {
+        passthrough.push(flag, String(args[key]));
+      }
+    }
+    const boolOpts /*: Array<[string, string]> */ = [
+      ['skipCodegen', '--skip-codegen'],
+      ['deintegrate', '--deintegrate'],
+      ['yes', '--yes'],
+    ];
+    for (const [key, flag] of boolOpts) {
+      if (args[key] === true) {
+        passthrough.push(flag);
+      }
+    }
+    await require('./scripts/setup-apple-spm').main(passthrough);
+  },
+};
+// macOS]
+
+commands.push(
+  bundleCommand,
+  startCommand,
+  macosSpmCommand,
+  macosCodegenCommand,
+); // [macOS]
 
 const config = {
   commands,
@@ -126,36 +196,47 @@ if (android != null) {
 }
 
 // [macOS
-config.commands.push(...macosCommands);
+if (macosCommands != null) {
+  config.commands.push(...macosCommands);
+}
 if (apple) {
+  const {
+    REACT_NATIVE: npmPackageName,
+  } = require('./scripts/codegen/generate-artifacts-executor/constants.js');
+  const macos = {platformName: 'macos'};
   config.platforms.macos = {
+    npmPackageName,
     linkConfig: () => {
       return {
         isInstalled: (
-          _projectConfig /*: mixed */,
-          _package /*: mixed */,
-          _dependencyConfig /*: mixed */,
+          _projectConfig /*: unknown */,
+          _package /*: unknown */,
+          _dependencyConfig /*: unknown */,
         ) => false,
         register: (
-          _package /*: mixed */,
-          _dependencyConfig /*: mixed */,
-          _obj /*: mixed */,
-          _projectConfig /*: mixed */,
+          _package /*: unknown */,
+          _dependencyConfig /*: unknown */,
+          _obj /*: unknown */,
+          _projectConfig /*: unknown */,
         ) => {},
         unregister: (
-          _package /*: mixed */,
-          _dependencyConfig /*: mixed */,
-          _projectConfig /*: mixed */,
-          _dependencyConfigs /*: mixed */,
+          _package /*: unknown */,
+          _dependencyConfig /*: unknown */,
+          _projectConfig /*: unknown */,
+          _dependencyConfigs /*: unknown */,
         ) => {},
-        copyAssets: (_assets /*: mixed */, _projectConfig /*: mixed */) => {},
-        unlinkAssets: (_assets /*: mixed */, _projectConfig /*: mixed */) => {},
+        copyAssets: (
+          _assets /*: unknown */,
+          _projectConfig /*: unknown */,
+        ) => {},
+        unlinkAssets: (
+          _assets /*: unknown */,
+          _projectConfig /*: unknown */,
+        ) => {},
       };
     },
-    projectConfig: apple.getProjectConfig({platformName: 'macos'}),
-    dependencyConfig: apple.getProjectConfig({platformName: 'macos'}),
-    npmPackageName: require('./scripts/codegen/generate-artifacts-executor/constants')
-      .REACT_NATIVE,
+    projectConfig: apple.getProjectConfig(macos),
+    dependencyConfig: apple.getDependencyConfig(macos),
   };
 }
 // macOS]

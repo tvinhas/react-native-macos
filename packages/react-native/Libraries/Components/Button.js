@@ -150,11 +150,6 @@ type ButtonPropsCore = Readonly<{
   accessibilityRole?: ?AccessibilityRole,
 
   /**
-   * Accessibility action handlers
-   */
-  onAccessibilityAction?: ?(event: AccessibilityActionEvent) => mixed,
-
-  /**
    * Handler to be called when the button receives key focus
    */
   onBlur?: ?(e: BlurEvent) => void,
@@ -325,7 +320,7 @@ const Button: component(
       accessibilityHint={accessibilityHint}
       accessibilityLanguage={accessibilityLanguage}
       // accessibilityRole="button"
-      accessibilityRole={accessibilityRole || 'button'} // [macOS]
+      accessibilityRole={accessibilityRole ?? 'button'} // [macOS]
       accessibilityState={_accessibilityState}
       importantForAccessibility={_importantForAccessibility}
       hasTVPreferredFocus={hasTVPreferredFocus}

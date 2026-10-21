@@ -20,7 +20,7 @@ const {
   createLogger,
   getMavenRepositoryUrls,
 } = require('./utils');
-const {execSync} = require('node:child_process');
+const {execFileSync} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const stream = require('node:stream');
@@ -113,7 +113,7 @@ async function prepareReactNativeDependenciesArtifactsAsync(
   // Extract the tar.gz
   const tmpPath = '/tmp/react-native-dependencies';
   fs.mkdirSync(tmpPath, {recursive: true});
-  execSync(`tar -xzf "${localPath}" -C "${tmpPath}"`, {
+  execFileSync('tar', ['-xzf', localPath, '-C', tmpPath], {
     stdio: 'inherit',
   });
 
@@ -125,9 +125,13 @@ async function prepareReactNativeDependenciesArtifactsAsync(
     'ReactNativeDependencies.xcframework',
   );
   // Copy the extracted files to the artifacts folder
-  execSync(`cp -R "${xcframeworkSource}" "${artifactsPath}"`, {
-    stdio: 'inherit',
-  });
+  fs.cpSync(
+    xcframeworkSource,
+    path.join(artifactsPath, path.basename(xcframeworkSource)),
+    {
+      recursive: true,
+    },
+  );
 
   // The headers-only ReactNativeDependenciesHeaders.xcframework sidecar ships
   // alongside the binary in the same tarball — it is what serves the deps
@@ -148,9 +152,11 @@ async function prepareReactNativeDependenciesArtifactsAsync(
     'ReactNativeDependenciesHeaders.xcframework',
   );
   if (fs.existsSync(headersSidecarSource)) {
-    execSync(`cp -R "${headersSidecarSource}" "${artifactsPath}"`, {
-      stdio: 'inherit',
-    });
+    fs.cpSync(
+      headersSidecarSource,
+      path.join(artifactsPath, path.basename(headersSidecarSource)),
+      {recursive: true},
+    );
   } else {
     dependencyLog(
       'ReactNativeDependenciesHeaders.xcframework not present in the tarball ' +

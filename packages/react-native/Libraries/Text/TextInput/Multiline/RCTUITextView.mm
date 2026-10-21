@@ -74,6 +74,7 @@ static RCTPlatformColor *defaultPlaceholderColor(void) // [macOS]
     self.textColor = [RCTPlatformColor labelColor]; // [macOS]
     // This line actually removes 5pt (default value) left and right padding in UITextView.
 #if !TARGET_OS_OSX // [macOS]
+    self.textContainer.lineFragmentPadding = 0;
 #else // [macOS
     // macOS has a bug where setting this to 0 will cause the scroll view to scroll to top when
     // inserting a newline at the bottom of a NSTextView when it has more rows than can be displayed

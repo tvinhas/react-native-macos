@@ -37,3 +37,9 @@ def pod(name, version = nil, path: nil, configurations: nil, modular_headers: ni
     if tag != nil then params[:tag] = tag end
     $podInvocation[name] = params
 end
+
+# `rncore_pod` (react_native_pods.rb) declares React core pods. Outside the
+# prebuilt facade mode it is a plain `pod` call, which is what the spy records.
+def rncore_pod(name, **opts)
+    pod(name, **opts)
+end

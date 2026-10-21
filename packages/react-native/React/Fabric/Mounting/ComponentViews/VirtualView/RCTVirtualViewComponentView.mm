@@ -205,7 +205,7 @@ static BOOL sIsAccessibilityUsed = NO;
   }
 }
 
-- (CGRect)containerRelativeRect:(RCTUIView *)scrollView // [macOS]
+- (CGRect)containerRelativeRect:(RCTPlatformView *)scrollView // [macOS]
 {
   // Return the view's position relative to its container (the scroll view)
   return [self convertRect:self.bounds toView:scrollView];
@@ -274,7 +274,7 @@ static BOOL sIsAccessibilityUsed = NO;
 
 - (id<RCTVirtualViewContainerProtocol>)_getParentVirtualViewContainer
 {
-  RCTUIView *view = self.superview; // [macOS]
+  RCTPlatformView *view = self.superview; // [macOS]
   while (view != nil) {
     if ([view respondsToSelector:@selector(virtualViewContainerState)]) {
       return (id<RCTVirtualViewContainerProtocol>)view;

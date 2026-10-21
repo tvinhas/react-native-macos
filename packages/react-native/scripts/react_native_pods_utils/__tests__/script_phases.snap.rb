@@ -5,9 +5,15 @@
 
 def snap_get_script_phases_with_codegen_discovery_with_config_file_dir()
     return <<~EOS
-    pushd "$PODS_ROOT/../" > /dev/null
-    RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
-    popd >/dev/null
+    # Use PODFILE_DIR (set by react_native_post_install) to locate the
+    # Podfile directory. PODS_ROOT/.. does not work when Pods/ is a symlink.
+    if [ -n "$PODFILE_DIR" ]; then
+      RCT_SCRIPT_POD_INSTALLATION_ROOT="$PODFILE_DIR"
+    else
+      pushd "$PODS_ROOT/../" > /dev/null
+      RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
+      popd >/dev/null
+    fi
 
     export RCT_SCRIPT_RN_DIR=$RCT_SCRIPT_POD_INSTALLATION_ROOT/../..
     export RCT_SCRIPT_APP_PATH=$RCT_SCRIPT_POD_INSTALLATION_ROOT/
@@ -22,9 +28,15 @@ end
 
 def snap_get_script_phases_with_codegen_discovery_without_config_file_dir()
     return <<~EOS
-    pushd "$PODS_ROOT/../" > /dev/null
-    RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
-    popd >/dev/null
+    # Use PODFILE_DIR (set by react_native_post_install) to locate the
+    # Podfile directory. PODS_ROOT/.. does not work when Pods/ is a symlink.
+    if [ -n "$PODFILE_DIR" ]; then
+      RCT_SCRIPT_POD_INSTALLATION_ROOT="$PODFILE_DIR"
+    else
+      pushd "$PODS_ROOT/../" > /dev/null
+      RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
+      popd >/dev/null
+    fi
 
     export RCT_SCRIPT_RN_DIR=$RCT_SCRIPT_POD_INSTALLATION_ROOT/../..
     export RCT_SCRIPT_APP_PATH=$RCT_SCRIPT_POD_INSTALLATION_ROOT/
@@ -39,9 +51,15 @@ end
 
 def snap_get_script_phases_no_codegen_discovery()
     return <<~EOS
-    pushd "$PODS_ROOT/../" > /dev/null
-    RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
-    popd >/dev/null
+    # Use PODFILE_DIR (set by react_native_post_install) to locate the
+    # Podfile directory. PODS_ROOT/.. does not work when Pods/ is a symlink.
+    if [ -n "$PODFILE_DIR" ]; then
+      RCT_SCRIPT_POD_INSTALLATION_ROOT="$PODFILE_DIR"
+    else
+      pushd "$PODS_ROOT/../" > /dev/null
+      RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
+      popd >/dev/null
+    fi
 
     export RCT_SCRIPT_RN_DIR=${PODS_TARGET_SRCROOT}/../../..
     export RCT_SCRIPT_LIBRARY_NAME=ScreenshotmanagerSpec

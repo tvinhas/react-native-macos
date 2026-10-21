@@ -13,7 +13,7 @@ const {
   hermesCommitAtMergeBase,
 } = require('./microsoft-hermes'); // [macOS]
 const {createLogger, getMavenRepositoryUrls} = require('./utils');
-const {execSync} = require('node:child_process');
+const {execFileSync, execSync} = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os'); // [macOS]
 const path = require('node:path');
@@ -69,7 +69,15 @@ async function prepareHermesArtifactsAsync(
 
     // [macOS] Map macOS version to upstream RN version for artifact lookup.
     let allowBuildFromSource = false;
-    if (!process.env.HERMES_VERSION) {
+    // Prefer the Hermes release pinned in sdks/hermes-engine/version.properties:
+    // the artifact the hermes-engine pod downloads and the hermes-compiler that
+    // compiles the bundle, rather than the floating `latest-v1` dist-tag.
+    const pinnedVersion =
+      process.env.HERMES_VERSION == null ? readPinnedHermesVersion() : null;
+    if (pinnedVersion != null) {
+      hermesLog(`Using pinned Hermes version: ${pinnedVersion}`);
+      resolvedVersion = pinnedVersion;
+    } else if (!process.env.HERMES_VERSION) {
       const packageJsonPath = path.resolve(
         __dirname,
         '..',
@@ -127,7 +135,7 @@ async function prepareHermesArtifactsAsync(
   }
 
   // Extract the tar.gz
-  execSync(`tar -xzf "${localPath}" -C "${artifactsPath}"`, {
+  execFileSync('tar', ['-xzf', localPath, '-C', artifactsPath], {
     stdio: 'inherit',
   });
 
@@ -138,6 +146,28 @@ async function prepareHermesArtifactsAsync(
 
   return artifactsPath;
 }
+
+// [macOS
+function readPinnedHermesVersion() /*: ?string */ {
+  const propertiesPath = path.resolve(
+    __dirname,
+    '..',
+    '..',
+    'sdks',
+    'hermes-engine',
+    'version.properties',
+  );
+  try {
+    const match = fs
+      .readFileSync(propertiesPath, 'utf8')
+      .match(/^\s*HERMES_VERSION_NAME\s*=\s*(\S+)\s*$/m);
+    // 1000.0.0 is the main-branch placeholder, not a published artifact.
+    return match != null && match[1] !== '1000.0.0' ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+// macOS]
 
 async function getLatestHermesVersionFromNPM() /*: Promise<string> */ {
   // TODO: rename 'latest-v1' to 'latest' once V1 is the only Hermes on npm
@@ -166,7 +196,8 @@ type HermesEngineSourceType =
 
 const HermesEngineSourceTypes /*:{
   readonly DOWNLOAD_PREBUILD_TARBALL: "download_prebuild_tarball",
-  readonly LOCAL_PREBUILT_TARBALL: "local_prebuilt_tarball"
+  readonly LOCAL_PREBUILT_TARBALL: "local_prebuilt_tarball",
+  readonly BUILD_FROM_HERMES_COMMIT: "build_from_hermes_commit", // [macOS]
 } */ = {
   LOCAL_PREBUILT_TARBALL: 'local_prebuilt_tarball',
   DOWNLOAD_PREBUILD_TARBALL: 'download_prebuild_tarball',
@@ -307,7 +338,6 @@ async function hermesSourceType(
     return HermesEngineSourceTypes.BUILD_FROM_HERMES_COMMIT;
   }
   // macOS]
-
 
   hermesLog(
     `No prebuilt tarball found for version ${version}. Falling back to DOWNLOAD_PREBUILD_TARBALL, which may fail.`,

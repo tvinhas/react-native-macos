@@ -15,11 +15,13 @@ import {ViewStyle} from '../../StyleSheet/StyleSheetTypes';
 import {
   DragEvent, // [macOS]
   HandledKeyEvent, // [macOS]
-  KeyEvent, // [macOS]
+  KeyDownEvent, // [macOS]
+  KeyUpEvent, // [macOS]
   BlurEvent,
   FocusEvent,
   LayoutChangeEvent,
   MouseEvent, // [macOS]
+  PointerEvent, // [macOS]
   PointerEvents,
 } from '../../Types/CoreEventTypes';
 import {Touchable} from '../Touchable/Touchable';
@@ -140,13 +142,30 @@ export interface ViewPropsMacOS {
   onMouseEnter?: ((event: MouseEvent) => void) | undefined;
   onMouseLeave?: ((event: MouseEvent) => void) | undefined;
   onDoubleClick?: ((event: MouseEvent) => void) | undefined;
+  onAuxClick?: ((event: PointerEvent) => void) | undefined;
+  onAuxClickCapture?: ((event: PointerEvent) => void) | undefined;
   onDragEnter?: ((event: DragEvent) => void) | undefined;
   onDragLeave?: ((event: DragEvent) => void) | undefined;
   onDrop?: ((event: DragEvent) => void) | undefined;
-  onKeyDown?: ((event: KeyEvent) => void) | undefined;
-  onKeyUp?: ((event: KeyEvent) => void) | undefined;
+  onKeyDown?: ((event: KeyDownEvent) => void) | undefined;
+  onKeyUp?: ((event: KeyUpEvent) => void) | undefined;
   keyDownEvents?: HandledKeyEvent[] | undefined;
   keyUpEvents?: HandledKeyEvent[] | undefined;
+  /**
+   * @deprecated Use `keyDownEvents`. Only honored by TextInput (legacy compat
+   * layer) and Pressable; a no-op on plain View.
+   */
+  validKeysDown?: readonly (string | HandledKeyEvent)[] | undefined;
+  /**
+   * @deprecated Use `keyUpEvents`. Only honored by TextInput (legacy compat
+   * layer); a no-op on plain View.
+   */
+  validKeysUp?: readonly (string | HandledKeyEvent)[] | undefined;
+  /**
+   * @deprecated Only honored by TextInput (legacy compat layer) and
+   * Pressable; a no-op on plain View.
+   */
+  passthroughAllKeyEvents?: boolean | undefined;
   draggedTypes?: DraggedTypesType | undefined;
 }
 

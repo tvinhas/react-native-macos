@@ -3228,6 +3228,7 @@ __metadata:
     invariant: "npm:^2.2.4"
     listr2: "npm:^6.4.1"
     nullthrows: "npm:^1.1.1"
+    react-native-macos: "workspace:*"
     react-native-test-library-apple: "npm:0.87.0-main"
     react-native-test-library-common: "npm:0.87.0-main"
     rxjs: "npm:@react-native-community/rxjs@6.5.4-custom"
@@ -11437,7 +11438,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-native-macos@workspace:packages/react-native":
+"react-native-macos@workspace:*, react-native-macos@workspace:packages/react-native":
   version: 0.0.0-use.local
   resolution: "react-native-macos@workspace:packages/react-native"
   dependencies:
@@ -11455,8 +11456,10 @@ __metadata:
     hermes-compiler: "npm:260318099.0.4"
     invariant: "npm:^2.2.4"
     memoize-one: "npm:^5.0.0"
+    metro: "npm:^0.87.1"
     metro-runtime: "npm:^0.87.1"
     metro-source-map: "npm:^0.87.1"
+    micromatch: "npm:^4.0.4"
     nullthrows: "npm:^1.1.1"
     pretty-format: "npm:^29.7.0"
     promise: "npm:^8.3.0"

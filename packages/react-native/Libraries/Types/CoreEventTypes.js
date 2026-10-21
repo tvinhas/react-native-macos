@@ -367,26 +367,6 @@ export type DragEvent = NativeSyntheticEvent<
   }>,
 >;
 
-export type KeyEvent = NativeSyntheticEvent<
-  Readonly<{|
-    // Modifier keys
-    capsLockKey: boolean,
-    shiftKey: boolean,
-    ctrlKey: boolean,
-    altKey: boolean,
-    metaKey: boolean,
-    numericPadKey: boolean,
-    helpKey: boolean,
-    functionKey: boolean,
-    // Key options
-    ArrowLeft: boolean,
-    ArrowRight: boolean,
-    ArrowUp: boolean,
-    ArrowDown: boolean,
-    key: string,
-  |}>,
->;
-
 /**
  * Represents a key that could be passed to `KeyDownEvents` and `KeyUpEvents`.
  *
@@ -407,10 +387,11 @@ export type HandledKeyEvent = Readonly<{|
 |}>;
 // macOS]
 
-// Upstream 0.85 added a generic web-style keyboard event below. Renamed inner
-// type to avoid colliding with the fork's NativeSyntheticEvent-wrapped
-// `KeyEvent` above. KeyUpEvent / KeyDownEvent are kept as exported wrappers.
-export type KeyEventData = Readonly<{
+// [macOS] Upstream names this payload `KeyEvent`; the fork keeps `KeyEvent` as
+// the (deprecated) name of the wrapped key-down event below, so the payload is
+// `KeyboardEventPayload`. macOS emits the same payload through the same
+// KeyDownEvent / KeyUpEvent wrappers as iOS and Android.
+export type KeyboardEventPayload = Readonly<{
   /**
    * The actual key that was pressed. For example, F would be "f" or "F" depending on the shift key.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
@@ -420,7 +401,7 @@ export type KeyEventData = Readonly<{
    * The key code of the key that was pressed. For example, F would be "KeyF"
    * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
    */
-  code: string,
+  code?: string, // [macOS] macOS does not emit a physical key code.
   altKey: boolean,
   ctrlKey: boolean,
   metaKey: boolean,
@@ -435,8 +416,26 @@ export type KeyEventData = Readonly<{
    * @see https://developer.mozilla.org/en-US/docs/Web/API/CompositionEvent/isComposing
    */
   isComposing?: boolean,
+  // [macOS
+  /** @platform macos */
+  capsLockKey?: boolean,
+  /** @platform macos */
+  numericPadKey?: boolean,
+  /** @platform macos */
+  helpKey?: boolean,
+  /** @platform macos */
+  functionKey?: boolean,
+  // macOS]
 }>;
 
-export type KeyUpEvent = NativeSyntheticEvent<KeyEventData>;
+export type KeyUpEvent = NativeSyntheticEvent<KeyboardEventPayload>;
 
-export type KeyDownEvent = NativeSyntheticEvent<KeyEventData>;
+export type KeyDownEvent = NativeSyntheticEvent<KeyboardEventPayload>;
+
+// [macOS
+/** @deprecated Use KeyDownEvent or KeyUpEvent instead. */
+export type KeyEvent = KeyDownEvent;
+
+/** @deprecated Use KeyboardEventPayload instead. */
+export type KeyEventData = KeyboardEventPayload;
+// macOS]

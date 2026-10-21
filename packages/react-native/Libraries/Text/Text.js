@@ -216,7 +216,7 @@ const TextImpl: component(
         'backgroundColor' in processedStyle &&
         !('borderRadius' in processedStyle)
       ) {
-        overrides = overrides || ({}: {...TextStyleInternal});
+        overrides = overrides || ({} as {...TextStyle});
         overrides.borderRadius = Number.MIN_VALUE;
       }
     }

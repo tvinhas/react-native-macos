@@ -93,12 +93,14 @@ RCT_EXPORT_MODULE()
 
   _currentInterfaceDimensions = [self _exportedDimensions];
 
-#if !TARGET_OS_OSX // [macOS]
+  // [macOS] [visionOS] -interfaceOrientationDidChange is only compiled for TARGET_OS_IOS;
+  // registering it elsewhere sends an unrecognized selector when the app becomes active.
+#if TARGET_OS_IOS // [macOS] [visionOS]
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(interfaceOrientationDidChange)
                                                name:UIApplicationDidBecomeActiveNotification
                                              object:nil];
-#endif // [macOS]
+#endif // [macOS] [visionOS]
 
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(interfaceFrameDidChange)

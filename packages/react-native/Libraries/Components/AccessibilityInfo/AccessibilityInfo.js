@@ -325,10 +325,13 @@ const AccessibilityInfo = {
    * Returns a promise which resolves to a boolean.
    * The result is `true` when a reduce transparency is enabled and `false` otherwise.
    *
-   * @platform ios
+   * @platform ios macos
    */
   isReduceTransparencyEnabled(): Promise<boolean> {
-    if (Platform.OS === 'android' || Platform.OS === 'macos' /* [macOS] */) {
+    // [macOS] macOS asks native too: RCTAccessibilityManager tracks
+    // -[NSWorkspace accessibilityDisplayShouldReduceTransparency] and already
+    // emits `reduceTransparencyChanged` on macOS.
+    if (Platform.OS === 'android') {
       return Promise.resolve(false);
     } else {
       return new Promise((resolve, reject) => {

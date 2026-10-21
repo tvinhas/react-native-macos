@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<52d39a196023796eed43d419c5a0b855>>
+ * @generated SignedSource<<395d81b6319dc95890a383ffd78b207c>>
  * @flow strict
  * @noformat
  */
@@ -343,7 +343,7 @@ export const enableImperativeEvents: Getter<boolean> = createNativeFlagGetter('e
 /**
  * Enable ref.focus() and ref.blur() for all views, not just TextInput.
  */
-export const enableImperativeFocus: Getter<boolean> = createNativeFlagGetter('enableImperativeFocus', false);
+export const enableImperativeFocus: Getter<boolean> = createNativeFlagGetter('enableImperativeFocus', true);
 /**
  * This is to fix the issue with interop view manager where component descriptor lookup is causing ViewManager to preload.
  */

@@ -21,7 +21,8 @@ import type {
   DragEvent,
   FocusEvent,
   HandledKeyEvent,
-  KeyEvent,
+  KeyDownEvent,
+  KeyUpEvent,
 } from '../../Types/CoreEventTypes';
 // macOS]
 import type {DraggedTypesType} from '../View/DraggedType'; // [macOS]
@@ -158,12 +159,12 @@ type PressableBaseProps = Readonly<{
   /**
    * Called after a key down event is detected.
    */
-  onKeyDown?: ?(event: KeyEvent) => void,
+  onKeyDown?: ?(event: KeyDownEvent) => void,
 
   /**
    * Called after a key up event is detected.
    */
-  onKeyUp?: ?(event: KeyEvent) => void,
+  onKeyUp?: ?(event: KeyUpEvent) => void,
 
   /**
    * Array of keys to receive key down events for. These events have their default native behavior prevented.
@@ -415,9 +416,9 @@ function Pressable({
     keyDownEvents:
       keyDownEvents ??
       // $FlowFixMe[unclear-type] Legacy props not in type definitions
-      (((props: any).validKeysDown: mixed) == null &&
+      (((props as any).validKeysDown as unknown) == null &&
       // $FlowFixMe[unclear-type]
-      ((props: any).passthroughAllKeyEvents: mixed) !== true
+      ((props as any).passthroughAllKeyEvents as unknown) !== true
         ? [{key: ' '}, {key: 'Enter'}]
         : undefined),
     mouseDownCanMoveWindow: false,

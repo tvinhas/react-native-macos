@@ -35,10 +35,9 @@ const {
   renderUmbrellaHeader,
 } = require('./headers-spec');
 const {
-  CATALYST_STUB_SLICE,
-  DEFAULT_STUB_SLICES,
   buildDepsHeadersXcframework,
   composeHeadersOnlyXcframework,
+  stubSlicesFromXcframework,
 } = require('./headers-xcframework');
 const {execFileSync} = require('node:child_process');
 const crypto = require('node:crypto');
@@ -77,6 +76,7 @@ function composeToolingHash() /*: string */ {
 }
 
 /*:: import type {HeadersSpecPlan, SpecEntry} from './headers-spec'; */
+/*:: import type {StubSlice} from './headers-xcframework'; */
 
 /**
  * Computes the spec plan from the live source tree. Throws on collisions
@@ -205,6 +205,12 @@ function emitReactFrameworkHeaders(
 
   for (const slice of slices) {
     const fwk = path.join(xcfwPath, slice, 'React.framework');
+    // [macOS] Versioned frameworks expose Headers/Modules/Resources through
+    // symlinks. Write resources beside the binary's versioned resource bundle.
+    const resources = fs.existsSync(path.join(fwk, 'Versions', 'Current'))
+      ? path.join(fwk, 'Versions', 'Current', 'Resources')
+      : fwk;
+    fs.mkdirSync(resources, {recursive: true});
     fs.rmSync(path.join(fwk, 'Headers'), {recursive: true, force: true});
     execFileSync('/bin/cp', [CP_FLAGS, stage, path.join(fwk, 'Headers')]);
     fs.rmSync(path.join(fwk, 'Modules'), {recursive: true, force: true});
@@ -215,14 +221,14 @@ function emitReactFrameworkHeaders(
     );
     if (privacyManifest != null) {
       fs.writeFileSync(
-        path.join(fwk, 'PrivacyInfo.xcprivacy'),
+        path.join(resources, 'PrivacyInfo.xcprivacy'),
         serializePrivacyManifest(privacyManifest),
       );
     }
     // Clone the prebuilt RCTI18nStrings.bundle so the framework-aware
     // RCTLocalizedString loader resolves React-Core's strings in prebuilt/SPM.
     if (i18nLocales > 0 && i18nBundleStage != null) {
-      const dest = path.join(fwk, 'RCTI18nStrings.bundle');
+      const dest = path.join(resources, 'RCTI18nStrings.bundle');
       fs.rmSync(dest, {recursive: true, force: true});
       execFileSync('/bin/cp', [CP_FLAGS, i18nBundleStage, dest]);
     }
@@ -252,7 +258,7 @@ function buildReactNativeHeadersXcframework(
   outDir /*: string */,
   plan /*: HeadersSpecPlan */,
   rnRoot /*: string */,
-  includeCatalyst /*: boolean */ = false,
+  slices /*: Array<StubSlice> */,
   // Optional dir containing a `hermes/` namespace (Hermes public headers from
   // the hermes-ios tarball's destroot/include). Folded in as a textual
   // namespace so `<hermes/...>` resolves without per-library wiring. null
@@ -296,9 +302,6 @@ function buildReactNativeHeadersXcframework(
   );
 
   // ---- compose (stub archives + create-xcframework) ----
-  const slices = includeCatalyst
-    ? [...DEFAULT_STUB_SLICES, CATALYST_STUB_SLICE]
-    : DEFAULT_STUB_SLICES;
   const outXcfw = composeHeadersOnlyXcframework(
     outDir,
     'ReactNativeHeaders',
@@ -337,11 +340,13 @@ function ensureHeadersLayout(
   const sourceXcfw = fs.realpathSync(
     path.join(artifactsDir, 'React.xcframework'),
   );
-  const depsHeaders = path.join(
+  const depsXcfw = path.join(
     artifactsDir,
     'ReactNativeDependencies.xcframework',
-    'Headers',
   );
+  const depsHeaders = path.join(depsXcfw, 'Headers');
+  const reactSlices = stubSlicesFromXcframework(sourceXcfw);
+  const depsSlices = stubSlicesFromXcframework(depsXcfw);
   // Hermes public headers staged into the slot by download-spm-artifacts
   // (the hermes-ios tarball ships them in destroot/include, which the
   // xcframework extraction otherwise discards). null when absent — then
@@ -364,7 +369,9 @@ function ensureHeadersLayout(
   // recomposes instead of reusing a hermes-less ReactNativeHeaders. The
   // compose-tooling hash makes a local edit to headers-{inventory,spec,compose}
   // recompose too (the source xcframework's Info.plist mtime can't detect that).
-  const marker = `${sourceXcfw}\n${sourceStat.mtimeMs}\n${hermesHeaders ?? 'no-hermes'}\ntooling:${composeToolingHash()}\n`;
+  // Include both binary slice sets so a changed deps platform set also
+  // invalidates the cached sidecars, even when React itself is unchanged.
+  const marker = `${sourceXcfw}\n${sourceStat.mtimeMs}\n${hermesHeaders ?? 'no-hermes'}\ntooling:${composeToolingHash()}\nslices:${JSON.stringify([reactSlices, depsSlices])}\n`;
   if (
     !force &&
     fs.existsSync(reactXcfw) &&
@@ -394,16 +401,15 @@ function ensureHeadersLayout(
     outDir,
     plan,
     rnRoot,
-    false,
+    reactSlices,
     hermesHeaders,
   );
-  // The deps sidecar (like ReactNativeHeaders here) skips the catalyst slice
-  // on the consumer repackage path to stay fast.
+  // Each sidecar matches its own binary, which may carry a different slice set.
   buildDepsHeadersXcframework(
     outDir,
     depsHeaders,
     plan.depsNamespaces,
-    DEFAULT_STUB_SLICES,
+    depsSlices,
   );
   fs.writeFileSync(markerPath, marker);
   return {reactXcfw, headersXcfw, depsHeadersXcfw};

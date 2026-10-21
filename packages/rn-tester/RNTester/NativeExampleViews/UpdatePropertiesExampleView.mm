@@ -7,22 +7,36 @@
 
 #import "UpdatePropertiesExampleView.h"
 
+#if __has_include(<React/RCTRootViewFactory.h>)
+#import <React/RCTRootViewFactory.h>
+#else
+#import <RCTRootViewFactory.h>
+#endif
 #import <React/RCTRootView.h>
-#import <React/RCTViewManager.h>
 
-#import "AppDelegate.h"
+@interface UpdatePropertiesExampleView ()
 
-@interface UpdatePropertiesExampleViewManager : RCTViewManager
+- (instancetype)initWithFrame:(CGRect)frame rootViewFactory:(RCTRootViewFactory *)rootViewFactory;
 
 @end
 
-@implementation UpdatePropertiesExampleViewManager
+@implementation UpdatePropertiesExampleViewManager {
+  RCTRootViewFactory *_rootViewFactory;
+}
 
 RCT_EXPORT_MODULE();
 
+- (instancetype)initWithRootViewFactory:(RCTRootViewFactory *)rootViewFactory
+{
+  if ((self = [super init]) != nil) {
+    _rootViewFactory = rootViewFactory;
+  }
+  return self;
+}
+
 - (RCTPlatformView *)view // [macOS]
 {
-  return [UpdatePropertiesExampleView new];
+  return [[UpdatePropertiesExampleView alloc] initWithFrame:CGRectZero rootViewFactory:_rootViewFactory];
 }
 
 @end
@@ -39,15 +53,17 @@ RCT_EXPORT_MODULE();
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
+  return [self initWithFrame:frame rootViewFactory:nil];
+}
+
+- (instancetype)initWithFrame:(CGRect)frame rootViewFactory:(RCTRootViewFactory *)rootViewFactory
+{
   self = [super initWithFrame:frame];
   if (self) {
     _beige = YES;
 
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-
-    _rootView =
-        (RCTRootView *)[appDelegate.reactNativeFactory.rootViewFactory viewWithModuleName:@"SetPropertiesExampleApp"
-                                                                        initialProperties:@{@"color" : @"beige"}];
+    _rootView = (RCTRootView *)[rootViewFactory viewWithModuleName:@"SetPropertiesExampleApp"
+                                                 initialProperties:@{@"color" : @"beige"}];
 
     // [macOS Github#1642: Suppress analyzer error of nonlocalized string
     NSString *buttonTitle = NSLocalizedString(@"Native Button", nil);

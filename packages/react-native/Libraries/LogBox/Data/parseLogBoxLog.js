@@ -21,40 +21,212 @@ const ANSI_REGEX = ansiRegex().source;
 
 const RE_TRANSFORM_ERROR = /^TransformError /;
 const RE_COMPONENT_STACK_LINE = /\n {4}at/;
-const RE_COMPONENT_STACK_LINE_STACK_FRAME = /@.*\n/;
+// [macOS
+// The parsers below are linear-time equivalents of the upstream regexes quoted
+// in their comments. Those regexes backtrack polynomially (cubically for the
+// code frame one) on long adversarial messages, which can freeze the JS thread
+// while LogBox handles an error. Each helper returns exactly the regex's
+// capture groups (or `false`/`null` when it would not match).
 
-// "TransformError " (Optional) and either "SyntaxError: " or "ReferenceError: "
-// Capturing groups:
-// 1: error message
-// 2: file path
-// 3: line number
-// 4: column number
-// \n\n
-// 5: code frame
-const RE_BABEL_TRANSFORM_ERROR_FORMAT =
-  /^(?:TransformError )?(?:SyntaxError: |ReferenceError: )(.*): (.*) \((\d+):(\d+)\)\n\n([\s\S]+)/;
+function isLineTerminator(code: number): boolean {
+  return code === 0x0a || code === 0x0d || code === 0x2028 || code === 0x2029;
+}
 
-// Capturing groups:
-// - non-capturing "TransformError " (optional)
-// - non-capturing Error message
-// 1: file path
-// 2: file name
-// 3: error message
-// 4: code frame, which includes code snippet indicators or terminal escape sequences for formatting.
-const RE_BABEL_CODE_FRAME_ERROR_FORMAT =
-  // eslint-disable-next-line no-control-regex
-  /^(?:TransformError )?(?:.*):? (?:.*?)(\/.*): ([\s\S]+?)\n([ >]{2}[\d\s]+ \|[\s\S]+|\u{001b}[\s\S]+)/u;
+function isDigit(code: number): boolean {
+  return code >= 0x30 && code <= 0x39;
+}
 
-// Capturing groups:
-// - non-capturing "InternalError Metro has encountered an error:"
-// 1: error title
-// 2: error message
-// 3: file path
-// 4: line number
-// 5: column number
-// 6: code frame, which includes code snippet indicators or terminal escape sequences for formatting.
-const RE_METRO_ERROR_FORMAT =
-  /^(?:InternalError Metro has encountered an error:) (.*): (.*) \((\d+):(\d+)\)\n\n([\s\S]+)/u;
+// Index of the first line terminator at or after `from`: where `.*` stops.
+function lineEnd(s: string, from: number): number {
+  let i = from;
+  while (i < s.length && !isLineTerminator(s.charCodeAt(i))) {
+    i++;
+  }
+  return i;
+}
+
+// Same as `/@.*\n/.test(s)`.
+function hasStackFrameLine(s: string): boolean {
+  let at = s.indexOf('@');
+  while (at !== -1) {
+    const end = lineEnd(s, at + 1);
+    if (s.charCodeAt(end) === 0x0a) {
+      return true;
+    }
+    at = s.indexOf('@', end);
+  }
+  return false;
+}
+
+// Same captures as `/^<prefix>(.*): (.*) \((\d+):(\d+)\)\n\n([\s\S]+)/`, for
+// mutually exclusive alternatives of `<prefix>`.
+//
+// Babel transform errors: "TransformError " (optional), then "SyntaxError: "
+// or "ReferenceError: ". Captures: 1: file path, 2: error message, 3: line,
+// 4: column, 5: code frame.
+//
+// Metro errors: "InternalError Metro has encountered an error: ". Captures:
+// 1: error title, 2: error message (file path), 3: line, 4: column, 5: code
+// frame.
+function matchErrorWithLocation(
+  message: string,
+  prefixes: ReadonlyArray<string>,
+): ?[string, string, string, string, string] {
+  const prefix = prefixes.find(candidate => message.startsWith(candidate));
+  if (prefix == null) {
+    return null;
+  }
+  // The header is the first line and must be followed by "\n\n" and a frame.
+  const end = lineEnd(message, prefix.length);
+  if (
+    message.charCodeAt(end) !== 0x0a ||
+    message.charCodeAt(end + 1) !== 0x0a ||
+    end + 2 >= message.length
+  ) {
+    return null;
+  }
+  // The header ends with " (<row>:<column>)".
+  let i = end - 1;
+  if (message[i] !== ')') {
+    return null;
+  }
+  const columnEnd = i--;
+  while (i >= prefix.length && isDigit(message.charCodeAt(i))) {
+    i--;
+  }
+  if (i === columnEnd - 1 || message[i] !== ':') {
+    return null;
+  }
+  const columnStart = i + 1;
+  const rowEnd = i--;
+  while (i >= prefix.length && isDigit(message.charCodeAt(i))) {
+    i--;
+  }
+  if (i === rowEnd - 1 || message[i] !== '(' || message[i - 1] !== ' ') {
+    return null;
+  }
+  const rowStart = i + 1;
+  const locationStart = i - 1;
+  // The first `(.*)` is greedy: split at the last ": " before the location.
+  if (locationStart - 2 < prefix.length) {
+    return null;
+  }
+  const separator = message.lastIndexOf(': ', locationStart - 2);
+  if (separator < prefix.length) {
+    return null;
+  }
+  return [
+    message.slice(prefix.length, separator),
+    message.slice(separator + 2, locationStart),
+    message.slice(rowStart, rowEnd),
+    message.slice(columnStart, columnEnd),
+    message.slice(end + 2),
+  ];
+}
+
+const RE_DIGIT_OR_SPACE = /[\d\s]/;
+
+// Returns a predicate telling whether a code frame
+// (`[ >]{2}[\d\s]+ \|[\s\S]+` or `\u{001b}[\s\S]+`) starts right after the
+// "\n" at index `n`. Must be called with increasing `n`; the end of the
+// `[\d\s]+` run is cached so a whole scan stays linear.
+function makeCodeFrameStartTest(s: string): (n: number) => boolean {
+  let runEnd = 0;
+  return n => {
+    const first = s[n + 1];
+    if (first === '\u001b') {
+      return n + 2 < s.length;
+    }
+    const second = s[n + 2];
+    if (
+      (first !== ' ' && first !== '>') ||
+      (second !== ' ' && second !== '>')
+    ) {
+      return false;
+    }
+    const runStart = n + 3;
+    if (runEnd < runStart) {
+      runEnd = runStart;
+    }
+    while (runEnd < s.length && RE_DIGIT_OR_SPACE.test(s[runEnd])) {
+      runEnd++;
+    }
+    return (
+      runEnd - runStart >= 2 &&
+      s[runEnd - 1] === ' ' &&
+      s[runEnd] === '|' &&
+      runEnd + 1 < s.length
+    );
+  };
+}
+
+// Same captures as
+// `/^(?:TransformError )?(?:.*):? (?:.*?)(\/.*): ([\s\S]+?)\n([ >]{2}[\d\s]+ \|[\s\S]+|\u{001b}[\s\S]+)/u`
+// (- non-capturing "TransformError " (optional)
+//  - non-capturing Error message
+//  1: file path
+//  2: error message
+//  3: code frame, which includes code snippet indicators or terminal escape
+//     sequences for formatting.)
+function matchBabelCodeFrameError(message: string): ?[string, string, string] {
+  const end = lineEnd(message, 0);
+  let lastFrame = -1;
+  const isFrameStart = makeCodeFrameStartTest(message);
+  for (
+    let n = message.indexOf('\n');
+    n !== -1;
+    n = message.indexOf('\n', n + 1)
+  ) {
+    if (isFrameStart(n)) {
+      lastFrame = n;
+    }
+  }
+  if (lastFrame === -1) {
+    return null;
+  }
+  // The path is greedy: it ends at the last ": " on the first line that still
+  // leaves a non-empty message before some code frame. It starts at the first
+  // "/" after the last space that precedes a "/" within it.
+  const from = Math.min(end - 2, lastFrame - 3);
+  if (from < 0) {
+    return null;
+  }
+  const separator = message.lastIndexOf(': ', from);
+  if (separator < 1) {
+    return null;
+  }
+  const lastSlash = message.lastIndexOf('/', separator - 1);
+  if (lastSlash < 1) {
+    return null;
+  }
+  const space = message.lastIndexOf(' ', lastSlash - 1);
+  if (space === -1) {
+    return null;
+  }
+  const pathStart = message.indexOf('/', space + 1);
+  // The message is lazy: it ends at the first code frame after it.
+  const isFirstFrameStart = makeCodeFrameStartTest(message);
+  let frame = -1;
+  for (
+    let n = message.indexOf('\n', separator + 3);
+    n !== -1;
+    n = message.indexOf('\n', n + 1)
+  ) {
+    if (isFirstFrameStart(n)) {
+      frame = n;
+      break;
+    }
+  }
+  if (frame === -1) {
+    return null;
+  }
+  return [
+    message.slice(pathStart, separator),
+    message.slice(separator + 2, frame),
+    message.slice(frame + 1),
+  ];
+}
+// macOS]
 
 // https://github.com/babel/babel/blob/33dbb85e9e9fe36915273080ecc42aee62ed0ade/packages/babel-code-frame/src/index.ts#L183-L184
 const RE_BABEL_CODE_FRAME_MARKER_PATTERN = new RegExp(
@@ -189,7 +361,7 @@ function isComponentStack(consoleArgument: string) {
   // - JSC format: "Component@/path/to/file.js:1:2"
   return (
     RE_COMPONENT_STACK_LINE.test(consoleArgument) ||
-    RE_COMPONENT_STACK_LINE_STACK_FRAME.test(consoleArgument)
+    hasStackFrameLine(consoleArgument) // [macOS]
   );
 }
 
@@ -208,10 +380,13 @@ export function parseLogBoxException(
   const message =
     error.originalMessage != null ? error.originalMessage : 'Unknown';
 
-  const metroInternalError = message.match(RE_METRO_ERROR_FORMAT);
+  // [macOS
+  const metroInternalError = matchErrorWithLocation(message, [
+    'InternalError Metro has encountered an error: ',
+  ]);
+  // macOS]
   if (metroInternalError) {
-    const [content, fileName, row, column, codeFrame] =
-      metroInternalError.slice(1);
+    const [content, fileName, row, column, codeFrame] = metroInternalError; // [macOS]
 
     return {
       level: 'fatal',
@@ -236,11 +411,17 @@ export function parseLogBoxException(
     };
   }
 
-  const babelTransformError = message.match(RE_BABEL_TRANSFORM_ERROR_FORMAT);
+  // [macOS
+  const babelTransformError = matchErrorWithLocation(message, [
+    'TransformError SyntaxError: ',
+    'TransformError ReferenceError: ',
+    'SyntaxError: ',
+    'ReferenceError: ',
+  ]);
+  // macOS]
   if (babelTransformError) {
     // Transform errors are thrown from inside the Babel transformer.
-    const [fileName, content, row, column, codeFrame] =
-      babelTransformError.slice(1);
+    const [fileName, content, row, column, codeFrame] = babelTransformError; // [macOS]
 
     return {
       level: 'syntax',
@@ -267,11 +448,11 @@ export function parseLogBoxException(
   // Perform a cheap match first before trying to parse the full message, which
   // can get expensive for arbitrary input.
   if (RE_BABEL_CODE_FRAME_MARKER_PATTERN.test(message)) {
-    const babelCodeFrameError = message.match(RE_BABEL_CODE_FRAME_ERROR_FORMAT);
+    const babelCodeFrameError = matchBabelCodeFrameError(message); // [macOS]
 
     if (babelCodeFrameError) {
       // Codeframe errors are thrown from any use of buildCodeFrameError.
-      const [fileName, content, codeFrame] = babelCodeFrameError.slice(1);
+      const [fileName, content, codeFrame] = babelCodeFrameError; // [macOS]
       return {
         level: 'syntax',
         stack: [],

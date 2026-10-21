@@ -95,13 +95,13 @@ type TouchableWithoutFeedbackPropsCore = {
    * the OS-specific concept of "blur" occurs, meaning the element lost focus.
    * Some platforms may not have the concept of blur.
    */
-  onBlur?: ?(event: BlurEvent) => unknown,
+  onBlur?: ?(event: BlurEvent) => void, // [macOS]
   /**
    * When `accessible` is true (which is the default) this may be called when
    * the OS-specific concept of "focus" occurs. Some platforms may not have
    * the concept of focus.
    */
-  onFocus?: ?(event: FocusEvent) => unknown,
+  onFocus?: ?(event: FocusEvent) => void, // [macOS]
   /**
    * Invoked on mount and layout changes with
    * {nativeEvent: {layout: {x, y, width, height}}}

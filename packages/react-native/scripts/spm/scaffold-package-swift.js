@@ -647,12 +647,21 @@ function emitScaffoldedPackageSwift(
 
   // Linker frameworks: defaults + podspec-declared extras + weak frameworks.
   // Dedup on render so the user doesn't see duplicate UIKit lines.
-  const defaults = ['UIKit', 'Foundation', 'CoreGraphics'];
+  const defaults = ['UIKit', 'AppKit', 'Foundation', 'CoreGraphics']; // [macOS]
   const linkedFrameworks = Array.from(
     new Set([...defaults, ...spec.extraFrameworks]),
   );
   const linkerEntries = [
-    ...linkedFrameworks.map(f => `.linkedFramework("${f}")`),
+    ...linkedFrameworks.map(f => {
+      // [macOS] Framework defaults must be valid on the target Apple platform.
+      const condition =
+        f === 'UIKit'
+          ? ', .when(platforms: [.iOS, .tvOS, .visionOS, .macCatalyst])'
+          : f === 'AppKit'
+            ? ', .when(platforms: [.macOS])'
+            : '';
+      return `.linkedFramework("${f}"${condition})`;
+    }),
     ...spec.weakFrameworks.map(
       f => `.linkedFramework("${f}", .when(platforms: [.iOS]))`,
     ),

@@ -8,6 +8,15 @@
 #import <React/RCTUIKit.h> // [macOS]
 
 #import <React/RCTView.h>
+#import <React/RCTViewManager.h>
+
+@class RCTRootViewFactory;
+
+@interface UpdatePropertiesExampleViewManager : RCTViewManager
+
+- (instancetype)initWithRootViewFactory:(RCTRootViewFactory *)rootViewFactory;
+
+@end
 
 @interface UpdatePropertiesExampleView : RCTView
 

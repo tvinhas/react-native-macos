@@ -338,6 +338,19 @@ describe('emitReactFrameworkHeaders resource landing (integration)', () => {
         recursive: true,
       });
     }
+    const macFramework = path.join(
+      xcfw,
+      'macos-arm64_x86_64',
+      'React.framework',
+    );
+    fs.mkdirSync(path.join(macFramework, 'Versions', 'A', 'Resources'), {
+      recursive: true,
+    });
+    fs.symlinkSync('A', path.join(macFramework, 'Versions', 'Current'));
+    fs.symlinkSync(
+      'Versions/Current/Resources',
+      path.join(macFramework, 'Resources'),
+    );
   });
 
   afterEach(() => {
@@ -367,5 +380,17 @@ describe('emitReactFrameworkHeaders resource landing (integration)', () => {
         true,
       );
     }
+    const resources = path.join(
+      xcfw,
+      'macos-arm64_x86_64',
+      'React.framework',
+      'Resources',
+    );
+    expect(fs.existsSync(path.join(resources, 'PrivacyInfo.xcprivacy'))).toBe(
+      true,
+    );
+    expect(
+      fs.existsSync(path.join(resources, 'RCTI18nStrings.bundle', 'en.lproj')),
+    ).toBe(true);
   });
 });

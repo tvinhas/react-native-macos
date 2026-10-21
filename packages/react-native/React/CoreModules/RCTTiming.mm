@@ -133,11 +133,12 @@ RCT_EXPORT_MODULE()
      if (!self->_inBackground &&
         ([RCTSharedApplication() applicationState] == UIApplicationStateBackground ||
          [UIDevice currentDevice].proximityState)) {
-#else // [macOS
-    if (!self->_inBackground && ![RCTSharedApplication() isHidden]) {
-#endif
       [self appDidMoveToBackground];
     }
+#endif // [macOS] macOS apps keep running while hidden or inactive, so there is no
+       // background mode here. (This used to call appDidMoveToBackground whenever the
+       // app was *not* hidden, and with no foreground notification on macOS timers
+       // stayed in NSTimer mode for good: requestAnimationFrame busy-looped at ~50k/s.)
   });
 
 #if !TARGET_OS_OSX // [macOS]

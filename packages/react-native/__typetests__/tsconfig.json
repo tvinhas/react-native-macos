@@ -10,7 +10,13 @@
     "jsx": "react",
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    // [macOS] The core workspace is named react-native-macos, so nothing named
+    // `react-native` resolves in-repo; point the upstream tests at the
+    // generated API (run `yarn build-types` first).
+    "paths": {
+      "react-native": ["../types_generated/index.d.ts"]
+    }
   },
   "include": ["**/*"]
 }
