@@ -214,3 +214,7 @@ __pycache__/
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 # macOS]
+
+# Agent instruction files (kept local, not tracked)
+AGENTS.md
+CLAUDE.md
