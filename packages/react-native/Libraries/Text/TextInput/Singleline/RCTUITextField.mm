@@ -116,6 +116,12 @@
     [self setBordered:NO];
     [self setAllowsEditingTextAttributes:YES];
     [self setBackgroundColor:[NSColor clearColor]];
+    // A field built in code wraps by default, so text wider than the field
+    // broke onto a second line the one-line frame hid, and the field editor
+    // scrolled down to the caret: a pasted address showed only its last word.
+    // Scroll sideways like UITextField and every native single-line field.
+    self.cell.scrollable = YES;
+    self.cell.wraps = NO;
 #endif // macOS]
 
     _textInputDelegateAdapter = [[RCTBackedTextFieldDelegateAdapter alloc] initWithTextField:self];
