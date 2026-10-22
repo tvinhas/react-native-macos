@@ -54,6 +54,7 @@ const {
   AUTOLINKED_PACKAGE_NAME,
   REACT_CODEGEN_APP_PRODUCTS,
   REACT_CODEGEN_PACKAGE_NAME,
+  REACT_CODEGEN_PRODUCTS,
   REACT_NATIVE_PACKAGE_NAME,
   REACT_NATIVE_PRODUCTS,
   isValidScriptPhaseId,
@@ -1133,6 +1134,18 @@ function ensureStubPackages(appRoot /*: string */) /*: void */ {
         packageName: entry.packageName,
         products: [entry.product],
       });
+    }
+  }
+
+  // Library manifests depend on these products, but the app must not link
+  // them, so they are stubbed here instead of listed in SPM_PRODUCT_PACKAGES.
+  for (const def of byPath.values()) {
+    if (def.packageName === REACT_CODEGEN_PACKAGE_NAME) {
+      for (const product of REACT_CODEGEN_PRODUCTS) {
+        if (!def.products.includes(product)) {
+          def.products.push(product);
+        }
+      }
     }
   }
 
