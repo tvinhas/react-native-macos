@@ -129,6 +129,7 @@ static BOOL RCTViewIsInteractiveAccessibilityElement(UIView *view, const ViewPro
   BOOL _hasClipViewBoundsObserver;
   NSTrackingArea *_trackingArea;
   BOOL _allowsVibrancy;
+  CATransform3D _requestedTransform3D;
 #endif // macOS]
   NSMutableArray<RCTUIView *> *_reactSubviews; // [macOS]
   NSSet<NSString *> *_Nullable _propKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN;
@@ -158,6 +159,7 @@ static BOOL RCTViewIsInteractiveAccessibilityElement(UIView *view, const ViewPro
     _removeClippedSubviews = NO;
 #if TARGET_OS_OSX // [macOS
     _allowsVibrancy = NO;
+    _requestedTransform3D = CATransform3DIdentity;
     self.mouseDownCanMoveWindow = YES;
 #endif // macOS]
   }
@@ -2495,6 +2497,73 @@ enum MouseEventType {
   [super viewDidMoveToWindow];
 }
 
+#pragma mark - Inverted ScrollView content
+
+// AppKit hit-tests, tracks the pointer and scrolls in view coordinates, which leave out layer
+// transforms, so an inverted list can't be flipped with scaleY(-1) as on iOS. Its ScrollView lays
+// the content out from the bottom instead (RCTScrollViewComponentView), and the cells' flips are
+// left off. The flips stay in the props, so layout and measurement see what iOS sees.
+
+static BOOL RCTIsVerticalFlip(CATransform3D transform)
+{
+  return CATransform3DEqualToTransform(transform, CATransform3DMakeScale(1, -1, 1));
+}
+
+// AppKit works out where a view's layer goes, flipped or not, when the view's frame is set.
+static void RCTRelayoutLayer(RCTPlatformView *view)
+{
+  NSPoint origin = view.frame.origin;
+  [view setFrameOrigin:NSMakePoint(origin.x + 1, origin.y)];
+  [view setFrameOrigin:origin];
+}
+
+- (BOOL)isFlipped
+{
+  return !_invertsSubviewsVertically;
+}
+
+- (void)setInvertsSubviewsVertically:(BOOL)invertsSubviewsVertically
+{
+  if (_invertsSubviewsVertically == invertsSubviewsVertically) {
+    return;
+  }
+  _invertsSubviewsVertically = invertsSubviewsVertically;
+  RCTRelayoutLayer(self);
+  for (RCTPlatformView *subview in self.subviews) {
+    if ([subview isKindOfClass:[RCTViewComponentView class]]) {
+      [(RCTViewComponentView *)subview applyTransform3DForSuperview];
+    }
+    RCTRelayoutLayer(subview);
+  }
+}
+
+- (void)setTransform3D:(CATransform3D)transform3D
+{
+  _requestedTransform3D = transform3D;
+  [super setTransform3D:[self transform3DForSuperview]];
+}
+
+- (CATransform3D)transform3DForSuperview
+{
+  BOOL isInvertedCell = RCTIsVerticalFlip(_requestedTransform3D) &&
+      [self.superview isKindOfClass:[RCTViewComponentView class]] &&
+      ((RCTViewComponentView *)self.superview).invertsSubviewsVertically;
+  return isInvertedCell ? CATransform3DIdentity : _requestedTransform3D;
+}
+
+- (void)applyTransform3DForSuperview
+{
+  if (RCTIsVerticalFlip(_requestedTransform3D)) {
+    [super setTransform3D:[self transform3DForSuperview]];
+  }
+}
+
+- (void)viewDidMoveToSuperview
+{
+  [super viewDidMoveToSuperview];
+  [self applyTransform3DForSuperview];
+}
+
 - (void)updateTrackingAreas
 {
   BOOL hasMouseEventHandler =
@@ -2558,6 +2627,14 @@ enum MouseEventType {
 
   _hasMouseOver = NO;
   [self emitMouseEvent:MouseLeave];
+}
+
+- (void)mouseDown:(NSEvent *)event
+{
+  // Accept mouseDown: the surface's touch handler, a gesture recognizer, has already taken the
+  // press. NSView's default passes it on to an overlapping sibling view beneath the point, and a
+  // text field there starts a tracking loop that consumes the mouseUp, so a button drawn over a
+  // TextInput would never be pressed.
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -2631,7 +2708,13 @@ enum MouseEventType {
 
 - (BOOL)styleNeedsSwiftUIContainer
 {
-  if (!_props->filter.empty()) {
+  if (_props->filter.empty()) {
+    return NO;
+  }
+
+  // A filter must not affect layout, but UIHostingController insets its content by the safe area.
+  // To disable the insets we use `safeAreaRegions` which is only available in iOS 16.4 and tvOS 16.4.
+  if (@available(iOS 16.4, tvOS 16.4, *)) {
     for (const auto &primitive : _props->filter) {
       if (primitive.type == FilterType::Blur || primitive.type == FilterType::Grayscale ||
           primitive.type == FilterType::DropShadow || primitive.type == FilterType::Saturate ||
@@ -2640,6 +2723,7 @@ enum MouseEventType {
       }
     }
   }
+
   return NO;
 }
 

@@ -206,7 +206,13 @@
   [self setNeedsLayout];
 #else // [macOS
   ((RCTUITextFieldCell*)self.cell).textContainerInset = _textContainerInset;
+  [self _relocateFieldEditor];
+#endif // macOS]
+}
 
+#if TARGET_OS_OSX // [macOS
+- (void)_relocateFieldEditor
+{
   if (self.currentEditor) {
     NSRange selectedRange = self.currentEditor.selectedRange;
 
@@ -218,8 +224,19 @@
                          start:selectedRange.location
                         length:selectedRange.length];
   }
-#endif // macOS]
 }
+
+- (void)setFrameSize:(NSSize)newSize
+{
+  BOOL sizeChanged = !NSEqualSizes(newSize, self.frame.size);
+  [super setFrameSize:newSize];
+  // NSTextField resizes the field editor of a field being edited to the cell's drawing rect, which
+  // leaves out the title rect's padding and vertical centering, so the text jumped to the top.
+  if (sizeChanged) {
+    [self _relocateFieldEditor];
+  }
+}
+#endif // macOS]
 
 #if TARGET_OS_OSX // [macOS
 
@@ -413,6 +430,13 @@
                                                           attributes:[self defaultTextAttributes]]];
 
   self.font = [[self defaultTextAttributes] objectForKey:NSFontAttributeName];
+
+  // Plain text set later (`text`) and a secure field's bullets are drawn in textColor, not in the
+  // attributed text's color, so it has to follow the style too.
+  NSColor *textColor = [[self defaultTextAttributes] objectForKey:NSForegroundColorAttributeName];
+  if (textColor != nil) {
+    self.textColor = textColor;
+  }
 #endif // macOS]
 }
 

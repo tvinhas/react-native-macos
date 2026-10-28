@@ -36,6 +36,10 @@ public typealias RCTPlatformHostingController = UIHostingController
   @objc public override init() {
     super.init()
     hostingController = RCTPlatformHostingController(rootView: SwiftUIContainerView(viewModel: containerViewModel)) // [macOS]
+    if #available(iOS 16.4, tvOS 16.4, *) {
+      // Disable implicit safe area insets or else the view is shifted by the safe area insets
+      hostingController?.safeAreaRegions = []
+    }
     guard let view = hostingController?.view else {
       return
     }

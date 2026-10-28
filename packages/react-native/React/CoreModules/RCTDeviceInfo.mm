@@ -112,6 +112,16 @@ RCT_EXPORT_MODULE()
                                                name:UIApplicationDidBecomeActiveNotification
                                              object:nil];
 
+#if TARGET_OS_OSX // [macOS
+  // The window observed in init is the one that was key when this module was created, which is
+  // often none: an app usually makes its window key after starting React Native. Observe every
+  // window's resize instead, so the dimensions follow the window whenever it is resized.
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(interfaceFrameDidChange)
+                                               name:NSWindowDidResizeNotification
+                                             object:nil];
+#endif // macOS]
+
 #if TARGET_OS_IOS && !TARGET_OS_MACCATALYST
   _currentInterfaceOrientation = RCTKeyWindow().windowScene.interfaceOrientation;
 #endif
@@ -171,6 +181,10 @@ RCT_EXPORT_MODULE()
 
   [_applicationWindow removeObserver:self forKeyPath:kFrameKeyPath];
 
+#if TARGET_OS_OSX // [macOS
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:NSWindowDidResizeNotification object:nil];
+#endif // macOS]
+
 #if TARGET_OS_IOS
   [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
 #endif
@@ -197,6 +211,25 @@ static BOOL RCTIsIPhoneNotched()
 }
 
 
+#if TARGET_OS_OSX // [macOS
+// The window whose size is reported. While the app is in the background no window is key or
+// main, though the app's window is still on screen: fall back to the frontmost visible window
+// that is not a panel, rather than to the screen.
+static NSWindow *RCTDimensionsWindow(void)
+{
+  NSWindow *window = RCTKeyWindow() ?: NSApp.mainWindow;
+  if (window != nil) {
+    return window;
+  }
+  for (NSWindow *candidate in NSApp.orderedWindows) {
+    if (candidate.isVisible && ![candidate isKindOfClass:[NSPanel class]]) {
+      return candidate;
+    }
+  }
+  return nil;
+}
+#endif // macOS]
+
 static NSDictionary *RCTExportedDimensions(CGFloat fontScale)
 {
   RCTAssertMainQueue();
@@ -215,14 +248,15 @@ static NSDictionary *RCTExportedDimensions(CGFloat fontScale)
 #else // [macOS
   NSScreen *mainScreen = NSScreen.mainScreen;
   CGSize screenSize = mainScreen.frame.size;
-  NSWindow *mainWindow = RCTKeyWindow();
+  NSWindow *mainWindow = RCTDimensionsWindow();
 #endif // macOS]
 
   // We fallback to screen size if a key window is not found.
 #if !TARGET_OS_OSX // [macOS]
   CGSize windowSize = mainWindow != nil ? mainWindow.bounds.size : screenSize; //[macOS]
 #else // [macOS
-  CGSize windowSize = mainWindow != nil ? mainWindow.frame.size : screenSize; //[macOS]
+  // The content's size, which is what the root view gets: the frame includes the title bar.
+  CGSize windowSize = mainWindow != nil ? [mainWindow contentRectForFrameRect:mainWindow.frame].size : screenSize; //[macOS]
 #endif // macOS]
 
 #if !TARGET_OS_OSX // [macOS]
@@ -358,7 +392,13 @@ static NSDictionary *RCTExportedDimensions(CGFloat fontScale)
   NSDictionary *nextInterfaceDimensions = _constants[@"Dimensions"];
 
   // update and publish the even only when the app is in active state
-  if (!([nextInterfaceDimensions isEqual:_currentInterfaceDimensions]) && RCTIsAppActive()) {
+#if !TARGET_OS_OSX // [macOS]
+  const BOOL shouldPublish = RCTIsAppActive();
+#else // [macOS
+  // A Mac app's window stays on screen in the background, and can be resized there.
+  const BOOL shouldPublish = YES;
+#endif // macOS]
+  if (!([nextInterfaceDimensions isEqual:_currentInterfaceDimensions]) && shouldPublish) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[_moduleRegistry moduleForName:"EventDispatcher"] sendDeviceEventWithName:@"didUpdateDimensions"

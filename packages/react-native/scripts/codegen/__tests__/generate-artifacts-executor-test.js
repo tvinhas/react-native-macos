@@ -219,7 +219,7 @@ describe('generateRCTThirdPartyComponents', () => {
         'utf8',
       );
       expect(generatedFile).toContain(
-        '@"ExampleComponent": NSClassFromString(@"RCTExampleComponent"), // component-library',
+        '@"ExampleComponent": @"RCTExampleComponent", // component-library',
       );
     } finally {
       fs.rmSync(libraryPath, {recursive: true, force: true});

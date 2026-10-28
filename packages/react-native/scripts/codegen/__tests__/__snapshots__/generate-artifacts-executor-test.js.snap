@@ -79,7 +79,7 @@ exports[`execute test-app "ReactAppDependencyProvider/ReactAppDependencyProvider
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-version = \\"0.88.0\\"
+version = \\"0.88.1\\"
 source = { :git => 'https://github.com/facebook/react-native.git' }
 if version == '1000.0.0'
   # This is an unpublished version, use the latest commit hash of the react-native repo, which we’re presumably in.
@@ -328,10 +328,24 @@ exports[`execute test-app "ReactCodegen/RCTThirdPartyComponentsProvider.mm" shou
   static dispatch_once_t nativeComponentsToken;
 
   dispatch_once(&nativeComponentsToken, ^{
-    thirdPartyComponents = @{
-		@\\"TestAppComponent\\": NSClassFromString(@\\"RCTTestAppComponent\\"), // test-app
-		@\\"TestLibraryComponent\\": NSClassFromString(@\\"RCTTestLibraryComponent\\"), // test-library
+    NSDictionary<NSString *, NSString *> * componentMapping = @{
+		@\\"TestAppComponent\\": @\\"RCTTestAppComponent\\", // test-app
+		@\\"TestLibraryComponent\\": @\\"RCTTestLibraryComponent\\", // test-library
     };
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithCapacity:componentMapping.count];
+
+    for (NSString *key in componentMapping) {
+      // Nil for a library this target does not link (an app extension, macOS).
+      Class klass = NSClassFromString(componentMapping[key]);
+      if (!klass) {
+        continue;
+      }
+
+      [dict setObject:klass forKey:key];
+    }
+
+    thirdPartyComponents = dict;
   });
 
   return thirdPartyComponents;
@@ -399,7 +413,7 @@ exports[`execute test-app "ReactCodegen/ReactCodegen.podspec" should match snaps
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-version = \\"0.88.0\\"
+version = \\"0.88.1\\"
 source = { :git => 'https://github.com/facebook/react-native.git' }
 if version == '1000.0.0'
   # This is an unpublished version, use the latest commit hash of the react-native repo, which we’re presumably in.
@@ -590,7 +604,7 @@ exports[`execute test-app-legacy "ReactAppDependencyProvider/ReactAppDependencyP
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-version = \\"0.88.0\\"
+version = \\"0.88.1\\"
 source = { :git => 'https://github.com/facebook/react-native.git' }
 if version == '1000.0.0'
   # This is an unpublished version, use the latest commit hash of the react-native repo, which we’re presumably in.
@@ -821,9 +835,23 @@ exports[`execute test-app-legacy "ReactCodegen/RCTThirdPartyComponentsProvider.m
   static dispatch_once_t nativeComponentsToken;
 
   dispatch_once(&nativeComponentsToken, ^{
-    thirdPartyComponents = @{
-		@\\"TestAppDeprecatedComponent\\": NSClassFromString(@\\"RCTTestAppDeprecatedComponentClass\\"), // test-app-legacy
+    NSDictionary<NSString *, NSString *> * componentMapping = @{
+		@\\"TestAppDeprecatedComponent\\": @\\"RCTTestAppDeprecatedComponentClass\\", // test-app-legacy
     };
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithCapacity:componentMapping.count];
+
+    for (NSString *key in componentMapping) {
+      // Nil for a library this target does not link (an app extension, macOS).
+      Class klass = NSClassFromString(componentMapping[key]);
+      if (!klass) {
+        continue;
+      }
+
+      [dict setObject:klass forKey:key];
+    }
+
+    thirdPartyComponents = dict;
   });
 
   return thirdPartyComponents;
@@ -882,7 +910,7 @@ exports[`execute test-app-legacy "ReactCodegen/ReactCodegen.podspec" should matc
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-version = \\"0.88.0\\"
+version = \\"0.88.1\\"
 source = { :git => 'https://github.com/facebook/react-native.git' }
 if version == '1000.0.0'
   # This is an unpublished version, use the latest commit hash of the react-native repo, which we’re presumably in.
