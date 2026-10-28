@@ -132,6 +132,7 @@
 #endif // [macOS]
 #if TARGET_OS_OSX // [macOS
     _isUpdatingPlaceholderText = NO;
+    _enableFocusRing = YES;
 #endif // macOS]
   }
 
@@ -374,16 +375,20 @@
   return ((RCTUITextFieldCell*)self.cell).font;
 }
 
+// Computed from the prop, as RCTUITextView does: a focus ring type stored once, when the prop
+// changed, came back after AppKit reset it (enableFocusRing={false} showing a ring again).
+- (NSFocusRingType)focusRingType
+{
+  return _enableFocusRing ? NSFocusRingTypeDefault : NSFocusRingTypeNone;
+}
+
 - (void)setEnableFocusRing:(BOOL)enableFocusRing {
   if (_enableFocusRing != enableFocusRing) {
     _enableFocusRing = enableFocusRing;
   }
 
-  if (enableFocusRing) {
-    [self setFocusRingType:NSFocusRingTypeDefault];
-  } else {
-    [self setFocusRingType:NSFocusRingTypeNone];
-  }
+  [super setFocusRingType:self.focusRingType];
+  [self setKeyboardFocusRingNeedsDisplayInRect:self.bounds];
 }
 
 #endif // macOS]

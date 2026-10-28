@@ -133,7 +133,7 @@ static BOOL RCTViewIsInteractiveAccessibilityElement(UIView *view, const ViewPro
 #endif // macOS]
   NSMutableArray<RCTUIView *> *_reactSubviews; // [macOS]
   NSSet<NSString *> *_Nullable _propKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN;
-  RCTPlatformView *_containerView; // [macOS]
+  RCTUIView *_containerView; // [macOS]
   BOOL _useCustomContainerView;
   NSMutableSet<NSString *> *_accessibilityOrderNativeIDs;
   RCTSwiftUIContainerViewWrapper *_swiftUIWrapper;
@@ -504,6 +504,9 @@ static BOOL RCTLayerTransformCollapsesAxis(CALayer *layer)
   // `overflow`
   if (oldViewProps.getClipsContentToBounds() != newViewProps.getClipsContentToBounds()) {
     self.currentContainerView.clipsToBounds = newViewProps.getClipsContentToBounds();
+#if TARGET_OS_OSX // [macOS
+    _containerView.layer.masksToBounds = _containerView.clipsToBounds;
+#endif // macOS]
     needsInvalidateLayer = YES;
   }
 
@@ -1295,11 +1298,17 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
 
   if (_useCustomContainerView) {
     if (!_containerView) {
-      _containerView = [[RCTPlatformView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height)]; // [macOS]
+      _containerView = [[RCTUIView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height)]; // [macOS]
       for (RCTPlatformView *subview = nullptr in effectiveContentView.subviews) { // [macOS]
         [_containerView addSubview:subview];
       }
       _containerView.clipsToBounds = effectiveContentView.clipsToBounds;
+#if TARGET_OS_OSX // [macOS
+      // RCTUIView's clipsToBounds doesn't clip on its own: clip with the layer, as invalidateLayer
+      // does for the view itself. (An NSView container clipped, but it isn't flipped and has no
+      // insertSubview:atIndex:, so children mounted into it were mispositioned or crashed.)
+      _containerView.layer.masksToBounds = _containerView.clipsToBounds;
+#endif // macOS]
       effectiveContentView.clipsToBounds = NO;
       _containerView.layer.mask = effectiveContentView.layer.mask;
       effectiveContentView.layer.mask = nil;
