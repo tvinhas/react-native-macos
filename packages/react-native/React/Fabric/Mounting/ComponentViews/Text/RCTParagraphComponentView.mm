@@ -61,6 +61,35 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
     view = view.superview;
   }
 }
+
+// Link spans show the pointing hand. A nested <Text> carries its own
+// `cursor` style, but a paragraph is drawn (and, when selectable, hosted
+// by an NSTextView) as ONE view, so a per-span cursor never reaches AppKit
+// and the whole paragraph showed the arrow, or the I-beam when selectable,
+// even over links the user can click. The span's role is the one marker
+// that survives into the attributed string:
+// RCTNSTextAttributesFromTextAttributes stores it under
+// RCTTextAttributesAccessibilityRoleAttributeName, `role` winning over
+// `accessibilityRole`, exactly as tested here.
+static BOOL RCTTextAttributeValueIsLink(id value)
+{
+  return [value isKindOfClass:[NSString class]] && [(NSString *)value isEqualToString:@"link"];
+}
+
+static BOOL RCTAttributedStringHasLinkFragment(const AttributedString &attributedString)
+{
+  for (const auto &fragment : attributedString.getFragments()) {
+    const auto &textAttributes = fragment.textAttributes;
+    const BOOL isLink = textAttributes.role.has_value()
+        ? textAttributes.role.value() == Role::Link
+        : (textAttributes.accessibilityRole.has_value() &&
+           textAttributes.accessibilityRole.value() == AccessibilityRole::Link);
+    if (isLink) {
+      return YES;
+    }
+  }
+  return NO;
+}
 #endif // macOS]
 
 #pragma mark - RCTParagraphTextView (default, non-selectable) // [macOS]
@@ -410,6 +439,25 @@ static void RCTCancelTouchesForView(RCTPlatformView *view)
   _selectableTextView.maxSize = frame.size;
   _selectableTextView.frame = frame;
   [[_selectableTextView textStorage] setAttributedString:textStorage];
+
+  // Let the NSTextView's own cursor rects carry the pointing hand over link
+  // spans too, so a cursor-rect rebuild while the pointer rests on a link
+  // does not put the I-beam back. RCTParagraphSelectableTextView also sets
+  // the cursor itself on cursor updates and mouse moves; both agree.
+  NSTextStorage *selectableTextStorage = _selectableTextView.textStorage;
+  NSCursor *pointingHandCursor = [NSCursor pointingHandCursor];
+  [selectableTextStorage beginEditing];
+  [selectableTextStorage enumerateAttribute:RCTTextAttributesAccessibilityRoleAttributeName
+                                    inRange:NSMakeRange(0, selectableTextStorage.length)
+                                    options:0
+                                 usingBlock:^(id value, NSRange range, __unused BOOL *stop) {
+                                   if (RCTTextAttributeValueIsLink(value)) {
+                                     [selectableTextStorage addAttribute:NSCursorAttributeName
+                                                                   value:pointingHandCursor
+                                                                   range:range];
+                                   }
+                                 }];
+  [selectableTextStorage endEditing];
 #else // macOS]
   // On iOS, set the attributed text directly. UITextView manages its own layout.
   _selectableTextView.attributedText = textStorage;
@@ -768,6 +816,101 @@ Class<RCTComponentViewProtocol> RCTParagraphCls(void)
   return nil;
 }
 
+#if TARGET_OS_OSX // [macOS
+// Link spans get pointing-hand cursor rects (see RCTAttributedStringHasLinkFragment).
+// Cursor rects are kept by the window, not found by hit testing, so they
+// apply even though this view returns nil from hitTest:. Anything that moves
+// the drawn glyphs invalidates them.
+- (void)setState:(ParagraphShadowNode::ConcreteState::Shared)state
+{
+  _state = state;
+  [self invalidateLinkCursorRects];
+}
+
+- (void)setParagraphAttributes:(ParagraphAttributes)paragraphAttributes
+{
+  if (_paragraphAttributes == paragraphAttributes) {
+    return;
+  }
+  _paragraphAttributes = paragraphAttributes;
+  [self invalidateLinkCursorRects];
+}
+
+- (void)setDrawingFrame:(CGRect)drawingFrame
+{
+  if (CGRectEqualToRect(_drawingFrame, drawingFrame)) {
+    return;
+  }
+  _drawingFrame = drawingFrame;
+  [self invalidateLinkCursorRects];
+}
+
+- (void)invalidateLinkCursorRects
+{
+  NSWindow *window = self.window;
+  if (window) {
+    [window invalidateCursorRectsForView:self];
+  }
+}
+
+- (void)resetCursorRects
+{
+  [super resetCursorRects];
+
+  if (!_state) {
+    return;
+  }
+
+  const auto &stateData = _state->getData();
+  // Cheap check first: most paragraphs (every list row) have no link, and
+  // they must not pay for a text layout here.
+  if (!RCTAttributedStringHasLinkFragment(stateData.attributedString)) {
+    return;
+  }
+
+  auto textLayoutManager = stateData.layoutManager.lock();
+  if (!textLayoutManager) {
+    return;
+  }
+
+  RCTTextLayoutManager *nativeTextLayoutManager =
+      (RCTTextLayoutManager *)unwrapManagedObject(textLayoutManager->getNativeTextLayoutManager());
+  const CGRect frame = _drawingFrame;
+  NSTextStorage *textStorage = [nativeTextLayoutManager getTextStorageForAttributedString:stateData.attributedString
+                                                                      paragraphAttributes:_paragraphAttributes
+                                                                                     size:frame.size];
+  NSLayoutManager *layoutManager = textStorage.layoutManagers.firstObject;
+  NSTextContainer *textContainer = layoutManager.textContainers.firstObject;
+  if (!layoutManager || !textContainer) {
+    return;
+  }
+
+  NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+  NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
+  NSCursor *pointingHandCursor = [NSCursor pointingHandCursor];
+
+  [textStorage enumerateAttribute:RCTTextAttributesAccessibilityRoleAttributeName
+                          inRange:characterRange
+                          options:0
+                       usingBlock:^(id value, NSRange range, __unused BOOL *stop) {
+                         if (!RCTTextAttributeValueIsLink(value)) {
+                           return;
+                         }
+                         NSRange linkGlyphRange = [layoutManager glyphRangeForCharacterRange:range
+                                                                        actualCharacterRange:NULL];
+                         // Every line of a wrapped link, not just the first.
+                         [layoutManager
+                             enumerateEnclosingRectsForGlyphRange:linkGlyphRange
+                                         withinSelectedGlyphRange:NSMakeRange(NSNotFound, 0)
+                                                  inTextContainer:textContainer
+                                                       usingBlock:^(NSRect rect, __unused BOOL *innerStop) {
+                                                         [self addCursorRect:NSOffsetRect(rect, frame.origin.x, frame.origin.y)
+                                                                      cursor:pointingHandCursor];
+                                                       }];
+                       }];
+}
+#endif // macOS]
+
 - (void)drawRect:(CGRect)rect
 {
   if (!_state) {
@@ -809,13 +952,119 @@ Class<RCTComponentViewProtocol> RCTParagraphCls(void)
 // [macOS
 #pragma mark - RCTParagraphSelectableTextView Implementation
 
-@implementation RCTParagraphSelectableTextView
+@implementation RCTParagraphSelectableTextView {
+#if TARGET_OS_OSX
+  NSTrackingArea *_linkCursorTrackingArea;
+  BOOL _showsLinkCursor;
+#endif
+}
 
 #if TARGET_OS_OSX
 
 - (void)setNeedsDisplay
 {
   [self setNeedsDisplay:YES];
+}
+
+#pragma mark Link cursor
+
+// NSTextView shows the I-beam over all of its text. Over a link span (see
+// RCTAttributedStringHasLinkFragment) show the pointing hand instead, as a
+// browser does: clicking there runs the span's onPress, not a selection.
+// Click handling is untouched; RCTParagraphComponentView's hitTest: and
+// mouseDown: still route presses to JS. Move events reach this view
+// (that hitTest: lets them through), and the tracking area below makes sure
+// cursor updates and mouse moves are delivered here at all.
+
+- (void)updateTrackingAreas
+{
+  [super updateTrackingAreas];
+  [self installLinkCursorTrackingAreaIfNeeded];
+}
+
+- (void)viewDidMoveToWindow
+{
+  [super viewDidMoveToWindow];
+  [self installLinkCursorTrackingAreaIfNeeded];
+}
+
+- (void)installLinkCursorTrackingAreaIfNeeded
+{
+  if (_linkCursorTrackingArea && [self.trackingAreas containsObject:_linkCursorTrackingArea]) {
+    return;
+  }
+  // NSTrackingInVisibleRect keeps the rect glued to the visible area, so
+  // the area never needs rebuilding for a resize or scroll. No
+  // entered/exited events: the responder chain would forward them to
+  // RCTViewComponentView's hover handling.
+  _linkCursorTrackingArea = [[NSTrackingArea alloc]
+      initWithRect:NSZeroRect
+           options:NSTrackingCursorUpdate | NSTrackingMouseMoved | NSTrackingActiveInKeyWindow |
+           NSTrackingInVisibleRect
+             owner:self
+          userInfo:nil];
+  [self addTrackingArea:_linkCursorTrackingArea];
+}
+
+// YES only over the glyphs of a link span: glyphIndexForPoint: answers the
+// nearest glyph, so a point past the end of a line (or in the gap below
+// the last one) is checked against that glyph's own rect.
+- (BOOL)isLinkAtWindowPoint:(NSPoint)windowPoint
+{
+  NSLayoutManager *layoutManager = self.layoutManager;
+  NSTextContainer *textContainer = self.textContainer;
+  NSTextStorage *textStorage = self.textStorage;
+  if (!layoutManager || !textContainer || textStorage.length == 0 || layoutManager.numberOfGlyphs == 0) {
+    return NO;
+  }
+
+  NSPoint point = [self convertPoint:windowPoint fromView:nil];
+  const NSPoint containerOrigin = self.textContainerOrigin;
+  point.x -= containerOrigin.x;
+  point.y -= containerOrigin.y;
+
+  const NSUInteger glyphIndex = [layoutManager glyphIndexForPoint:point inTextContainer:textContainer];
+  if (glyphIndex >= layoutManager.numberOfGlyphs) {
+    return NO;
+  }
+  const NSRect glyphRect = [layoutManager boundingRectForGlyphRange:NSMakeRange(glyphIndex, 1)
+                                                    inTextContainer:textContainer];
+  if (!NSPointInRect(point, glyphRect)) {
+    return NO;
+  }
+
+  const NSUInteger characterIndex = [layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+  if (characterIndex >= textStorage.length) {
+    return NO;
+  }
+  return RCTTextAttributeValueIsLink([textStorage attribute:RCTTextAttributesAccessibilityRoleAttributeName
+                                                    atIndex:characterIndex
+                                             effectiveRange:NULL]);
+}
+
+// Runs after NSTextView's own handling, so the hand wins over the I-beam it
+// sets; off a link the I-beam comes back the moment the pointer leaves one.
+- (void)applyLinkCursorForEvent:(NSEvent *)event
+{
+  if ([self isLinkAtWindowPoint:event.locationInWindow]) {
+    _showsLinkCursor = YES;
+    [[NSCursor pointingHandCursor] set];
+  } else if (_showsLinkCursor) {
+    _showsLinkCursor = NO;
+    [[NSCursor IBeamCursor] set];
+  }
+}
+
+- (void)cursorUpdate:(NSEvent *)event
+{
+  [super cursorUpdate:event];
+  [self applyLinkCursorForEvent:event];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+  [super mouseMoved:event];
+  [self applyLinkCursorForEvent:event];
 }
 
 - (BOOL)canBecomeKeyView
