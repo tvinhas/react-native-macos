@@ -996,6 +996,19 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
   NSResponder *responder = [_backedTextInputView respondsToSelector:@selector(responder)]
       ? _backedTextInputView.responder
       : (NSResponder *)_backedTextInputView;
+  // Already focused: do nothing, as iOS does (its JS skips focus() on the focused input; macOS JS
+  // can't, since any view can hold focus, so it sends focus on every click in the field). An
+  // NSTextField being edited is not the first responder, its field editor is, so
+  // makeFirstResponder: ended the edit and made the field first responder again, and AppKit then
+  // selected all of its text: every click in a single-line input selected the whole field.
+  NSResponder *firstResponder = window.firstResponder;
+  BOOL alreadyFocused = firstResponder != nil &&
+      (firstResponder == responder ||
+       ([responder isKindOfClass:[NSControl class]] &&
+        firstResponder == [(NSControl *)responder currentEditor]));
+  if (alreadyFocused) {
+    return;
+  }
   [window makeFirstResponder:responder];
 #endif // macOS]
 
