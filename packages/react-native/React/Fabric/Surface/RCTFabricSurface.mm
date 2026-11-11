@@ -73,7 +73,14 @@ using namespace facebook::react;
                                              selector:@selector(handleContentSizeCategoryDidChangeNotification:)
                                                  name:UIContentSizeCategoryDidChangeNotification
                                                object:nil];
-#endif // [macOS]
+#else // [macOS
+    // The app changed its text multiplier (RCTSetFontSizeMultiplier): lay out again,
+    // as iOS does when the system text size changes.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleContentSizeCategoryDidChangeNotification:)
+                                                 name:RCTFontSizeMultiplierDidChangeNotification
+                                               object:nil];
+#endif // macOS]
   }
 
   return self;

@@ -14,6 +14,7 @@
 #import <React/RCTEventDispatcherProtocol.h>
 #import <React/RCTLog.h>
 #import <React/RCTUIManager.h>
+#import <React/RCTUtils.h> // [macOS] RCTSetFontSizeMultiplier
 
 #import "CoreModulesPlugins.h"
 
@@ -399,8 +400,15 @@ RCT_EXPORT_MODULE()
       multipliers,
       UIContentSizeCategoryAccessibilityExtraExtraExtraLarge,
       JSMultipliers.accessibilityExtraExtraExtraLarge());
-#endif // [macOS]
   self.multipliers = multipliers;
+#else // [macOS
+  // macOS has no text-size categories. `large` is the size every app runs at, so its
+  // multiplier is THE multiplier: text across every surface is scaled by it.
+  (void)multipliers;
+  if (JSMultipliers.large().has_value()) {
+    RCTSetFontSizeMultiplier(JSMultipliers.large().value());
+  }
+#endif // macOS]
 }
 
 static void setMultipliers(

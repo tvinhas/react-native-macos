@@ -48,6 +48,14 @@ RCT_EXTERN void RCTUnsafeExecuteOnMainQueueSync(dispatch_block_t block);
 // Get screen metrics in a thread-safe way
 RCT_EXTERN CGFloat RCTScreenScale(void);
 RCT_EXTERN CGFloat RCTFontSizeMultiplier(void);
+#if TARGET_OS_OSX // [macOS
+// macOS has no system text size, so RCTFontSizeMultiplier() was a constant 1.0 there
+// and an app had no way to scale its text. The app sets it here (JS:
+// `setAccessibilityContentSizeMultipliers({large})`); every Fabric surface lays out
+// again on RCTFontSizeMultiplierDidChangeNotification. Any thread.
+RCT_EXTERN void RCTSetFontSizeMultiplier(CGFloat multiplier);
+RCT_EXTERN NSString *const RCTFontSizeMultiplierDidChangeNotification;
+#endif // macOS]
 RCT_EXTERN CGSize RCTScreenSize(void);
 RCT_EXTERN CGSize RCTViewportSize(void);
 RCT_EXTERN CGSize RCTSwitchSize(void);

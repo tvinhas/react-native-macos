@@ -429,8 +429,28 @@ CGFloat RCTScreenScale(void)
   return [NSScreen mainScreen].backingScaleFactor;
 }
 
+NSString *const RCTFontSizeMultiplierDidChangeNotification = @"RCTFontSizeMultiplierDidChangeNotification";
+
+// Read and written on the main queue only: the reader is the Fabric surface's
+// layout-context update, and the setter hops to the main queue before writing.
+static CGFloat RCTMacFontSizeMultiplier = 1.0;
+
 CGFloat RCTFontSizeMultiplier(void) {
-  return 1.0;
+  return RCTMacFontSizeMultiplier;
+}
+
+void RCTSetFontSizeMultiplier(CGFloat multiplier)
+{
+  if (!(multiplier > 0.0) || !isfinite(multiplier)) {
+    return;
+  }
+  RCTExecuteOnMainQueue(^{
+    if (RCTMacFontSizeMultiplier == multiplier) {
+      return;
+    }
+    RCTMacFontSizeMultiplier = multiplier;
+    [[NSNotificationCenter defaultCenter] postNotificationName:RCTFontSizeMultiplierDidChangeNotification object:nil];
+  });
 }
 
 CGSize RCTScreenSize(void)
