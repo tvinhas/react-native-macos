@@ -14,6 +14,10 @@
 #import "RCTSurfaceProtocol.h"
 #import "RCTSurfaceRootView.h"
 
+#if TARGET_OS_OSX // [macOS
+NSString *const RCTSurfaceViewBackingScaleDidChangeNotification = @"RCTSurfaceViewBackingScaleDidChangeNotification";
+#endif // macOS]
+
 @implementation RCTSurfaceView {
   RCTSurfaceRootView *_Nullable _rootView;
   RCTSurfaceStage _stage;
@@ -37,6 +41,22 @@ RCT_NOT_IMPLEMENTED(-(nullable instancetype)initWithCoder : (NSCoder *)coder)
 - (BOOL)isFlipped
 {
   return YES;
+}
+
+- (void)viewDidMoveToWindow
+{
+  [super viewDidMoveToWindow];
+  if (self.window != nil) {
+    [[NSNotificationCenter defaultCenter] postNotificationName:RCTSurfaceViewBackingScaleDidChangeNotification
+                                                        object:self];
+  }
+}
+
+- (void)viewDidChangeBackingProperties
+{
+  [super viewDidChangeBackingProperties];
+  [[NSNotificationCenter defaultCenter] postNotificationName:RCTSurfaceViewBackingScaleDidChangeNotification
+                                                      object:self];
 }
 #endif // macOS]
 

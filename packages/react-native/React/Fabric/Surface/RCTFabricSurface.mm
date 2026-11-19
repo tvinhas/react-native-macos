@@ -80,6 +80,13 @@ using namespace facebook::react;
                                              selector:@selector(handleContentSizeCategoryDidChangeNotification:)
                                                  name:RCTFontSizeMultiplierDidChangeNotification
                                                object:nil];
+    // The surface's window moved to a screen of another density, or the
+    // surface landed in a window for the first time: round layout to that
+    // screen's pixels.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleBackingScaleDidChangeNotification:)
+                                                 name:RCTSurfaceViewBackingScaleDidChangeNotification
+                                               object:nil];
 #endif // macOS]
   }
 
@@ -190,7 +197,18 @@ using namespace facebook::react;
 
   auto layoutContext = _surfaceHandler->getLayoutContext();
 
+#if !TARGET_OS_OSX // [macOS]
   layoutContext.pointScaleFactor = RCTScreenScale();
+#else // [macOS
+  // The scale of the screen the surface is ON. `RCTScreenScale()` is the main
+  // screen's, which is another screen whenever the window sits on a second
+  // monitor: with a Retina panel as the main screen and the window on a 1x
+  // monitor, layout was rounded to half points there, so frames and the
+  // scrollable extent fell between pixels (blurred content, and a scroll
+  // offset that flipped by half a pixel at the end of the content).
+  CGFloat windowScale = [NSThread isMainThread] ? _view.window.backingScaleFactor : 0;
+  layoutContext.pointScaleFactor = windowScale > 0 ? windowScale : RCTScreenScale();
+#endif // macOS]
   layoutContext.swapLeftAndRightInRTL =
       [[RCTI18nUtil sharedInstance] isRTL] && [[RCTI18nUtil sharedInstance] doLeftAndRightSwapInRTL];
   layoutContext.fontSizeMultiplier = RCTFontSizeMultiplier();
@@ -289,6 +307,15 @@ using namespace facebook::react;
 {
   [self _updateLayoutContext];
 }
+
+#if TARGET_OS_OSX // [macOS
+- (void)handleBackingScaleDidChangeNotification:(NSNotification *)notification
+{
+  if (notification.object == _view) {
+    [self _updateLayoutContext];
+  }
+}
+#endif // macOS]
 
 #pragma mark - Private
 
